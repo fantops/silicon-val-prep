@@ -1,7 +1,5 @@
 # Day 07 — TLB, Huge Pages, IOMMU / SMMU
 
-> **Source merge:** [30day_plan/day13_tlb_iommu.md](../30day_plan/day13_tlb_iommu.md), [30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md](../30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md). 30-day files are unchanged.
-
 ## Concept
 
 The **TLB** caches recent VA→PA translations. **Huge pages** (2 MB / 1 GB) multiply each TLB entry's coverage and are the single biggest perf lever for AI/HPC working sets. The **IOMMU / SMMU / VT-d** is the device-side MMU that translates **IOVA → PA** and sandboxes DMA. **TLB shootdown** uses an IPI to invalidate TLB entries on remote cores.
@@ -10,7 +8,7 @@ The **TLB** caches recent VA→PA translations. **Huge pages** (2 MB / 1 GB) mul
 
 Day 6 built the page-table walk and the cost of a full walk. Day 7 explains why the cost is tolerable in practice (TLB), the lever to make it cheaper (huge pages), the cross-core cost when the OS edits a PTE (shootdown), and the device-side analogue (IOMMU). All four are needed for Day 8 (DMA / doorbells / barriers) and Day 11 (NVMe queues).
 
-In the 30-day Layer map this completes **Layer 2**.
+In the Layer map this completes **Layer 2**.
 
 ---
 

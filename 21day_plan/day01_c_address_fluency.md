@@ -1,14 +1,12 @@
 # Day 01 — C Address Fluency, Bit/Field Macros, MMIO Primer
 
-> **Source merge:** [30day_plan/day00_c_rampup.md](../30day_plan/day00_c_rampup.md) (Blocks 1, 2a-2c, 4), [30day_plan/day02_pointers_memory.md](../30day_plan/day02_pointers_memory.md) (pointer essentials). 30-day files are unchanged.
-
 ## Concept
 
 A pointer is just an address with a type. Hardware registers are just addresses with **side effects** on every load/store. Today you build the macro set (`BIT`, `MASK`, `FIELD_GET`, `FIELD_PREP`, `ARRAY_SIZE`) and the accessor set (`reg_read32`, `reg_write32`, `reg_field_write`, `wait_for_bit_set`) that the next 20 days reuse verbatim.
 
 ## Why this day in the flow
 
-Layer 0 of the 30-day system flow ("Coding And Address Fluency") starts here because every later layer — caches, virtual memory, DMA, PCIe, NVMe, power management, NPU runtime — is ultimately accessed through a typed address with a side effect. If `reg_field_write` and `wait_for_bit_set` are not muscle memory by the end of today, every later day will spend energy on the wrong problem.
+Layer 0 of the system flow ("Coding And Address Fluency") starts here because every later layer — caches, virtual memory, DMA, PCIe, NVMe, power management, NPU runtime — is ultimately accessed through a typed address with a side effect. If `reg_field_write` and `wait_for_bit_set` are not muscle memory by the end of today, every later day will spend energy on the wrong problem.
 
 The two real bug stories that hinge on these basics:
 

@@ -1,7 +1,5 @@
 # Day 05 — Cache Coherence (MESI), False Sharing, Snoop Debug
 
-> **Source merge:** [30day_plan/day10_mesi_coherence.md](../30day_plan/day10_mesi_coherence.md), [30day_plan/day11_false_sharing.md](../30day_plan/day11_false_sharing.md), [30day_plan/CACHE_LINE_SYSTEM_BRIDGE_NOTES.md](../30day_plan/CACHE_LINE_SYSTEM_BRIDGE_NOTES.md). 30-day files are unchanged.
-
 ## Concept
 
 In a multicore SoC each core has private L1/L2 caches; **MESI** (or its variants MOESI / MESIF) keeps them coherent at cache-line granularity. The performance bug class that follows is **false sharing**: two cores writing different variables that happen to share a 64 B line. The debug counter is **HITM** (Hit-Modified). Today closes Layer 1 and prepares the DMA discussion of Day 8.
@@ -10,7 +8,7 @@ In a multicore SoC each core has private L1/L2 caches; **MESI** (or its variants
 
 Day 4 introduced the cache line and write-back. Day 5 takes the next step: what happens when *two cores* see the same line. This is where the **fourth C of misses (coherence)** lives, where the most common silent-perf bug class lives, and where the snoop traffic that hurts NUMA scaling lives. Day 8 (DMA / doorbells / barriers) reuses the same picture: the device acts like another "core" that needs an up-to-date copy of the line.
 
-In the 30-day Layer map this is the second half of **Layer 1**.
+In the Layer map this is the second half of **Layer 1**.
 
 ---
 

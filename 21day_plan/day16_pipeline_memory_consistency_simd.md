@@ -1,7 +1,5 @@
 # Day 16 — CPU Pipeline, OoO, Memory Consistency, SIMD
 
-> **Source merge:** [30day_plan/day13b_pipeline_isa_simd.md](../30day_plan/day13b_pipeline_isa_simd.md). 30-day files are unchanged.
-
 ## Concept
 
 Modern cores are **deeply pipelined out-of-order machines**: front-end (fetch / branch-predict / decode / μop cache) feeds a backend (rename → reservation stations → functional units → ROB → retire). Three hazards block the simple pipeline (structural / data / control). The **memory consistency model** decides what reorderings the hardware is allowed to expose to other cores: x86 is **TSO** (mostly safe), ARM/RISC-V/POWER are **weak** (need explicit barriers). **SIMD** widens each instruction (SSE/AVX/AVX-512 on x86, NEON/SVE on ARM); on Intel the wider you go, the more current you draw, and the **license level** drops core frequency to keep V margin.
@@ -10,7 +8,7 @@ Modern cores are **deeply pipelined out-of-order machines**: front-end (fetch / 
 
 Days 4-15 covered the platform — caches, MMU, IOMMU, DMA, PCIe, NVMe, power, thermal, perf counters. Day 16 is the **CPU itself** as a microarchitecture, the layer where IPC actually happens. You need this to talk credibly about pipeline-stall counters from Day 15, and to write the concurrency primitives on Day 17 with the right memory orders.
 
-In the 30-day Layer map this is **Layer 6 (CPU microarch)**.
+In the Layer map this is **Layer 6 (CPU microarch)**.
 
 ---
 

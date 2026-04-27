@@ -1,7 +1,5 @@
 # Day 08 — DMA, Doorbells, Memory Ordering, Barriers
 
-> **Source merge:** [30day_plan/day22_volatile_mmio.md](../30day_plan/day22_volatile_mmio.md), [30day_plan/CACHE_LINE_SYSTEM_BRIDGE_NOTES.md](../30day_plan/CACHE_LINE_SYSTEM_BRIDGE_NOTES.md), [30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md](../30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md), [30day_plan/day20_nvme_architecture.md](../30day_plan/day20_nvme_architecture.md) (doorbell intro). 30-day files are unchanged.
-
 ## Concept
 
 A typical device-submission flow is **descriptor → barrier → MMIO doorbell → device DMA → completion**. Each arrow has a real failure mode: descriptor stuck in a dirty cache line, doorbell reordered ahead of the descriptor write on weak memory, IOMMU mapping missing, MMIO accidentally cached. Today consolidates all four into one mental model and one C harness.
@@ -10,7 +8,7 @@ A typical device-submission flow is **descriptor → barrier → MMIO doorbell �
 
 Days 4-5 gave you cache lines and coherence. Days 6-7 gave you VM and IOMMU. Day 8 is the day they all converge: **the device is just another agent that needs to see the latest copy of memory, in the right order, at the right physical address.** Once today is solid, NVMe (Day 11), PCIe TLP/credit (Day 10), and NPU runtime DMA (Day 18-19) are scaffolding work.
 
-In the 30-day Layer map this is the **Layer 2 → Layer 3 bridge**.
+In the Layer map this is the **Layer 2 → Layer 3 bridge**.
 
 ---
 

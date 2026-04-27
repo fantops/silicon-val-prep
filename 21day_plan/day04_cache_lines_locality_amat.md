@@ -1,7 +1,5 @@
 # Day 04 — Cache Lines, Locality, Write Policies, AMAT
 
-> **Source merge:** [30day_plan/day08_cache_fundamentals.md](../30day_plan/day08_cache_fundamentals.md), [30day_plan/day09_cache_policies.md](../30day_plan/day09_cache_policies.md), [30day_plan/CACHE_LINE_SYSTEM_BRIDGE_NOTES.md](../30day_plan/CACHE_LINE_SYSTEM_BRIDGE_NOTES.md). 30-day files are unchanged.
-
 ## Concept
 
 Caches exist because DRAM is hundreds of cycles away. Data moves in fixed-size **cache lines** (64 B on x86/ARM); an address splits into **tag / set / offset**; **associativity** controls how many lines can co-exist in one set; **write-back + write-allocate** is the dominant policy; AMAT quantifies all of it. Today is the foundation of every later "device read stale data" / "false sharing" / "DMA visibility" bug.
@@ -15,7 +13,7 @@ After mastering addresses (Day 1), layout (Day 2), and registers (Day 3), this i
 - Day 14 — ADR (write-back makes the WPQ a thing in the first place).
 - Day 19 — NPU memory bugs (page faults vs cache misses are not the same thing — today is where you draw the line).
 
-This is **Layer 1** of the 30-day system flow.
+This is **Layer 1** of the system flow.
 
 ---
 

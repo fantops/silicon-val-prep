@@ -1,14 +1,12 @@
 # Day 12 — DVFS, P-states, PVT Corners, Binning
 
-> **Source merge:** [30day_plan/day04_dvfs_power.md](../30day_plan/day04_dvfs_power.md), [30day_plan/day06_pvt_corners.md](../30day_plan/day06_pvt_corners.md). 30-day files are unchanged.
-
 ## Concept
 
 Power has two pieces: **dynamic** $P_{dyn} = C V^2 F$ and **static** (leakage), with leakage **exponential in temperature**. **DVFS** exploits the $V^2$ term by lowering both $V$ and $F$ when full performance isn't needed. **P-states** are the discrete operating points; **Turbo** is the opportunistic above-P0 mode that uses thermal/power headroom from idle cores. Every chip lives at a unique **PVT corner** (Process × Voltage × Temperature); validation must cover the worst cases (FF for power/thermal, SS for timing). After fab, chips are **speed-binned** into SKUs, each with its own DVFS table.
 
 ## Why this day in the flow
 
-After Days 1-11 (CPU/memory/PCIe/NVMe — the *what*), Days 12-15 cover **how the platform manages power and thermals around all of it**. DVFS is the active-power lever; Day 13 (C-states) is the idle-power lever; Day 14 (ADR/PCU/Core C6 bugs) is the firmware-side bug story; Day 15 is thermals + perf counters. Together they form **Layer 5 (Power/Thermal)** in the 30-day flow.
+After Days 1-11 (CPU/memory/PCIe/NVMe — the *what*), Days 12-15 cover **how the platform manages power and thermals around all of it**. DVFS is the active-power lever; Day 13 (C-states) is the idle-power lever; Day 14 (ADR/PCU/Core C6 bugs) is the firmware-side bug story; Day 15 is thermals + perf counters. Together they form **Layer 5 (Power/Thermal)** in the system-flow layers.
 
 ---
 

@@ -1,7 +1,5 @@
 # Day 17 — Concurrency Primitives, Lock-free Queues, DSA Drills
 
-> **Source merge:** [30day_plan/day28b_concurrency_dsa_drills.md](../30day_plan/day28b_concurrency_dsa_drills.md). 30-day files are unchanged.
-
 ## Concept
 
 A concurrent primitive offers some combination of three independent guarantees: **atomicity** (no torn read/write), **visibility** (the write becomes observable), **ordering** (relative position vs surrounding ops preserved). `volatile` gives only compiler-side ordering for that variable; **C11 atomics** with explicit memory orders give all three at controllable cost. Pick the **weakest correct** order: relaxed < acquire/release < seq_cst. The canonical lock-free structure is the **SPSC ring** — one writer per pointer + acquire/release, no CAS needed; same shape as NVMe SQ/CQ (Day 11). DSA drills (two-pointer, sliding window, hashmap, stack/queue, BFS/DFS, binary search, bit manipulation, heap) round out a Qualcomm coding round.
@@ -10,7 +8,7 @@ A concurrent primitive offers some combination of three independent guarantees: 
 
 Days 5 (MESI / false sharing) and 16 (memory model) gave you the *why*; Day 17 gives you the *write it under interview pressure* skill. Coding rounds at Qualcomm/Intel/Microsoft test both systems-C (spinlock, ring, doorbell harness) and classic DSA. Today is the rep day.
 
-In the 30-day Layer map this is the **coding-readiness layer that sits across Layers 1, 5, and 6**.
+In the Layer map this is the **coding-readiness layer that sits across Layers 1, 5, and 6**.
 
 ---
 

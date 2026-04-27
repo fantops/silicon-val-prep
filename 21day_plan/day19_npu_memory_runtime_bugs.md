@@ -1,7 +1,5 @@
 # Day 19 — NPU Memory, Runtime & Scheduling Bugs
 
-> **Source merge:** [30day_plan/day29_debug_bugs.md](../30day_plan/day29_debug_bugs.md) (Bug 4 QNN/ORT page-fault, Bug 4b Paint SR vs Camera), [30day_plan/day01_career_narrative.md](../30day_plan/day01_career_narrative.md) (silent EP fallback, VTCM cliff, MS power), [30day_plan/SPRINT_3DAY_PLAN.md](../30day_plan/SPRINT_3DAY_PLAN.md) (60-90 sec framing). 30-day files are unchanged.
-
 ## Concept
 
 Once the NPU stack of Day 18 is in your head, **the bugs you actually see in production** fall into four buckets: (1) **memory-lifecycle regressions** in the host runtime — page-fault spike, virtual-memory bloat — that **look like silicon defects but aren't**; (2) **scheduler bugs** — single-queue HTP, no preemption, one workload starves another; (3) **silent EP fallback** — looks fine functionally, perf 10× off; (4) **power / Modern Standby** — NPU stays in active power state when it should idle. The discipline that keeps you out of trouble: **never blame silicon first**. Build a version matrix, separate variables, correlate counters together (page faults *and* virtual memory, not either alone).
@@ -10,7 +8,7 @@ Once the NPU stack of Day 18 is in your head, **the bugs you actually see in pro
 
 Day 18 was the architecture; Day 19 is the **stories an interviewer will ask about**. These are the bugs you actually own at Microsoft and the ones a Qualcomm/Intel NPU role wants to hear you reason through. Every bug on this page traces back to a Day 1-17 fundamental.
 
-In the 30-day Layer map this is the **debug-storytelling layer for NPU work**.
+In the Layer map this is the **debug-storytelling layer for NPU work**.
 
 ---
 

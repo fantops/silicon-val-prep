@@ -1,7 +1,5 @@
 # Day 21 — Final Mock + Per-Company Tailoring
 
-> **Source merge:** [30day_plan/day30_mock_final.md](../30day_plan/day30_mock_final.md) (mock interview format), [30day_plan/day01_career_narrative.md](../30day_plan/day01_career_narrative.md) (narrative + roles), [30day_plan/QUALCOMM_CHEATSHEET.md](../30day_plan/QUALCOMM_CHEATSHEET.md) (per-prompt → per-day map). 30-day files are unchanged.
-
 ## Concept
 
 Final day. Three blocks: a **mock loop** (behavioral + technical + coding) timed end-to-end, a **flashcard sweep** to make sure the cheap facts are instant, and **per-company tailoring** so you walk into Qualcomm / Intel / Microsoft with the right vocabulary on top. The narrative is the **same** core (Microsoft post-Si platform validation → Intel pre-Si emulation on Cambria → L&T post-Si NVMe bring-up); only the **emphasis** changes per company.
@@ -10,7 +8,7 @@ Final day. Three blocks: a **mock loop** (behavioral + technical + coding) timed
 
 Days 1-20 built the technical material; today **rehearses the loop**. Confidence comes from preparation, not from cramming new topics in the final 24 hours.
 
-In the 30-day Layer map this is the **rehearsal layer**.
+In the Layer map this is the **rehearsal layer**.
 
 ---
 

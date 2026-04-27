@@ -1,7 +1,5 @@
 # Day 02 — Pointers, Memory Layout, Alignment, container_of
 
-> **Source merge:** [30day_plan/day02_pointers_memory.md](../30day_plan/day02_pointers_memory.md), [30day_plan/day00_c_rampup.md](../30day_plan/day00_c_rampup.md) (Block 3). 30-day files are unchanged.
-
 ## Concept
 
 Where data lives (stack / heap / BSS / data / text), how the compiler lays out a struct (natural alignment + tail padding), and three ways to obtain an aligned buffer (DMA / SIMD / page) — plus the kernel idiom `container_of` that recovers the parent struct from a member pointer.
@@ -10,7 +8,7 @@ Where data lives (stack / heap / BSS / data / text), how the compiler lays out a
 
 Day 1 gave you "what is an address." Day 2 gives you "what lives at addresses, in what order, with what padding." Every later bug — DMA buffers crossing a cache line (Day 4), MMIO struct overlay misalignment (Day 8), VTCM tile alignment in NPU runtime (Day 18), false sharing (Day 5) — reduces to a layout-or-alignment question. Doing this badly means re-debugging the same class of bug for the rest of the plan.
 
-In the 30-day Layer map this is **Layer 0 → Layer 1 bridge**: from "addresses" to "addresses inside structures and aligned regions."
+In the Layer map this is **Layer 0 → Layer 1 bridge**: from "addresses" to "addresses inside structures and aligned regions."
 
 ---
 

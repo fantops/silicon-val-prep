@@ -1,7 +1,5 @@
 # Day 20 — Debug Methodology and Polished Bug Stories
 
-> **Source merge:** [30day_plan/day29_debug_bugs.md](../30day_plan/day29_debug_bugs.md) (7-step framework, 4 polished stories), [30day_plan/day24_sim_vs_emul.md](../30day_plan/day24_sim_vs_emul.md) (validation stages — what each catches), [30day_plan/SPRINT_3DAY_PLAN.md](../30day_plan/SPRINT_3DAY_PLAN.md) (delivery discipline). 30-day files are unchanged.
-
 ## Concept
 
 Every silicon bug investigation follows the same **7-step framework**: Observe → Reproduce → Isolate → Hypothesise → Test → Root-cause → Fix & Verify. The stages of validation (RTL sim → emulation → FPGA proto → post-Si) each catch a different bug class, and the cost of finding a bug **rises ~10× per stage**, so where you find it matters as much as what you find. In an interview the bug story is delivered in **90 seconds** with a fixed shape: **Symptom → Hypothesis → How I narrowed it → Root cause → Fix → Learning**. The interviewer is not testing the bug; they are testing how your mind works.
@@ -10,7 +8,7 @@ Every silicon bug investigation follows the same **7-step framework**: Observe �
 
 Days 1-19 gave you the technical material. Day 20 is **how you talk about it**. Polished bug stories are what convert technical knowledge into hire-no-hire signal in the loop.
 
-In the 30-day Layer map this is the **debug methodology + storytelling layer**.
+In the Layer map this is the **debug methodology + storytelling layer**.
 
 ---
 

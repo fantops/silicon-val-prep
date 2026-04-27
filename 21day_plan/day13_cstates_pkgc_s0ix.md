@@ -1,7 +1,5 @@
 # Day 13 — C-states, PkgC6, S0ix, Cross-IP Idle
 
-> **Source merge:** [30day_plan/day05_cstates_idle.md](../30day_plan/day05_cstates_idle.md), [30day_plan/INTC notes (Core cstate Flow)](../30day_plan/), [30day_plan/QUALCOMM_CHEATSHEET.md](../30day_plan/QUALCOMM_CHEATSHEET.md). 30-day files are unchanged.
-
 ## Concept
 
 P-states control the **active** core; C-states control the **idle** core. Deeper C-states save more power but take longer to wake. **C1/C1E** = clock-gated (state preserved, fast wake). **C6** = power-gated (state saved to retention SRAM, voltage collapsed, slow wake ~100 µs+). When *all* cores reach C6 *and* every uncore IP asserts idle, the package can enter **PkgC6** — LLC flushed to DRAM, uncore fabric power-gated, main package rail collapsed. **S0ix / Modern Standby** targets PkgC10 — if PkgC6 is broken, S0ix power is over-budget. The most common PkgC6 blocker in real bring-ups is a **PCIe link not in L1.2**.
@@ -10,7 +8,7 @@ P-states control the **active** core; C-states control the **idle** core. Deeper
 
 Day 12 was active-power. Day 13 is idle-power and **the cross-IP handshake** that makes deep package idle work. Day 14 then tells two real bug stories at this exact layer (ADR, Core C6 wake-lost). Together Days 12-14 are the power chapter; Day 15 closes it with thermal and counters.
 
-In the 30-day Layer map this is **Layer 5 — idle side**.
+In the Layer map this is **Layer 5 — idle side**.
 
 ---
 

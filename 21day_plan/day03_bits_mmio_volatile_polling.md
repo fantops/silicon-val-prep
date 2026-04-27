@@ -1,7 +1,5 @@
 # Day 03 — Bits, MMIO, volatile, Polling, Endianness
 
-> **Source merge:** [30day_plan/day03_bit_manipulation.md](../30day_plan/day03_bit_manipulation.md), [30day_plan/day22_volatile_mmio.md](../30day_plan/day22_volatile_mmio.md), [30day_plan/day23_endianness.md](../30day_plan/day23_endianness.md). 30-day files are unchanged.
-
 ## Concept
 
 Hardware registers are not variables — they are bit-field collections at memory-mapped addresses, and every byte on the wire has an endianness. Today consolidates: register field RMW, why `volatile` matters and where it ends, polling-with-timeout, and parsing little-/big-endian buffers without struct overlay.

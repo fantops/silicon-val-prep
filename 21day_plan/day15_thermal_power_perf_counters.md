@@ -1,14 +1,12 @@
 # Day 15 — Thermal, Perf Counters, Multi-IP Interference
 
-> **Source merge:** [30day_plan/day26_thermal.md](../30day_plan/day26_thermal.md), [30day_plan/day27_multi_ip_perf.md](../30day_plan/day27_multi_ip_perf.md), [30day_plan/day27b_perf_counters_methodology.md](../30day_plan/day27b_perf_counters_methodology.md). 30-day files are unchanged.
-
 ## Concept
 
 The chip operates inside a **junction-temperature** (Tj) envelope: $T_j = T_{ambient} + P \cdot \theta_{JA}$. Cross **Tjmax** and `PROCHOT#` asserts → throttle. **Modern SoCs are multi-IP shared-resource systems** (CPU + GPU + NPU + ISP) where memory bandwidth, LLC, NoC, IOMMU and power budget are contended; performance bugs are usually one of five interference classes. The **PMU** measures it: top-down methodology classifies every pipeline slot into Frontend / Backend-Memory / Backend-Core / Bad-Speculation / Retiring. **RAPL** measures energy. The figure of merit is **perf-per-watt** or **EDP** (energy × delay), not raw throughput.
 
 ## Why this day in the flow
 
-Days 12-14 covered active power, idle power, and the firmware bug stories around them. Day 15 is **how you measure all of it** + **what goes wrong when many IPs share resources**. Forms the bridge into Day 16 (pipeline / SIMD) and Day 17 (concurrency / DSA). In the 30-day Layer map this completes **Layer 5** and feeds Layer 6.
+Days 12-14 covered active power, idle power, and the firmware bug stories around them. Day 15 is **how you measure all of it** + **what goes wrong when many IPs share resources**. Forms the bridge into Day 16 (pipeline / SIMD) and Day 17 (concurrency / DSA). In the Layer map this completes **Layer 5** and feeds Layer 6.
 
 ---
 

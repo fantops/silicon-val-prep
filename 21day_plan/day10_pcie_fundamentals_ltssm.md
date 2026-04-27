@@ -1,7 +1,5 @@
 # Day 10 — PCIe Fundamentals + LTSSM + Power States
 
-> **Source merge:** [30day_plan/day15_pcie_physical.md](../30day_plan/day15_pcie_physical.md), [30day_plan/day16_pcie_transactions.md](../30day_plan/day16_pcie_transactions.md), [30day_plan/day17_pcie_config.md](../30day_plan/day17_pcie_config.md), [30day_plan/day18_ltssm.md](../30day_plan/day18_ltssm.md), [30day_plan/day19_ltssm_power_gen6.md](../30day_plan/day19_ltssm_power_gen6.md). 30-day files are unchanged.
-
 ## Concept
 
 PCIe is a **3-layer point-to-point serial fabric**: physical (lanes, encoding, equalisation), data link (LCRC, ACK/NAK, flow control credits), transaction (TLPs — posted MWr, non-posted MRd/CfgRd, completions). Every link runs an **LTSSM** state machine: `Detect → Polling → Config → L0 → Recovery / L0s / L1 / L1.1 / L1.2 / L2`. Software talks to the fabric through **config space** at **ECAM** addresses computed from `BDF`, **BARs** that publish MMIO windows, and a **capability list** for power, MSI/MSI-X and PCIe-extended features. Gen6 introduces **PAM4 + FEC + 256 B FLITs + L0p**.
@@ -10,7 +8,7 @@ PCIe is a **3-layer point-to-point serial fabric**: physical (lanes, encoding, e
 
 Days 4-8 built the cache/MMU/IOMMU/DMA picture. Day 10 is the **bus that carries all that traffic**. PCIe is the substrate for NVMe (Day 11), thermal events (Day 15), accelerator submission (Day 18-19) and a huge fraction of debug (Day 20). Today is also where the Day 13 PkgC6 story lives — PkgC6 needs PCIe links in **L1.2** specifically.
 
-In the 30-day Layer map this is **Layer 3 (Buses)**.
+In the Layer map this is **Layer 3 (Buses)**.
 
 ---
 

@@ -1,7 +1,5 @@
 # Day 18 — NPU Stack: ORT, Execution Providers, QNN, Hexagon HTP
 
-> **Source merge:** [30day_plan/day01_career_narrative.md](../30day_plan/day01_career_narrative.md) (NPU execution layer + cheat-sheet numbers), [30day_plan/SPRINT_CONCEPT_TRANSCRIPTS.md](../30day_plan/SPRINT_CONCEPT_TRANSCRIPTS.md) (NPU software stack), [30day_plan/QUALCOMM_CHEATSHEET.md](../30day_plan/QUALCOMM_CHEATSHEET.md). 30-day files are unchanged.
-
 ## Concept
 
 A trained model runs on an NPU through a **6-layer software stack**: Model framework → ONNX export → ONNX Runtime → Execution Provider (QNN / OpenVINO / DirectML / CPU) → vendor runtime/compiler → silicon (Hexagon HTP, Intel NPU, AMD XDNA). ORT **partitions** the graph: contiguous subgraphs go to the chosen EP; unsupported ops fall back to **CPU EP**. The vendor compiler runs **QDQ fusion** (Quantize → Conv → Dequantize collapses to a single INT8 op), tiles the activation to fit on-chip SRAM (Qualcomm **VTCM** 8 MB on v79; Intel ~2 MB; AMD ~4 MB), and serialises the artifact as a **context cache**. At inference the CPU writes a doorbell; the NPU **DMAs** input from DDR into VTCM; **HMX** runs INT8 matmul (4096 MACs/instr), **HVX** does vector/requant, **DMA** streams the next tile — three engines pipelined.
@@ -10,7 +8,7 @@ A trained model runs on an NPU through a **6-layer software stack**: Model frame
 
 You spent Days 1-17 learning the platform — pointers, MMU, IOMMU, DMA, PCIe, NVMe, power, thermal, perf counters, pipeline, concurrency. Day 18 is **the workload that runs on top of it all** in your current Microsoft role and in any Qualcomm/Intel NPU role. Day 19 is the bug stories on this stack.
 
-In the 30-day Layer map this is **Layer 7 (NPU runtime)**.
+In the Layer map this is **Layer 7 (NPU runtime)**.
 
 ---
 

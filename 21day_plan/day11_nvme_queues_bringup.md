@@ -1,7 +1,5 @@
 # Day 11 — NVMe Queues, Bring-up, CSTS.RDY Bug
 
-> **Source merge:** [30day_plan/day20_nvme_architecture.md](../30day_plan/day20_nvme_architecture.md), [30day_plan/day21_nvme_bringup_coding.md](../30day_plan/day21_nvme_bringup_coding.md). 30-day files are unchanged.
-
 ## Concept
 
 NVMe is a **PCIe-native host-controller protocol** built on **paired SQ/CQ ring buffers in host memory** + **MMIO doorbells in the controller's BAR**. Bring-up is a strict register dance: read `CAP`, disable (`CC.EN=0`, poll `CSTS.RDY=0`), program admin queue (`AQA`/`ASQ`/`ACQ`), enable (`CC.EN=1`, poll `CSTS.RDY=1`), Identify, create I/O queues, then issue Reads/Writes. The **`CSTS.RDY` timeout** is the canonical bring-up failure and the bug that exercises every concept from Days 4-10.
@@ -16,7 +14,7 @@ Day 11 is where Days 4-10 stop being theory:
 - Day 9 ARM/Snapdragon — SMMU Stream ID in front of every NVMe DMA on QC platforms.
 - Day 10 PCIe — `lspci` for VID/DID, BAR0 = NVMe register block, MSI-X for completion interrupts.
 
-In the 30-day Layer map this is **Layer 4 (Storage on PCIe)**.
+In the Layer map this is **Layer 4 (Storage on PCIe)**.
 
 ---
 

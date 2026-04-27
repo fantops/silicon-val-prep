@@ -1,7 +1,5 @@
 # Day 14 — ADR, PCU/PUnit Firmware, Core C6 Wake Bugs
 
-> **Source merge:** [30day_plan/sprint_day02_addon_adr_cstate_intel.md](../30day_plan/sprint_day02_addon_adr_cstate_intel.md), [30day_plan/day05_cstates_idle.md](../30day_plan/day05_cstates_idle.md), [30day_plan/day29_debug_bugs.md](../30day_plan/day29_debug_bugs.md). 30-day files are unchanged.
-
 ## Concept
 
 ADR (Asynchronous DRAM Refresh) is a platform-level **power-loss ordering** sequence run by PCU/PUnit firmware: PLI asserts → IO quiesces → WPQ drains → DDR enters self-refresh → optional NVDIMM SAVE → rails collapse. Core C6 is a **per-core power-gating** sequence: cache flush → state save to S3M SRAM → P-channel handshake → power-FET opens. Both fail in the same shape: a handshake across always-on logic, firmware, and a power-gated domain that races a clock or reset.
@@ -12,7 +10,7 @@ This day exists to **convert the C-states material from Day 13 into bug stories 
 
 Day 12 gave you DVFS and PVT (the active-power lever). Day 13 gave you the C-state hierarchy and PkgC6 blockers (the idle-power lever). Day 14 takes the two real Intel-shaped bugs that live at the seam between firmware, always-on logic, and power-gated cores, drills them deep, and turns them into rehearsed stories. Day 15 then steps back out into thermal and perf counters, which is where these bugs were **observed** before they were **isolated**.
 
-In the 30-day Layer map this is **Layer 4 (Power Management)**, specifically the firmware/sequence side: `PCU FW → IOSF Sideband → Core PMA → S3M SRAM`.
+In the Layer map this is **Layer 4 (Power Management)**, specifically the firmware/sequence side: `PCU FW → IOSF Sideband → Core PMA → S3M SRAM`.
 
 ---
 

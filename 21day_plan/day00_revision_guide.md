@@ -1,12 +1,10 @@
 # Day 0 — Career Narrative + Daily Revision Skim Guide
 
-> **Source merge:** [30day_plan/day01_career_narrative.md](../30day_plan/day01_career_narrative.md), [30day_plan/QUALCOMM_CHEATSHEET.md](../30day_plan/QUALCOMM_CHEATSHEET.md). Use this as a **5-minute daily skim** before any coding/study block, and as the **night-before reread** before any loop.
-
 ## How to use this file
 
-- **Daily skim (5 min):** read §1 (introduction) + §2 (current work) out loud once. That's it.
-- **Pre-loop reread (15 min):** §1-§5 + the per-company anchor sentences (§6) + the Q&A (§9).
-- This file is **the narrative**. The technical days (1-21) are the substance behind the narrative.
+- **Daily skim (5 min):** read section 1 (Introduction) + section 2 (Current Work) out loud once. That's it.
+- **Pre-loop reread (15 min):** sections 1-5 + the per-company anchor sentences (section 6) + the Q&A (section 9).
+- The numbered sections below (1, 2, 3, …) are this file's table of contents. The technical days (1-21) are separate files — they hold the substance behind this narrative.
 
 ---
 

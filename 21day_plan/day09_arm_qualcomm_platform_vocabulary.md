@@ -1,7 +1,5 @@
 # Day 09 — ARM / Qualcomm Platform Vocabulary
 
-> **Source merge:** [30day_plan/day06b_arm_qualcomm_power.md](../30day_plan/day06b_arm_qualcomm_power.md), [30day_plan/day19b_clocks_lpddr_boot.md](../30day_plan/day19b_clocks_lpddr_boot.md), [30day_plan/QUALCOMM_CHEATSHEET.md](../30day_plan/QUALCOMM_CHEATSHEET.md). 30-day files are unchanged.
-
 ## Concept
 
 Qualcomm SoCs are ARM. Most of what you learned in Days 1-8 was named in x86 vocabulary (rings, APIC, VT-d, MTRR). Today translates that vocabulary to AArch64 (EL0/1/2/3, GIC, SMMU, MAIR), then layers Qualcomm-specific power infrastructure (PSCI, RPMh, PMIC, TCS) and SoC bring-up vocabulary (PLL lock, glitch-free mux, LPDDR training, PBL → SBL → ATF → ABL → kernel).
@@ -10,7 +8,7 @@ Qualcomm SoCs are ARM. Most of what you learned in Days 1-8 was named in x86 voc
 
 Days 1-8 are platform-agnostic memory/bus theory. Days 10-13 dive into PCIe, NVMe, DVFS and C-states — material interviewers will probe through ARM/Qualcomm vocabulary if you target QCT. Day 9 inserts the translation table now so every later answer naturally uses the right names. Without today, you will say "ring 0" in a Snapdragon interview.
 
-In the 30-day Layer map this is the **Layer 1 → Layer 3 ARM bridge**.
+In the Layer map this is the **Layer 1 → Layer 3 ARM bridge**.
 
 ---
 

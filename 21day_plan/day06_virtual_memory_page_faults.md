@@ -1,7 +1,5 @@
 # Day 06 — Virtual Memory, Page Tables, Page Faults
 
-> **Source merge:** [30day_plan/day12_virtual_memory.md](../30day_plan/day12_virtual_memory.md), [30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md](../30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md). 30-day files are unchanged.
-
 ## Concept
 
 Each process gets its own **virtual address space**; the **MMU** translates virtual to physical at page granularity (typically 4 KB) using a multi-level **page table** anchored by `CR3` (x86) / `TTBRn_EL1` (ARM). Each PTE carries permissions (P / R/W / U/S / NX) and cache attributes (PWT / PCD on x86, MAIR on ARM). A **page fault** is the OS-visible result of a translation that fails — minor (resolvable from RAM) or major (needs I/O).
@@ -14,7 +12,7 @@ After caches (Days 4-5), the next layer is *what address the cache is even asked
 - Day 8 — IOMMU/SMMU is the same idea for devices, plus MMIO PTE attributes that decide whether a register access is cached or device-typed.
 - Day 19 — the QNN/ORT page-fault bug is *exactly* a virtual-memory regression, not a cache miss.
 
-This is **Layer 2** of the 30-day system flow.
+This is **Layer 2** of the system flow.
 
 ---
 
