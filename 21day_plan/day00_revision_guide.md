@@ -60,9 +60,9 @@
 
 ### Why I left Intel
 
-> "Two reasons. **First**, the role was deep but narrow — within power-management on a single SoC family. I wanted to widen into multi-vendor validation across CPU/NPU/GPU on shipping silicon. The Microsoft Copilot+ PC role gave me exactly that: same workload across Intel, AMD, Qualcomm, end customers in front of me. **Second**, the Bangalore Cambria team was being restructured around the time I moved; the Microsoft Hyderabad team gave me a stronger growth track and a closer feedback loop with vendors. Intel taught me how to think about pre-silicon ordering, opcode-level FW tracing and CXL — that foundation is what makes me effective in platform validation today."
+> "Two reasons. **First**, mid-2024 was the inflection point for **on-device AI** — Copilot+ PCs, NPUs shipping in every laptop SoC, the whole AI-PC category being defined. The Microsoft role looked like the chance to work **close to silicon on AI workloads** — NPU bring-up, ORT/EP/runtime path, energy-per-inference on real devices — across Intel, AMD and Qualcomm at the same time. After joining I learned the scope is more **platform/system-level NPU validation** than vendor-IP work, but the AI-silicon exposure (HTP v79, OpenVINO NPU, XDNA, ETW/WPA on real workloads) is still real, and that's exactly the muscle I want to take back to a vendor. **Second**, the Server team was being restructured around the time I moved; the Microsoft Hyderabad team gave me a stronger growth track and a closer feedback loop with vendors. Intel taught me pre-silicon ordering, opcode-level PCU/FW tracing and CXL — that foundation is what makes me effective in NPU and platform validation today."
 
-Keep it neutral. No bridge-burning. The Intel time is an **asset** in your story, not a chapter you're escaping.
+Keep it neutral. No bridge-burning. The Intel time is an **asset** in your story, not a chapter you're escaping. The honest "I joined for AI-close-to-silicon, learned it's platform-level" framing is **strength**, not weakness — it shows self-awareness and explains the next move (back to vendor-side, but now with AI/NPU context).
 
 ---
 
