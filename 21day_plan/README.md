@@ -129,7 +129,7 @@ Bug stories are deliberately woven across the days so the same root mechanism ap
 
 ## Tailoring & Acceleration
 
-If your loop is in <14 days, follow the **Tier-1 path** in [Day 21 §3](day21_final_mock_company_tailoring.md). The night-before re-read order is also there.
+If your loop is in <14 days, follow the **Tier-1 path** in [Day 21 section 3](day21_final_mock_company_tailoring.md). The night-before re-read order is also there.
 
 ## A Note on the Bug Stories
 

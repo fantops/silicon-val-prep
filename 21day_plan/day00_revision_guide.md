@@ -140,7 +140,7 @@ Sentences 1-3 stay the same. Customise sentence 4 per company.
 
 ### C. Microsoft (current employer / lateral) — multi-vendor platform
 
-See [Day 21 §3 Microsoft](day21_final_mock_company_tailoring.md) — the current-job framing with EdgeOptimizer, ETL/WPA, agentic Copilot CLI.
+See [Day 21 section 3 Microsoft](day21_final_mock_company_tailoring.md) — the current-job framing with EdgeOptimizer, ETL/WPA, agentic Copilot CLI.
 
 ---
 
@@ -179,7 +179,7 @@ The same workload behaves differently on Intel/AMD/Qualcomm because of cache hie
 Structure: situation (what you were validating, what designer claimed) → your evidence (waveforms, repro, perf counters) → escalation (1:1 first, then data review with both managers, never email war) → outcome (root cause confirmed on either side — both are valid endings) → process change afterwards. Pick a real disagreement; "I just always agreed" is a red flag.
 
 **Q6. "Tell me about a tough bug." — which one do you tell?**
-Default: pick from [Day 20](day20_debug_method_bug_polish.md) §6. **Qualcomm CPU system validation:** lead with Core C6 wake-loss (story 3). **Intel NPU post-Si:** lead with QNN page-fault (story 4) framed as method, then ADR (story 1) for Intel-side credibility. **Microsoft lateral:** QNN page-fault (4) → Paint SR (4b) → silent EP fallback.
+Default: pick from [Day 20](day20_debug_method_bug_polish.md) section 6. **Qualcomm CPU system validation:** lead with Core C6 wake-loss (story 3). **Intel NPU post-Si:** lead with QNN page-fault (story 4) framed as method, then ADR (story 1) for Intel-side credibility. **Microsoft lateral:** QNN page-fault (4) → Paint SR (4b) → silent EP fallback.
 
 **Q7. "Why are you leaving Microsoft / your current role?"**
 "Not running from Microsoft — going toward vendor-side ownership. Microsoft gave me three-vendor breadth and the EdgeOptimizer/ETL discipline. The next step is to take that platform-validation rigor inside a vendor and own the silicon end-to-end — pre-Si through PV — instead of partnering with the vendor on triage."
@@ -199,9 +199,9 @@ Three buckets, regardless of company. Days 1-30: shadow current validation flow,
 
 **30 sec:** "I'm a silicon validation engineer. Currently at Microsoft doing post-Si platform validation of NPUs across Intel, AMD, Qualcomm Copilot+ PC silicon. Before that I was at Intel on Cambria pre-Si emulation — C-states, ADR, PCIe Gen6. Before that L&T doing NVMe post-Si bring-up for SanDisk. M.Tech CSE NIT Durgapur. I want to own silicon end-to-end at the vendor side."
 
-**60 sec:** §1 above.
+**60 sec:** section 1 above.
 
-**2 min:** §1 + §2 first paragraph + one sentence from §3 + one sentence from §4 + closing line about vendor-side ownership.
+**2 min:** section 1 + section 2 first paragraph + one sentence from section 3 + one sentence from section 4 + closing line about vendor-side ownership.
 
 Practice each version once per skim. They should feel **natural**, not recited.
 
@@ -209,9 +209,9 @@ Practice each version once per skim. They should feel **natural**, not recited.
 
 ## Daily Skim Order (5 minutes flat)
 
-1. Read §1 once aloud.
-2. Read §2 first paragraph aloud.
-3. Pick one Q from §9 and answer it aloud without looking.
+1. Read section 1 once aloud.
+2. Read section 2 first paragraph aloud.
+3. Pick one Q from section 9 and answer it aloud without looking.
 4. Pick one bug story from [Day 20](day20_debug_method_bug_polish.md) and tell it in 90 sec.
 5. Move to today's technical day file.
 
@@ -226,4 +226,4 @@ That's it. Don't skim more than 5 minutes — if you're skimming for 20 minutes,
 - [ ] Have a clear, neutral "why I left Intel" answer.
 - [ ] Have per-company sentence 4 ("why this company") drafted for QC and Intel NPU.
 - [ ] Have 3 bug stories selected for QC and 3 for Intel NPU.
-- [ ] Have answered 5 of the §9 questions out loud, ≤60 sec each.
+- [ ] Have answered 5 of the section 9 questions out loud, ≤60 sec each.

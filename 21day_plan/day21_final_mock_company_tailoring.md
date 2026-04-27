@@ -28,7 +28,7 @@ Time **60 minutes total**. No notes during answers.
 
 1. **"Tell me about yourself."** — 60-90 sec. Current role → past experience → why this role. Microsoft (multi-SoC post-Si NPU validation) → Intel (Cambria PCIe Gen6 + ADR pre-Si emul) → L&T/SanDisk (NVMe post-Si bring-up). Close: "I want to own silicon end-to-end at the vendor side."
 2. **"Tell me about a challenging bug."** — Pick from Day 20 stories 1-4b. 90 sec. Lead with symptom.
-3. **"Why this role / company?"** — research-driven. Map your experience to their product (see §3 below).
+3. **"Why this role / company?"** — research-driven. Map your experience to their product (see section 3 below).
 4. **"Tell me about a cross-team / disagreement."** — Situation → evidence → escalation (1:1, then data review) → outcome → process change.
 
 #### Technical prompts (60-90 sec each)
@@ -183,12 +183,12 @@ Customise sentence 4 per company; sentences 1-3 stay the same.
 
 In order:
 
-1. **Day 21 §3** — per-company tailoring + anchor sentences.
+1. **Day 21 section 3** — per-company tailoring + anchor sentences.
 2. **Day 20** — 4-5 polished bug stories, time each to 90 sec.
 3. **Day 16** — pipeline + memory model.
-4. **Day 9 §RPMh / EL0-3** — if Qualcomm.
-5. **Day 11 §boot flow** — if Qualcomm or NVMe role.
-6. **Day 17 §spinlock + SPSC ring** — coding-round template.
+4. **Day 9 section on RPMh / EL0-3** — if Qualcomm.
+5. **Day 11 section on boot flow** — if Qualcomm or NVMe role.
+6. **Day 17 section on spinlock + SPSC ring** — coding-round template.
 
 ### 6. The night before
 
@@ -277,7 +277,7 @@ Score yourself 1-5 on each. Anything ≤ 3 → re-read the day file before the l
 
 | Area | Day anchors | Score |
 |---|---|---|
-| Career narrative (30/60/90 sec) | Day 21 §1 |  |
+| Career narrative (30/60/90 sec) | Day 21 section 1 |  |
 | C / pointers / bits / MMIO | Day 1-3 |  |
 | Cache + MESI + false sharing | Day 4-5 |  |
 | Virtual memory + TLB + IOMMU | Day 6-7 |  |
@@ -294,7 +294,7 @@ Score yourself 1-5 on each. Anything ≤ 3 → re-read the day file before the l
 | NPU stack (ORT / EP / HTP) | Day 18 |  |
 | NPU bug stories | Day 19 |  |
 | Debug method + 90-sec stories | Day 20 |  |
-| Per-company tailoring | Day 21 §3 |  |
+| Per-company tailoring | Day 21 section 3 |  |
 
 ---
 
