@@ -1,0 +1,276 @@
+# Day 07 — TLB, Huge Pages, IOMMU / SMMU
+
+> **Source merge:** [30day_plan/day13_tlb_iommu.md](../30day_plan/day13_tlb_iommu.md), [30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md](../30day_plan/TLB_IOMMU_MEMORY_BRIDGE_NOTES.md). 30-day files are unchanged.
+
+## Concept
+
+The **TLB** caches recent VA→PA translations. **Huge pages** (2 MB / 1 GB) multiply each TLB entry's coverage and are the single biggest perf lever for AI/HPC working sets. The **IOMMU / SMMU / VT-d** is the device-side MMU that translates **IOVA → PA** and sandboxes DMA. **TLB shootdown** uses an IPI to invalidate TLB entries on remote cores.
+
+## Why this day in the flow
+
+Day 6 built the page-table walk and the cost of a full walk. Day 7 explains why the cost is tolerable in practice (TLB), the lever to make it cheaper (huge pages), the cross-core cost when the OS edits a PTE (shootdown), and the device-side analogue (IOMMU). All four are needed for Day 8 (DMA / doorbells / barriers) and Day 11 (NVMe queues).
+
+In the 30-day Layer map this completes **Layer 2**.
+
+---
+
+## Deep Study Notes
+
+### 1. TLB structure
+
+A small, fast cache of recent VA→PA translations.
+
+```
+CPU issues VA
+   │
+   ▼
+┌──────┐ hit  → PA in 1 cycle
+│ TLB  │
+└──┬───┘ miss
+   ▼
+HW page walker → page table → fill TLB → continue
+```
+
+Typical x86 layout:
+
+- **L1 iTLB** — 64-128 entries, fully associative, instructions.
+- **L1 dTLB** — 64-128 entries, fully associative, data.
+- **L2 STLB** — 1024-2048 entries, shared.
+
+A TLB hit is ~1 cycle. A miss costs ~7-30 cycles if the page-walk hits cache, ~400+ cycles if the walk goes to DRAM. In random-access workloads with large working sets, TLB misses dominate.
+
+### 2. Why TLB **coverage** beats TLB **entry count**
+
+The metric that matters is `entries × page_size`.
+
+| Entries | Page size | Coverage |
+|---|---|---|
+| 1024 | 4 KB | 4 MB |
+| 1024 | 2 MB | 2 GB |
+| 1024 | 1 GB | 1 TB |
+
+Same hardware, 512× more coverage just from page size. AI workloads with multi-GB tensors miss the TLB constantly with 4 KB pages; switching to huge pages can return 20-30% performance with **zero hardware change**.
+
+### 3. Huge pages — how they skip a level
+
+Normal walk: `PML4 → PDPT → PD → PT → frame`.
+
+- **2 MB page:** PD entry has PS=1 and points directly to a 2 MB-aligned frame; PT level skipped; bits `[20:0]` become offset.
+- **1 GB page:** PDPT entry has PS=1; PD and PT levels skipped; bits `[29:0]` become offset.
+
+Saves a memory access per walk and one level of TLB pressure.
+
+Linux exposes them via `MAP_HUGETLB` (`hugetlbfs`) or **transparent huge pages (THP)**. THP is opportunistic — the kernel coalesces 4 KB pages into 2 MB when possible. Easy to enable, sometimes hard to predict for production tail latency.
+
+### 4. TLB shootdown
+
+When the OS modifies a PTE (e.g., `munmap`, page reclaim, COW), every core that may have cached the old translation must invalidate it. The originating core sends an **IPI (Inter-Processor Interrupt)** to all relevant cores; each receiver runs `INVLPG` and acks; the originator waits for all acks before returning.
+
+Cost: hundreds of cycles for the IPI round-trip, plus pipeline disruption on every receiver. Heavy `mmap`/`munmap` workloads can cause **shootdown storms** that pin a core in IPI processing.
+
+`INVLPG va` invalidates one entry; full `mov cr3, cr3` flushes the whole TLB on the local core (rarely used). PCID/ASID lets you avoid the flush across context switches.
+
+### 5. IOMMU / SMMU / VT-d — the device-side MMU
+
+The CPU is not the only memory client. NVMe controllers, GPUs, NPUs, NICs, any PCIe bus master can DMA host memory. Without an IOMMU they would use **physical** addresses, and a buggy or hostile device could read or write any RAM.
+
+```
+Without IOMMU:
+  Device sends PA → DMA → reads/writes RAM   (no sandboxing)
+
+With IOMMU:
+  Device sends IOVA → IOMMU → PA → reads/writes RAM
+                       │
+                       └── enforces per-device permission and identity
+```
+
+- **Intel:** **VT-d**.
+- **ARM:** **SMMU** (System MMU, often labelled SMMUv2 / SMMUv3).
+- AMD: AMD-Vi.
+
+The IOMMU has its own per-device IO page tables (keyed by the device's `BDF` on PCIe). The OS programs these tables when the driver calls a DMA-mapping API (`dma_map_single`, `iommu_map`, etc.).
+
+Why it matters in validation:
+
+- **Security/safety:** a buggy PCIe device can't DMA anywhere it likes.
+- **Virtualisation:** SR-IOV / device passthrough relies on the IOMMU to isolate VM-exposed devices.
+- **AI accelerators:** GPUs/NPUs DMA host memory; the IOMMU keeps each accelerator inside its allocated buffers.
+
+### 6. IOMMU faults — the debug entry point
+
+When a device sends an IOVA that has no mapping (or wrong permissions), the IOMMU logs a fault carrying:
+
+- **BDF** — which PCIe device.
+- **Faulting IOVA**.
+- **Reason** — no entry, write to RO, permission denied, addressing beyond the device's window.
+
+Debug strategy:
+
+1. Read the IOMMU fault register and pull `BDF + IOVA + reason`.
+2. Did the OS map this buffer for this device? Compare with the device's IOMMU domain.
+3. If yes, the device is sending an unexpected address — firmware/driver bug.
+4. If no, the OS forgot to call the DMA-mapping API — driver bug.
+
+Either way you've narrowed the suspect to one of two layers fast.
+
+### 7. The four-table picture (do not confuse them)
+
+| Structure | Caches what? | Granularity | Owner |
+|---|---|---|---|
+| **TLB** | VA → PA translations | page (4 KB / 2 MB / 1 GB) | hardware (filled by walker) |
+| **Cache** | actual data/instructions | 64 B line | hardware |
+| **Page table** | translations + permissions | page | OS / kernel |
+| **IOMMU page table** | IOVA → PA | IO page | OS / IOMMU driver |
+
+A typical CPU load checks the TLB first (translation), then the cache hierarchy (data). They are independent — you can hit the TLB and miss the cache, or vice versa.
+
+### 8. The doorbell / DMA picture (preview of Day 8)
+
+```
+1. Driver fills descriptor in normal memory.
+2. Cache maintenance (clean) if non-coherent.
+3. Memory barrier so descriptor is visible before the doorbell.
+4. MMIO doorbell — uncached, side-effecting.
+5. Device DMA — IOVA goes through IOMMU → PA → reads descriptor.
+6. Device writes completion.
+7. CPU invalidates / reads completion.
+```
+
+Every layer in this picture comes from Days 4-7.
+
+---
+
+## Bugs in this Topic
+
+- **TLB shootdown storm under heavy `mmap`/`munmap`:** a core ends up spending cycles in IPI handlers, latency tail rises, throughput drops. Symptom: high `INTERRUPTS` / `IRQ` counts correlated with mapping churn. Fix: batch unmaps, use huge pages to reduce PTE count, lifecycle long-lived mappings.
+- **Random-access perf collapse on a model that fits in DRAM but not in TLB coverage:** with 4 KB pages, a 4 GB tensor needs 1 M TLB entries; STLB has thousands. Fix: enable transparent huge pages (THP) or `MAP_HUGETLB` for tensor arenas.
+- **IOMMU fault on first DMA after driver init:** OS never called the DMA-mapping API. Fault register shows the device's IOVA with "no entry". Fix: add the missing `dma_map_*` call.
+- **IOMMU fault from a device sending a stale IOVA:** OS unmapped the buffer but the device used a queued IOVA from before the unmap. Fix: synchronise device queue draining before unmap; revisit lifetime contract.
+- **Cross-link to QNN/ORT page-fault story (Day 19):** the bug looked superficially like "the model just got slower," but ETL traces showed minor-fault spikes — that's a TLB pressure / page-table population symptom, not an IOMMU symptom.
+
+---
+
+## Interview Explanation (60-90 sec)
+
+> "The TLB caches recent virtual-to-physical translations so the hardware doesn't have to do a 4-level page walk on every load. The metric that actually matters is TLB coverage — entries times page size — which is why huge pages are the single biggest performance lever for AI and HPC working sets: a 1024-entry TLB covers 4 MB at 4 KB pages but 2 GB at 2 MB pages, with no hardware change. When the OS edits a PTE, it has to invalidate the TLB on every core that may have cached the old translation, which it does with an IPI — that's TLB shootdown, and heavy `mmap` workloads can spawn shootdown storms. The IOMMU is the device-side MMU; it translates IOVA to physical and sandboxes DMA, so a buggy PCIe device can't read arbitrary memory. When DMA fails, I read the IOMMU fault register first — `BDF + IOVA + reason` narrows the bug to either a missing OS mapping or a device sending an unexpected address."
+
+---
+
+## Practice Q&A
+
+**Q1. Why does TLB coverage matter more than entry count?**
+Coverage = entries × page size. Huge pages multiply the second factor at zero hardware cost.
+
+**Q2. How does a 2 MB huge page skip a walk level?**
+PD entry has PS=1, points directly to a 2 MB-aligned frame; PT level skipped; bits [20:0] become offset.
+
+**Q3. Walk a TLB shootdown.**
+PTE edited on core A → IPI to all relevant cores → each runs `INVLPG` → ack → originator waits for all acks. Hundreds of cycles plus pipeline disruption per receiver.
+
+**Q4. What does an IOMMU fault tell you?**
+BDF, faulting IOVA, reason. Compare against the device's IOMMU domain to decide "OS forgot to map" vs "device sent unexpected address."
+
+**Q5. What does ARM call the IOMMU? Intel? AMD?**
+SMMU; VT-d; AMD-Vi.
+
+**Q6. PCID / ASID — what do they avoid?**
+TLB flush on context switch by tagging entries with the process ID.
+
+**Q7. TLB miss vs cache miss vs page fault?**
+TLB miss = HW page walk fills TLB silently. Cache miss = locality event at 64 B. Page fault = OS-visible translation/allocation event at page granularity.
+
+**Q8. AI workload "got slower after weight matrix grew" — where do you look first?**
+TLB coverage. Try huge pages.
+
+**Q9. Why doesn't transparent huge pages always win?**
+Coalescing introduces unpredictability; tail-latency-sensitive workloads sometimes prefer explicit `MAP_HUGETLB` or no THP at all.
+
+**Q10. What stops a buggy PCIe NIC from reading kernel memory?**
+The IOMMU. Without it, nothing — bus mastering would have free rein.
+
+---
+
+## Coding A — Systems C: TLB lookup with FIFO + IOMMU translate
+
+```c
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#define PG 12u
+#define MASK ((1u<<PG)-1u)
+#define ENTS 4
+
+typedef struct { uint32_t vpn, pfn; bool valid; } tlb_t;
+static tlb_t tlb[ENTS];
+static int next_evict = 0;
+static unsigned hits, misses;
+
+static uint32_t page_walk(uint32_t vpn) { return (vpn * 0x9E3779B1u) & 0xFFFFFu; }
+
+static uint32_t translate(uint32_t va) {
+    uint32_t vpn = va >> PG, off = va & MASK;
+    for (int i = 0; i < ENTS; i++)
+        if (tlb[i].valid && tlb[i].vpn == vpn) { hits++; return (tlb[i].pfn << PG) | off; }
+    misses++;
+    uint32_t pfn = page_walk(vpn);
+    tlb[next_evict] = (tlb_t){vpn, pfn, true};
+    next_evict = (next_evict + 1) % ENTS;
+    return (pfn << PG) | off;
+}
+
+/* Tiny IOMMU: per-BDF L1->L2 IO page table. Returns false on fault. */
+typedef struct { uint32_t pfn; bool present, writable; } io_pte_t;
+typedef struct { io_pte_t pt[1024]; bool present; } io_pd_t;
+typedef struct { uint16_t bdf; io_pd_t *pd[1024]; } iommu_ctx_t;
+
+static bool iommu_translate(iommu_ctx_t *c, uint32_t iova, bool wr, uint64_t *pa) {
+    uint32_t l1 = (iova >> 22) & 0x3FF, l2 = (iova >> 12) & 0x3FF, off = iova & 0xFFF;
+    io_pd_t *pd = c->pd[l1];
+    if (!pd || !pd->present) { fprintf(stderr,"IOMMU FAULT BDF %04X iova %08X: no L1\n", c->bdf, iova); return false; }
+    io_pte_t *e = &pd->pt[l2];
+    if (!e->present)        { fprintf(stderr,"IOMMU FAULT BDF %04X iova %08X: no L2\n", c->bdf, iova); return false; }
+    if (wr && !e->writable) { fprintf(stderr,"IOMMU FAULT BDF %04X iova %08X: write to RO\n", c->bdf, iova); return false; }
+    *pa = ((uint64_t)e->pfn << 12) | off;
+    return true;
+}
+
+int main(void) {
+    uint32_t accs[] = { 0x1000, 0x2040, 0x1080, 0x3000, 0x4000, 0x5000, 0x1000 };
+    for (size_t i = 0; i < sizeof accs / sizeof *accs; i++)
+        printf("VA %08X -> PA %08X\n", accs[i], translate(accs[i]));
+    printf("hits=%u misses=%u\n", hits, misses);
+    return 0;
+}
+```
+
+## Coding B — Interview DS&A: First Bad Version (LC 278)
+
+Predicate-based binary search — same shape as scanning a sorted page table for first-set bit.
+
+```python
+def firstBadVersion(n):
+    lo, hi = 1, n
+    while lo < hi:
+        mid = lo + (hi - lo) // 2
+        if isBadVersion(mid): hi = mid
+        else:                 lo = mid + 1
+    return lo
+```
+
+---
+
+## Bug Anchor
+
+- **Day 8 (DMA/doorbells):** the doorbell example is where TLB + IOMMU + cache + barrier all converge.
+- **Day 19 (QNN/ORT):** minor-fault spike on context-buffer touch is the symptom that links VM and TLB pressure.
+- **Day 11 (NVMe):** doorbell + descriptor + IOMMU mapping for SQ/CQ.
+
+## Exit Check
+
+- [ ] Stated TLB coverage formula and the 4 KB → 2 MB lever.
+- [ ] Walked a TLB shootdown end-to-end with IPI cost.
+- [ ] Distinguished IOMMU vs MMU vs cache vs page table.
+- [ ] Walked an IOMMU fault to a one-of-two-layer suspect.
+- [ ] Named SMMU / VT-d / AMD-Vi correctly.
+- [ ] Stated why a 2 MB page skips the PT level.

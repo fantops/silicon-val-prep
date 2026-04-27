@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>How PerceptiveShell Runs Models on NPU — Tech Forum</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+<style>
+:root { --blue: #0D47A1; --amber: #FF8F00; --teal: #00796B; --green: #2E7D32; }
+.reveal section { overflow-y: auto; }
+.reveal h1, .reveal h2, .reveal h3 { color: var(--blue); text-transform: none; }
+.reveal h1 { font-size: 1.8em; }
+.reveal h2 { font-size: 1.3em; }
+.reveal h3 { font-size: 0.95em; }
+.reveal li { font-size: 0.68em; }
+.reveal p  { font-size: 0.7em; }
+.reveal table { font-size: 0.48em; width: 100%; border-collapse: collapse; }
+.reveal table th { background: var(--blue); color: #fff; padding: 4px 6px; }
+.reveal table td { border: 1px solid #ccc; padding: 4px 6px; }
+.reveal pre code { font-size: 0.55em; max-height: 320px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.box  { font-size: 0.65em; padding: 6px 10px; border-radius: 6px; background: #E3F2FD; border-left: 4px solid var(--blue); margin: 4px 0; }
+.warn { font-size: 0.65em; padding: 6px 10px; border-radius: 6px; background: #FFF8E1; border-left: 4px solid var(--amber); margin: 4px 0; }
+.say  { font-size: 0.65em; padding: 6px 10px; border-radius: 6px; background: #E0F2F1; border-left: 4px solid var(--teal); margin: 4px 0; }
+.note { font-size: 0.65em; padding: 6px 10px; border-radius: 6px; background: #E8F5E9; border-left: 4px solid var(--green); margin: 4px 0; }
+.reveal .small { font-size: 0.55em; }
+.reveal .tiny  { font-size: 0.45em; }
+.engine-box { border-radius: 8px; padding: 8px 10px; text-align: center; color: #fff; font-size: 0.6em; margin: 3px 0; }
+.pipeline-arrow { text-align: center; font-size: 1.4em; color: var(--blue); }
+.timeline-grid { display: grid; grid-template-columns: 80px repeat(6,1fr); gap: 2px; font-size: 0.5em; }
+.timeline-grid div { padding: 4px 6px; border-radius: 4px; text-align: center; }
+.tl-dma  { background: #BBDEFB; }
+.tl-hmx  { background: #C8E6C9; }
+.tl-hvx  { background: #FFE0B2; }
+.tl-head { font-weight: bold; background: #ECEFF1; }
+.tl-idle { background: #F5F5F5; color: #999; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================ -->
+<!-- PART 1: BIG PICTURE                                          -->
+<!-- ============================================================ -->
+
+<!-- Slide 1: Title -->
+<section>
+  <h1 style="margin-top:1.2em;">How PerceptiveShell<br>Runs Models on NPU</h1>
+  <p>The complete model-execution pipeline — from API call to silicon</p>
+  <p>Om Singh &nbsp;·&nbsp; Tech Forum &nbsp;·&nbsp; April 2026</p>
+  <div class="box">
+    <strong>Worked example throughout:</strong> Super Resolution (SR) — the feature that upscales images in Paint.
+    Also covers Mu (the on-device language model).
+  </div>
+  <p class="small" style="color:#666;">Companion deep-dive: <em>Model_Execution_Flow.html</em> (33-slide ORT→HTP reference)</p>
+</section>
+
+<!-- Slide 2: What is an NPU? -->
+<section>
+  <h2>What Is an NPU?</h2>
+  <div class="two">
+    <div>
+      <p><strong>NPU = Neural Processing Unit</strong> — a chip purpose-built for AI math (multiply-accumulate operations).</p>
+      <div class="say">
+        <strong>Analogy:</strong> A CPU is a calculator — it does one multiply per clock cycle.
+        An NPU is a <em>factory of calculators</em> — it does <strong>thousands</strong> of multiplies every cycle, in parallel.
+      </div>
+      <ul>
+        <li><strong>CPU:</strong> flexible, handles any code, but ~1 MAC/cycle per core</li>
+        <li><strong>GPU:</strong> thousands of small cores, great for graphics &amp; AI, but power-hungry</li>
+        <li><strong>NPU:</strong> thousands of MACs in a fixed grid, extreme perf/watt for AI</li>
+      </ul>
+      <div class="box">
+        <strong>MAC</strong> = Multiply-ACcumulate: the atomic operation of AI.<br>
+        <code>result += weight × input</code> — neural networks do billions of these.
+      </div>
+    </div>
+    <div>
+      <h3>TOPS Explained</h3>
+      <p><strong>TOPS = Tera Operations Per Second</strong> — how many <em>trillion</em> multiply-accumulate operations the chip can do per second.</p>
+      <table>
+        <tr><th>Chip</th><th>TOPS (INT8)</th><th>Analogy</th></tr>
+        <tr><td>CPU core</td><td>~0.5</td><td>1 calculator</td></tr>
+        <tr><td>Intel NPU</td><td>~11</td><td>Small factory</td></tr>
+        <tr><td>AMD XDNA</td><td>16–50</td><td>Medium factory</td></tr>
+        <tr><td>Qualcomm HTP</td><td>~45</td><td>Large factory</td></tr>
+      </table>
+      <div class="warn">
+        TOPS is a <em>theoretical peak</em>. Real throughput depends on memory bandwidth,
+        model shape, and how well the compiler tiles the work.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 3: 6-Layer Pipeline -->
+<section>
+  <h2>The 6-Layer Pipeline</h2>
+  <p>Every model execution — SR, Mu, anything — goes through exactly these six layers:</p>
+  <table>
+    <tr><th>#</th><th>Layer</th><th>What It Does</th><th>SR Example</th></tr>
+    <tr><td>1</td><td><strong>Application</strong></td><td>User-facing feature code (Paint, Camera, etc.)</td><td>Paint calls "upscale this tile"</td></tr>
+    <tr><td>2</td><td><strong>PS API</strong></td><td>PerceptiveShell's public C API — the contract between features and the AI stack</td><td><code>SrProcess(image, …)</code></td></tr>
+    <tr><td>3</td><td><strong>ComputeCore</strong></td><td>Internal engine: wraps ORT, manages model files, decryption, and target selection (NPU/CPU/GPU)</td><td>Loads <code>sr_model.onnx</code> → creates ORT session</td></tr>
+    <tr><td>4</td><td><strong>ORT</strong></td><td>ONNX Runtime — the brain that reads the model graph, optimizes it, and dispatches work</td><td>Fuses QDQ (Quantize/DeQuantize) nodes, partitions graph for NPU</td></tr>
+    <tr><td>5</td><td><strong>Execution Provider (EP)</strong></td><td>ORT's plug-in that speaks the NPU's language (QNN, OpenVINO, Vitis AI)</td><td>QNN EP compiles graph → HTP context binary</td></tr>
+    <tr><td>6</td><td><strong>NPU Hardware</strong></td><td>Silicon that crunches the math — Hexagon HTP, Intel NPU, or AMD AIE tiles</td><td>HMX engine runs INT8 convolutions at 45 TOPS</td></tr>
+  </table>
+  <div class="pipeline-arrow">App → PS&nbsp;API → ComputeCore → ORT → EP → NPU</div>
+  <div class="note"><strong>Key insight:</strong> Layers 1–3 are ours. Layer 4 is Microsoft's ORT. Layer 5 is the chip vendor's EP. Layer 6 is silicon.</div>
+</section>
+
+<!-- Slide 4: Three NPU Platforms -->
+<section>
+  <h2>Three NPU Platforms We Support</h2>
+  <table>
+    <tr>
+      <th>Property</th>
+      <th>Qualcomm HTP</th>
+      <th>Intel NPU</th>
+      <th>AMD XDNA</th>
+    </tr>
+    <tr><td><strong>SoC Family</strong></td><td>Snapdragon X Elite / Plus</td><td>Meteor Lake / Arrow Lake</td><td>Ryzen AI 300 / 9000</td></tr>
+    <tr><td><strong>Architecture</strong></td><td>Hexagon: Scalar + HVX + HMX</td><td>SHAVE DSP + MAC Array</td><td>AIE Tiles (Xilinx-heritage)</td></tr>
+    <tr><td><strong>Peak TOPS (INT8)</strong></td><td>~45</td><td>~11</td><td>~16–50</td></tr>
+    <tr><td><strong>On-chip SRAM</strong></td><td>8 MB VTCM<br><span class="tiny">(Very Tightly Coupled Memory — fast on-chip SRAM the compiler controls directly)</span></td><td>~2 MB (hardware-managed cache)</td><td>~4 MB (32KB/tile × 128 tiles)</td></tr>
+    <tr><td><strong>SRAM Model</strong></td><td>Compiler places data explicitly — no cache misses, deterministic</td><td>Hardware L1/L2 cache — simpler for compiler, less predictable</td><td>Compiler manages per-tile — distributed, flexible</td></tr>
+    <tr><td><strong>ORT EP</strong></td><td>QNN EP</td><td>OpenVINO EP</td><td>Vitis AI EP</td></tr>
+    <tr><td><strong>Host ↔ NPU IPC</strong></td><td>FastRPC<br><span class="tiny">(Fast Remote Procedure Call — Qualcomm's shared-memory channel between ARM host CPU and Hexagon DSP, ~100 µs wake-up)</span></td><td>Level Zero API<br><span class="tiny">(Intel's low-level compute API, similar to Vulkan for compute)</span></td><td>XRT<br><span class="tiny">(Xilinx Runtime — manages AIE tile grid execution)</span></td></tr>
+    <tr><td><strong>Compiled Artifact</strong></td><td>Context binary (.bin)</td><td>Compiled blob (.bin)</td><td>XCLBIN container</td></tr>
+    <tr><td><strong>Compiler</strong></td><td>QNN compiler (in-proc)</td><td>OpenVINO compiler (in-proc)</td><td>xcompiler (out-of-proc, separate EXE)</td></tr>
+  </table>
+  <div class="warn">All TOPS numbers are vendor-claimed INT8 peaks. Real workload throughput varies 30–70% of peak depending on model shape and memory access patterns.</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 2: EACH LAYER EXPLAINED                                 -->
+<!-- ============================================================ -->
+
+<!-- Slide 5: PS API -->
+<section>
+  <h2>Layer 2: PS API — The Contract</h2>
+  <div class="two">
+    <div>
+      <h3>Super Resolution API</h3>
+      <pre><code class="language-c">// Pure C API — usable from any language
+PsResult SrProcess(
+    PsSrSession   session,   // opaque handle
+    const void   *inputRGBA, // source tile pixels
+    uint32_t      inWidth,
+    uint32_t      inHeight,
+    void         *outputRGBA,// upscaled output buffer
+    uint32_t      outWidth,
+    uint32_t      outHeight
+);
+// Returns PsResult: PS_OK, PS_E_MODEL_NOT_FOUND,
+//   PS_E_INFERENCE_FAILED, PS_E_OUT_OF_MEMORY …</code></pre>
+      <div class="box"><strong>PsResult</strong> = typed error code (like HRESULT). Every PS API returns one — callers MUST check it.</div>
+    </div>
+    <div>
+      <h3>Mu (Language Model) API</h3>
+      <pre><code class="language-c">// Autoregressive text generation
+PsResult PsLanguageModelApi::ProcessPrompt(
+    const char     *prompt,
+    PsMuCallback    onToken,  // called per token
+    void           *context
+);
+// onToken fires once per generated token,
+// letting the UI stream text in real time.</code></pre>
+      <ul>
+        <li><strong>Pure C interface</strong> — no C++ exceptions cross the boundary</li>
+        <li><strong>Session-based</strong> — caller creates session once, runs many inferences</li>
+        <li>PS API is <em>platform-agnostic</em>: same signature on QC, Intel, AMD</li>
+        <li>All NPU/EP selection happens <em>below</em> this layer</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 6: ComputeCore -->
+<section>
+  <h2>Layer 3: ComputeCore — The Engine Room</h2>
+  <div class="two">
+    <div>
+      <h3>What It Does</h3>
+      <ul>
+        <li><strong>ORT Wrapper</strong> — thin C++ layer that hides ONNX Runtime's complexity from feature code</li>
+        <li><strong>Model file management</strong> — finds <code>.onnx</code> files, decrypts them if encrypted at rest</li>
+        <li><strong>Target selection</strong> via <code>InferenceTarget</code> enum:
+          <pre><code class="language-cpp">enum InferenceTarget {
+  NPU,    // preferred — best perf/watt
+  CPU,    // fallback
+  GPU,    // rarely used for our models
+  REMOTE  // cloud endpoint (future)
+};</code></pre>
+        </li>
+        <li><strong>EP options injection</strong> — assembles the options dict (htp_performance_mode, vtcm_mb, etc.) based on target + platform</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Session Lifecycle</h3>
+      <pre><code class="language-cpp">// Simplified flow
+ComputeCoreSession* CreateComputeCoreSession(
+    const char* modelPath,
+    InferenceTarget target)
+{
+  // 1. Decrypt model if needed
+  auto bytes = DecryptModel(modelPath);
+  // 2. Build ORT SessionOptions
+  auto opts = BuildOptions(target);
+  // 3. Create ORT InferenceSession
+  //    → triggers EP compile on first call
+  auto session = new Ort::Session(env,
+      bytes.data(), bytes.size(), opts);
+  return Wrap(session);
+}</code></pre>
+      <div class="say"><strong>Key detail:</strong> The ORT session is created <em>once</em> and reused for every inference call. Creating it is expensive (model compile); running it is cheap.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 7: ORT — The Brain -->
+<section>
+  <h2>Layer 4: ONNX Runtime — The Brain</h2>
+  <p>ORT's 6-step session-creation pipeline (this is where all the magic happens):</p>
+  <table>
+    <tr><th>Step</th><th>What Happens</th><th>Plain English</th></tr>
+    <tr><td>1. Load</td><td>Deserialize protobuf → in-memory graph</td><td>Read the .onnx file into a data structure of nodes (operations) and edges (tensors)</td></tr>
+    <tr><td>2. Graph Transforms</td><td>Constant folding, QDQ node fusion, layout transforms (NCHW↔NHWC)</td><td>Simplify the graph: merge adjacent operations, pre-compute constants, reformat data layouts</td></tr>
+    <tr><td>3. Partitioning</td><td>Each EP's <code>GetCapability()</code> claims nodes it can run</td><td>Ask the NPU plugin "which operations can you handle?" — unclaimed nodes stay on CPU</td></tr>
+    <tr><td>4. Compile</td><td>EP's <code>Compile()</code> → produces context binary</td><td>The NPU compiler turns claimed nodes into a hardware-specific binary blob (cached for next launch)</td></tr>
+    <tr><td>5. Kernel Resolution</td><td>Remaining CPU nodes get kernel implementations</td><td>For anything the NPU can't do, find CPU code that can</td></tr>
+    <tr><td>6. Session Freeze</td><td>Allocate buffers, finalize execution plan</td><td>Lock everything in place — session is ready to run</td></tr>
+  </table>
+  <div class="two" style="margin-top:8px;">
+    <div class="box">
+      <strong>QDQ Fusion</strong> — QDQ = Quantize-DeQuantize nodes. ORT fuses them: instead of
+      <code>DQ→Conv→Q</code> (float math), fuse to <code>QConv</code> (INT8 math done entirely on NPU).
+    </div>
+    <div class="warn">
+      <strong>Context binary cache:</strong> Steps 1–4 are slow (seconds). Once cached, the binary is loaded directly at step 4 = sub-second startup.
+      Set <code>ep.context_enable=1</code> + <code>ep.context_file_path</code>.
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8: Execution Providers -->
+<section>
+  <h2>Layer 5: Execution Providers — Side by Side</h2>
+  <p>Each EP translates ORT graphs into vendor-specific format. Same contract, different internals:</p>
+  <table>
+    <tr>
+      <th style="width:22%;">Aspect</th>
+      <th style="width:26%; background:#1565C0;">🟦 QNN EP (Qualcomm)</th>
+      <th style="width:26%; background:#E65100;">🟧 OpenVINO EP (Intel)</th>
+      <th style="width:26%; background:#6A1B9A;">🟪 Vitis AI EP (AMD)</th>
+    </tr>
+    <tr>
+      <td><strong>Vendor SDK</strong></td>
+      <td>QNN C API<br><span class="tiny">(libQnnHtp.dll)</span></td>
+      <td>OpenVINO Core API<br><span class="tiny">(ov::Core)</span></td>
+      <td>VAIP + xcompiler<br><span class="tiny">(onnxruntime_vitisai_ep.dll)</span></td>
+    </tr>
+    <tr>
+      <td><strong>Compile step</strong></td>
+      <td>In-process<br>graph → QNN nodes → <code>QnnGraph_finalize()</code> → HTP context binary</td>
+      <td>In-process<br>graph → <code>ov::Model</code> → <code>compile_model(NPU)</code> → .bin blob</td>
+      <td><strong>Out-of-process</strong><br>graph → temp .onnx → <code>xcompiler.exe</code> → XCLBIN container</td>
+    </tr>
+    <tr>
+      <td><strong>Host → NPU path</strong></td>
+      <td><code>QnnGraph_execute()</code><br>→ <strong>FastRPC</strong><br>→ Hexagon DSP mailbox</td>
+      <td><code>ov::InferRequest::infer()</code><br>→ <strong>Level Zero API</strong><br>→ Intel NPU driver</td>
+      <td><code>xrt::run()</code><br>→ <strong>XRT runtime</strong><br>→ AIE tile controller</td>
+    </tr>
+    <tr>
+      <td><strong>Fallback strategy</strong></td>
+      <td><strong>Per-op</strong> — unsupported ops fall to CPU individually</td>
+      <td><strong>Per-op</strong> — SHAVE handles some flexible ops on-chip</td>
+      <td><strong>Per-cluster</strong> — one bad op rejects the <em>entire subgraph</em> to CPU</td>
+    </tr>
+    <tr>
+      <td><strong>Cached artifact</strong></td>
+      <td>QNN context binary (<code>.bin</code>)</td>
+      <td>OpenVINO compiled binary (<code>.bin</code>)</td>
+      <td>XCLBIN container</td>
+    </tr>
+    <tr>
+      <td><strong>Key gotcha</strong></td>
+      <td>Context binary is SDK-version-specific. Bump SnpeToolkit → must rebuild cache.</td>
+      <td><code>graph_optimization_level</code> must be <code>ORT_DISABLE_ALL</code> — OV handles its own transforms.</td>
+      <td>Out-of-proc compile is slow (~30s). Cluster rejection means more ops on CPU than expected.</td>
+    </tr>
+  </table>
+  <div class="box"><strong>Same ORT contract, very different behavior.</strong> QNN and OpenVINO compile in-process (fast). Vitis spawns a separate process (slow but isolated). QNN and OV do per-op fallback; Vitis does cluster-level (one bad op dumps the whole group to CPU).</div>
+</section>
+
+<!-- Slide 9: EP Options Glossary -->
+<section>
+  <h2>EP Options Glossary — The Reference Slide</h2>
+  <table>
+    <tr><th>EP</th><th>Option Key</th><th>Values</th><th>Plain English</th></tr>
+    <tr><td rowspan="7">QNN</td>
+      <td><code>htp_performance_mode</code></td><td>burst / sustained_high / balanced / low_balanced / power_saver</td><td>How hard to push the NPU clock. "burst" = max speed short bursts; "power_saver" = slow but cool</td></tr>
+    <tr><td><code>vtcm_mb</code></td><td>0–8 (integer)</td><td>How many MB of on-chip SRAM to reserve. More = faster but blocks other models</td></tr>
+    <tr><td><code>htp_graph_finalization_optimization_mode</code></td><td>0, 1, 2, 3</td><td>Compile optimization level: 0 = fast compile / slow run; 3 = slow compile / fastest run</td></tr>
+    <tr><td><code>rpc_control_latency</code></td><td>microseconds (e.g. 100)</td><td>How fast FastRPC wakes the DSP. Lower = faster response but more power</td></tr>
+    <tr><td><code>enable_htp_fp16_precision</code></td><td>0 / 1</td><td>Run sensitive layers (softmax, layernorm) in FP16 instead of INT8 — fixes accuracy at ~5% speed cost</td></tr>
+    <tr><td><code>enable_htp_shared_memory_allocator</code></td><td>0 / 1</td><td>Zero-copy tensors: app &amp; NPU share same physical memory, no copy needed</td></tr>
+    <tr><td><code>offload_graph_io_quantization</code></td><td>0 / 1</td><td>Move input/output quantize nodes to NPU instead of CPU</td></tr>
+    <tr><td rowspan="4">OpenVINO</td>
+      <td><code>device_type</code></td><td>NPU / CPU / GPU</td><td>Which hardware to target — same EP handles all three</td></tr>
+    <tr><td><code>NPU.PERFORMANCE_HINT</code></td><td>THROUGHPUT / LATENCY</td><td>Optimize for max batches/sec or min single-inference time</td></tr>
+    <tr><td><code>NPU.NPU_QDQ_OPTIMIZATION</code></td><td>YES / NO</td><td>Let OpenVINO fuse QDQ nodes its own way (can improve or break accuracy)</td></tr>
+    <tr><td><code>load_config</code></td><td>JSON file path</td><td>External config file for advanced tuning</td></tr>
+    <tr><td rowspan="4">Shared</td>
+      <td><code>ep.context_enable</code></td><td>0 / 1</td><td>Cache the compiled binary so next launch skips compilation (seconds → milliseconds)</td></tr>
+    <tr><td><code>ep.context_file_path</code></td><td>file path</td><td>Where to save/load the cached binary</td></tr>
+    <tr><td><code>session.disable_cpu_ep_fallback</code></td><td>0 / 1</td><td>0 = silently run unsupported ops on CPU; 1 = crash loudly if NPU can't handle everything</td></tr>
+    <tr><td><code>enable_arena</code></td><td>0 / 1</td><td>Memory arena: pre-allocate a pool and reuse it — fewer allocs, faster, less fragmentation</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 3: NPU SILICON DEEP-DIVE                                -->
+<!-- ============================================================ -->
+
+<!-- Slide 10: Qualcomm Hexagon HTP -->
+<section>
+  <h2>Qualcomm Hexagon HTP — SoC Block Diagram</h2>
+  <div style="border:3px solid #0D47A1;border-radius:14px;background:#ECEFF1;padding:12px;margin:6px 0;">
+    <div style="text-align:center;font-size:0.6em;font-weight:700;color:#0D47A1;margin-bottom:8px;">Snapdragon X Elite SoC — Hexagon HTP v73</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+      <div style="background:#FFE0B2;border:2px solid #E65100;border-radius:8px;padding:8px;text-align:center;font-size:0.5em;font-weight:600;">
+        🎛️ <b>Scalar VLIW Core</b><br><span style="font-weight:400;">4 instructions/cycle<br>Loop control · DMA kicks<br>"The Boss"</span>
+      </div>
+      <div style="background:#C8E6C9;border:2px solid #2E7D32;border-radius:8px;padding:8px;text-align:center;font-size:0.5em;font-weight:600;">
+        📊 <b>HVX</b> (Vector)<br><span style="font-weight:400;">1024-bit SIMD<br>128× INT8 per op<br>ReLU · Requant · Bias</span>
+      </div>
+      <div style="background:#BBDEFB;border:2px solid #1565C0;border-radius:8px;padding:8px;text-align:center;font-size:0.5em;font-weight:600;">
+        🧮 <b>HMX</b> (Matrix)<br><span style="font-weight:400;">64×64 INT8 MACs<br><b>4,096 MACs/instr</b><br>Where TOPS come from</span>
+      </div>
+      <div style="background:#F8BBD0;border:2px solid #AD1457;border-radius:8px;padding:8px;text-align:center;font-size:0.5em;font-weight:600;">
+        📦 <b>DMA Engine</b><br><span style="font-weight:400;">DDR ↔ VTCM<br>Double-buffered<br>Prefetch next tile</span>
+      </div>
+    </div>
+    <div style="background:#FFF9C4;border:2px solid #F57F17;border-radius:8px;padding:8px;text-align:center;font-weight:700;font-size:0.6em;margin-bottom:6px;">
+      💾 VTCM — 8 MB Software-Managed SRAM<br>
+      <span style="font-weight:400;font-size:0.85em;">Multi-banked · No cache misses · Deterministic latency · Compiler controls every byte</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <div style="background:#D1C4E9;border:1px solid #4527A0;border-radius:6px;padding:5px;text-align:center;font-size:0.48em;font-weight:600;">L2 Cache (HW-managed) — scalar code + spill</div>
+      <div style="background:#CFD8DC;border:1px solid #37474F;border-radius:6px;padding:5px;text-align:center;font-size:0.48em;font-weight:600;">System DDR / LPDDR5x — ~60 GB/s, shared with CPU+GPU via SMMU</div>
+    </div>
+  </div>
+  <div class="two" style="margin-top:4px;">
+    <div class="box"><b>Software-managed</b> = the compiler decides exactly what data lives in VTCM at every moment. No cache misses, no evictions — but if your tile doesn't fit → data spills to DDR → <b>5–10× slower</b>.</div>
+    <div class="say">💬 <b>VLIW</b> = Very Long Instruction Word. The scalar core packs 4 operations (DMA + HVX + HMX + bookkeeping) into one instruction. All 4 execute simultaneously in one cycle.</div>
+  </div>
+</section>
+
+<!-- Slide 11: HTP 3-Engine Concurrency -->
+<section>
+  <h2>HTP 3-Engine Concurrency — Why 45 TOPS</h2>
+  <p>All three engines fire every cycle. DMA, HMX, and HVX work on <em>different tiles</em> simultaneously:</p>
+  <div class="timeline-grid">
+    <div class="tl-head">Engine</div>
+    <div class="tl-head">Cycle 1</div><div class="tl-head">Cycle 2</div><div class="tl-head">Cycle 3</div>
+    <div class="tl-head">Cycle 4</div><div class="tl-head">Cycle 5</div><div class="tl-head">Cycle 6</div>
+
+    <div class="tl-head">DMA</div>
+    <div class="tl-dma">Fetch Tile 0</div><div class="tl-dma">Fetch Tile 1</div><div class="tl-dma">Fetch Tile 2</div>
+    <div class="tl-dma">Fetch Tile 3</div><div class="tl-dma">Fetch Tile 4</div><div class="tl-dma">Fetch Tile 5</div>
+
+    <div class="tl-head">HMX</div>
+    <div class="tl-idle">—</div><div class="tl-hmx">Compute Tile 0</div><div class="tl-hmx">Compute Tile 1</div>
+    <div class="tl-hmx">Compute Tile 2</div><div class="tl-hmx">Compute Tile 3</div><div class="tl-hmx">Compute Tile 4</div>
+
+    <div class="tl-head">HVX</div>
+    <div class="tl-idle">—</div><div class="tl-idle">—</div><div class="tl-hvx">Post-proc Tile 0</div>
+    <div class="tl-hvx">Post-proc Tile 1</div><div class="tl-hvx">Post-proc Tile 2</div><div class="tl-hvx">Post-proc Tile 3</div>
+  </div>
+  <div class="two" style="margin-top:10px;">
+    <div>
+      <div class="box">
+        <strong>Pipeline:</strong> While DMA fetches tile N+1 into VTCM buffer A,
+        HMX crunches tile N from VTCM buffer B,
+        and HVX post-processes tile N-1's output.
+        All three engines are always busy.
+      </div>
+      <ul>
+        <li><strong>DMA</strong> moves weights &amp; activations from DDR → VTCM (or VTCM → DDR)</li>
+        <li><strong>HMX</strong> does the heavy INT8 matrix multiplies (convolutions, matmuls)</li>
+        <li><strong>HVX</strong> handles activation functions (ReLU, sigmoid), element-wise adds, requantization</li>
+      </ul>
+    </div>
+    <div>
+      <div class="note">
+        <strong>Why this matters:</strong> If any engine stalls (e.g., DMA can't fetch fast enough from DDR),
+        the whole pipeline bubbles. This is why VTCM size matters — more VTCM = bigger tiles =
+        fewer DDR round-trips = fewer stalls.
+      </div>
+      <div class="warn">
+        <strong>The real bottleneck is memory bandwidth, not compute.</strong>
+        HMX can crunch 45 TOPS, but DDR can only deliver ~60 GB/s.
+        For bandwidth-bound layers (1×1 convs, depthwise), actual throughput is far below 45 TOPS.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 12: Intel NPU -->
+<section>
+  <h2>Intel NPU — SoC Block Diagram</h2>
+  <div style="border:3px solid #E65100;border-radius:14px;background:#ECEFF1;padding:12px;margin:6px 0;">
+    <div style="text-align:center;font-size:0.6em;font-weight:700;color:#E65100;margin-bottom:8px;">Intel Core Ultra (Meteor Lake / Lunar Lake) — NPU 3720 / 4000</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+      <div style="background:#FFE0B2;border:2px solid #E65100;border-radius:8px;padding:8px;text-align:center;font-size:0.5em;font-weight:600;">
+        🎛️ <b>Global Controller + Crossbar</b><br><span style="font-weight:400;">Dispatch · Scheduling · Data routing<br>Connects all engines to memory</span>
+      </div>
+      <div style="background:#F8BBD0;border:2px solid #AD1457;border-radius:8px;padding:8px;text-align:center;font-size:0.5em;font-weight:600;">
+        📦 <b>DMA + MMU</b><br><span style="font-weight:400;">Memory Management Unit<br>Virtual addressing · DDR ↔ SRAM</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+      <div style="border:2px dashed #1565C0;border-radius:8px;padding:6px;text-align:center;">
+        <div style="font-size:0.48em;font-weight:700;color:#1565C0;margin-bottom:4px;">Neural Compute Engine (NCE) × 2</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <div style="background:#C8E6C9;border:1px solid #2E7D32;border-radius:6px;padding:6px;text-align:center;font-size:0.45em;font-weight:600;">
+            ⚡ <b>SHAVE DSP</b><br><span style="font-weight:400;">Programmable vector<br>Custom ops · Activations<br>(from Movidius)</span>
+          </div>
+          <div style="background:#BBDEFB;border:1px solid #1565C0;border-radius:6px;padding:6px;text-align:center;font-size:0.45em;font-weight:600;">
+            🧮 <b>MAC Array</b><br><span style="font-weight:400;">2,048 MACs/cluster<br>Fixed-function matmul<br>INT8 · FP16 · BF16</span>
+          </div>
+        </div>
+      </div>
+      <div style="border:2px dashed #1565C0;border-radius:8px;padding:6px;text-align:center;">
+        <div style="font-size:0.48em;font-weight:700;color:#1565C0;margin-bottom:4px;">Neural Compute Engine (NCE) × 2</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <div style="background:#C8E6C9;border:1px solid #2E7D32;border-radius:6px;padding:6px;text-align:center;font-size:0.45em;font-weight:600;">
+            ⚡ <b>SHAVE DSP</b><br><span style="font-weight:400;">Programmable vector<br>Custom ops · Activations</span>
+          </div>
+          <div style="background:#BBDEFB;border:1px solid #1565C0;border-radius:6px;padding:6px;text-align:center;font-size:0.45em;font-weight:600;">
+            🧮 <b>MAC Array</b><br><span style="font-weight:400;">2,048 MACs/cluster<br>Fixed-function matmul</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="background:#FFF9C4;border:2px solid #F57F17;border-radius:8px;padding:8px;text-align:center;font-weight:700;font-size:0.6em;margin-bottom:6px;">
+      💾 ~2 MB Hardware-Managed SRAM<br>
+      <span style="font-weight:400;font-size:0.85em;">Acts like L1/L2 cache — hardware decides placement · Simpler but less predictable than VTCM</span>
+    </div>
+    <div style="background:#CFD8DC;border:1px solid #37474F;border-radius:6px;padding:5px;text-align:center;font-size:0.48em;font-weight:600;">System DDR — shared with CPU + GPU via ring interconnect · Accessed via Level Zero API</div>
+  </div>
+  <div class="two" style="margin-top:4px;">
+    <div class="box"><b>SHAVE</b> = Streaming Hybrid Architecture Vector Engine (from Movidius, acquired 2016). More flexible than HVX — can run arbitrary vector code, not just fixed SIMD patterns.</div>
+    <div class="note"><b>Intel's strength:</b> Same OpenVINO EP works on CPU, GPU, and NPU — just change <code>device_type</code>. Great for development. ~11 TOPS, designed as low-power "always-on" accelerator.</div>
+  </div>
+</section>
+
+<!-- Slide 13: AMD XDNA -->
+<section>
+  <h2>AMD XDNA (Ryzen AI) — SoC Block Diagram</h2>
+  <div style="border:3px solid #6A1B9A;border-radius:14px;background:#ECEFF1;padding:12px;margin:6px 0;">
+    <div style="text-align:center;font-size:0.6em;font-weight:700;color:#6A1B9A;margin-bottom:8px;">AMD Ryzen AI — XDNA NPU (from Xilinx AI Engine)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+      <div style="background:#FFE0B2;border:2px solid #E65100;border-radius:8px;padding:6px;text-align:center;font-size:0.5em;font-weight:600;">
+        🎛️ <b>NPU Controller</b><br><span style="font-weight:400;">Host interface · Work dispatch<br>Manages tile grid execution</span>
+      </div>
+      <div style="background:#F8BBD0;border:2px solid #AD1457;border-radius:8px;padding:6px;text-align:center;font-size:0.5em;font-weight:600;">
+        📦 <b>Global DMA + NoC</b><br><span style="font-weight:400;">Network-on-Chip mesh interconnect<br>Routes data between tiles + DDR</span>
+      </div>
+    </div>
+    <div style="border:2px dashed #6A1B9A;border-radius:10px;padding:8px;margin-bottom:6px;">
+      <div style="text-align:center;font-size:0.5em;font-weight:700;color:#6A1B9A;margin-bottom:6px;">AIE Tile Grid — 2D Array (16–48 tiles depending on SKU)</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;">
+        <div style="background:#E1BEE7;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#E1BEE7;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#E1BEE7;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#E1BEE7;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#E1BEE7;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#E1BEE7;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#D1C4E9;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#D1C4E9;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#D1C4E9;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#D1C4E9;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#D1C4E9;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+        <div style="background:#D1C4E9;border:1px solid #6A1B9A;border-radius:5px;padding:4px;text-align:center;font-size:0.38em;font-weight:600;">🧮 Vec Proc<br>32KB SRAM<br>DMA</div>
+      </div>
+      <div style="text-align:center;font-size:0.42em;color:#6A1B9A;margin-top:4px;">← Connected by mesh NoC — data flows tile-to-tile without going to DDR →</div>
+    </div>
+    <div style="background:#FFF9C4;border:2px solid #F57F17;border-radius:8px;padding:6px;text-align:center;font-weight:700;font-size:0.58em;margin-bottom:6px;">
+      💾 ~4 MB Total On-Chip SRAM (distributed: ~32 KB per tile × tiles)<br>
+      <span style="font-weight:400;font-size:0.85em;">Compiler-managed at tile level · Data flows through mesh, not central bus</span>
+    </div>
+    <div style="background:#CFD8DC;border:1px solid #37474F;border-radius:6px;padding:5px;text-align:center;font-size:0.48em;font-weight:600;">System DDR — accessed via XRT (Xilinx Runtime) · Compiled artifact = XCLBIN container</div>
+  </div>
+  <div class="two" style="margin-top:4px;">
+    <div class="box"><b>Distributed vs centralized:</b> QC has one big 8 MB SRAM. AMD has many small 32 KB SRAMs connected by a mesh. Data flows tile-to-tile for layer-by-layer processing — good for deep pipelines, harder to program.</div>
+    <div class="warn"><b>Cluster-level rejection:</b> If xcompiler can't handle ONE op in a subgraph, it rejects the <em>entire cluster</em> to CPU — unlike QNN/OV which do per-op fallback. This can cause unexpectedly large CPU fallback.</div>
+  </div>
+</section>
+
+<!-- Slide 14: Why QC Wins -->
+<section>
+  <h2>Why Qualcomm Wins Despite Similar TOPS Claims</h2>
+  <table>
+    <tr><th>#</th><th>Factor</th><th>Qualcomm Advantage</th><th>Detail</th></tr>
+    <tr><td>1</td><td><strong>VTCM Size</strong></td><td>8 MB vs 2 MB (Intel) / 4 MB (AMD)</td><td>4× more on-chip SRAM = fewer trips to slow DDR memory = fewer pipeline stalls</td></tr>
+    <tr><td>2</td><td><strong>Software-managed SRAM</strong></td><td>Compiler controls every byte</td><td>Optimal double-buffering: DMA fills one half while HMX reads the other. No cache miss surprises.</td></tr>
+    <tr><td>3</td><td><strong>HMX MAC Density</strong></td><td>4096 MACs/instruction</td><td>Intel: ~2048 MACs/cluster. QC does 2× more multiply-accumulates per instruction.</td></tr>
+    <tr><td>4</td><td><strong>FastRPC Maturity</strong></td><td>~100 µs wake-up</td><td>Battle-tested IPC from years of mobile DSP. Low-latency user-space path, no kernel transitions.</td></tr>
+  </table>
+  <div class="two" style="margin-top:8px;">
+    <div class="note">
+      <strong>BUT — Intel wins on:</strong>
+      <ul style="margin:0;">
+        <li>x86 ecosystem compatibility (same binary runs on CPU/GPU/NPU)</li>
+        <li>Developer tools (OpenVINO is mature, well-documented)</li>
+        <li>Integrated GPU as strong fallback</li>
+      </ul>
+    </div>
+    <div class="note">
+      <strong>BUT — AMD wins on:</strong>
+      <ul style="margin:0;">
+        <li>CPU-GPU-NPU integration (shared memory, unified driver stack)</li>
+        <li>Scalable tile architecture (more tiles = more TOPS, linearly)</li>
+        <li>Competitive CPU performance (Zen cores)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="warn" style="margin-top:6px;">
+    <strong>The real bottleneck is memory bandwidth, not compute.</strong>
+    All three NPUs can compute faster than DDR can feed them.
+    QC's larger VTCM simply means it stalls less often.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 4: QUANTIZATION                                         -->
+<!-- ============================================================ -->
+
+<!-- Slide 15: Quantization -->
+<section>
+  <h2>FP32 → INT8 Quantization — Why &amp; How</h2>
+  <div class="two">
+    <div>
+      <h3>The Formula</h3>
+      <pre><code class="language-text">Quantize:   q = round(x / scale) + zero_point
+Dequantize: x ≈ (q - zero_point) × scale
+
+Worked example (scale=0.005, zero_point=150):
+  FP32 value:  0.75
+  Quantized:   round(0.75 / 0.005) + 150 = 150 + 150 = … 
+               wait — round(150) + 150 = 300? No:
+  
+  q = round(0.75 / 0.005) + 0 = 150  (zero_point=0)
+  Dequantized: 150 × 0.005 = 0.750 ✓
+
+  But if zero_point=1:
+  q = round(0.75 / 0.005) + 1 = 151
+  Dequantized: (151 - 1) × 0.005 = 0.750 ✓
+
+  Precision loss example (scale=0.01):
+  q = round(0.75 / 0.01) + 0 = 75
+  Dequantized: 75 × 0.01 = 0.750 ✓  (lucky)
+  
+  q = round(0.743 / 0.01) = 74
+  Dequantized: 74 × 0.01 = 0.740 ≠ 0.743  ← lost!</code></pre>
+    </div>
+    <div>
+      <h3>Why INT8?</h3>
+      <div class="box">
+        <strong>4096× more MACs on HMX.</strong> FP32 uses one MAC unit per multiply.
+        INT8 packs 4 values in the same bits → HMX's 64×64 array does 4096 INT8 MACs
+        per instruction vs ~1 FP32.
+      </div>
+      <h3>Danger Zones</h3>
+      <ul>
+        <li><strong>Softmax</strong> — exponentials amplify tiny INT8 rounding errors</li>
+        <li><strong>LayerNorm</strong> — variance computation is numerically sensitive</li>
+        <li><strong>First &amp; last layers</strong> — input distribution is wide, INT8 range too narrow</li>
+      </ul>
+      <div class="say">
+        <strong>Mixed precision:</strong> INT8 for compute (convolutions, matmuls) +
+        FP16 for accumulators (running sums) + FP16 for sensitive layers.
+        Set <code>enable_htp_fp16_precision=1</code> in QNN EP options.
+      </div>
+      <div class="warn">
+        <strong>Per-channel vs per-tensor:</strong> Per-channel = different scale per output channel (more accurate, larger model).
+        Per-tensor = one scale for whole tensor (smaller, less accurate).
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 5: REAL BUG STORIES                                     -->
+<!-- ============================================================ -->
+
+<!-- Slide 16: Bug #1 — Vitis AI Memory Leak -->
+<section>
+  <h2>Bug #1: Vitis AI Memory Leak</h2>
+  <div class="two">
+    <div>
+      <h3>Symptom</h3>
+      <p>Memory grows continuously during model compilation on AMD. Never freed. Eventually OOM.</p>
+      <h3>Debug Journey</h3>
+      <ol>
+        <li><strong>WPA</strong> (Windows Performance Analyzer) — staircase pattern in heap graph. Memory only goes up, never down.</li>
+        <li><strong>AppVerifier</strong> — enabled heap tracking. Confirmed: allocations in <code>onnxruntime_vitisai_ep.dll</code> never freed.</li>
+        <li><strong>WinDbg</strong> — attached debugger, set breakpoints on alloc/free.</li>
+        <li><strong>Stack trace</strong> — leak traced to ORT's internal API used by Vitis EP.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Root Cause</h3>
+      <p>Found in ORT source: <code>global_api.cc</code> line 637, function <code>attr_proto_release_string</code>:</p>
+      <pre><code class="language-cpp">// BUGGY — sets pointer to null,
+// but never frees the string memory!
+void attr_proto_release_string(
+    OrtApiBase* api,
+    ONNX_NAMESPACE::AttributeProto* attr)
+{
+  std::string* pstr = attr->release_s();
+  pstr = nullptr;  // ← BUG: leak!
+  // Should be: delete pstr;
+}</code></pre>
+      <pre><code class="language-cpp">// FIX
+void attr_proto_release_string(...) {
+  std::string* pstr = attr->release_s();
+  delete pstr;     // ← actually free it
+}</code></pre>
+      <div class="warn"><strong>Lesson:</strong> EP bugs often live in ORT's <em>internal API layer</em>, not in the EP itself. Attach ORT source to debug EP issues.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 17: Bug #2 — QNN RAM Regression: Evidence -->
+<section>
+  <h2>Bug #2: Inference RAM Doubled Between QNN EP Drops</h2>
+  <p>Same PSMU model, same Snapdragon X Elite. Two EP drops from ASG WinML-Ingestion, captured as ETL traces.</p>
+  <p><b>Key context:</b> WinAppSDK and ORT are coupled — SDK 1.8.6 ships ORT 1.23.4, SDK 2-preview2 ships ORT 1.24.4.</p>
+  <table>
+    <tr><th>Metric</th><th>Drop 239<br>SDK 1.8.6 (ORT 1.23.4) ✅</th><th>Drop 245 + SDK 1.8<br>(ORT 1.23.4)</th><th>Drop 245 + SDK 2-preview2<br>(ORT 1.24.4) ❌</th></tr>
+    <tr><td><b>PageFault 115</b> (demand-zero)</td><td class="green"><b>1,725</b></td><td class="red"><b>102,293 (59×)</b></td><td><b>7,438 (4.3×)</b></td></tr>
+    <tr><td>VirtualAlloc (alloc calls)</td><td>24,845</td><td>24,498</td><td class="red">72,770 (3×)</td></tr>
+    <tr><td>VirtualFree</td><td>12,702</td><td class="red">11,815 (−7%)</td><td>27,833</td></tr>
+    <tr><td>HardFault (disk IO)</td><td>—</td><td class="green">30</td><td class="red">582 (20×)</td></tr>
+    <tr><td>Duration</td><td>85 s</td><td class="green">76 s (+12%)</td><td>—</td></tr>
+  </table>
+  <h3>WPA deep-dive: runtime memory profile for onnxruntime process</h3>
+  <table>
+    <tr><th></th><th>Drop 245 + SDK 1.8</th><th>Drop 245 + SDK 2-preview2</th></tr>
+    <tr><td><b>Peak committed</b></td><td>~302 MB (initial spike)</td><td class="red"><b>~500+ MB (grows continuously)</b></td></tr>
+    <tr><td><b>Steady state</b></td><td class="green">~180 MB (stable after init)</td><td class="red">Keeps climbing → may crash</td></tr>
+    <tr><td><b>Memory pattern</b></td><td>Spike at startup → settles down → flat during sustained inference</td><td class="red">Grows monotonically during inference → never stabilizes → OOM risk</td></tr>
+  </table>
+  <div class="warn"><b>Critical finding from WPA:</b> SDK 2-preview2 has a <b>memory leak or unbounded growth pattern</b> — committed memory for the ORT process climbs to 500+ MB and doesn't settle. SDK 1.8 spikes to 302 MB at init but stabilizes at ~180 MB. Despite having fewer page faults, 2-preview2 is <b>worse</b> for sustained workloads because memory never stops growing.</div>
+  <div class="box"><b>EP options are IDENTICAL across all runs</b> — same <code>vtcm_mb|8</code>, same <code>htp_performance_mode|burst</code>. Confirmed from ETL command lines.</div>
+</section>
+
+<!-- Slide 17b: Bug #2 — Root Cause Code -->
+<section>
+  <h2>Bug #2: Root Cause — The Exact Function</h2>
+  <p>File: <code>qnn_backend_manager.cc</code> → <code>CreateContextFromListAsync()</code>, lines 1049–1061.</p>
+  <div class="two">
+    <div>
+      <h3>ORT 1.23 — load one, free one</h3>
+<pre><code class="language-cpp">for (auto& it : context_bin_map) {
+  // Allocate buffer for ONE context binary
+  auto buffer = std::make_unique&lt;char[]&gt;(size);
+  ReadContextBin(path, buffer.get());
+
+  // Create context from this buffer
+  CreateContextFromBinary(buffer.get(), size);
+
+  // buffer freed HERE (unique_ptr scope ends)
+  // Only ~1 context in memory at any time
+}</code></pre>
+      <div class="box"><b>Peak memory:</b> ~1 context binary (~tens of MB). Load it, use it, free it. Next one reuses the same memory.</div>
+    </div>
+    <div>
+      <h3>ORT 1.24 — accumulate ALL, then create</h3>
+<pre><code class="language-cpp">// NEW: vector holds ALL context binaries at once
+std::vector&lt;std::vector&lt;char&gt;&gt; buffer_list;
+
+for (auto& it : context_bin_map) {
+  std::vector&lt;char&gt; buffer;
+  ReadContextBinIfValid(path, buffer);
+
+  // Buffer KEPT ALIVE in buffer_list
+  buffer_list.push_back(std::move(buffer));
+}
+// All buffers in memory simultaneously
+// → 102K demand-zero page faults (~400 MB)</code></pre>
+      <div class="warn"><b>Peak memory:</b> ALL context binaries at once. For N contexts × ~tens of MB each → hundreds of MB touched simultaneously → 59× page fault spike.</div>
+    </div>
+  </div>
+  <div class="note"><b>Why it was changed:</b> The async context creation path needs all buffers alive simultaneously so multiple contexts can be created in parallel — needed for concurrent model loading (MEP/ConcurrencyTestSuite). But for single-model inference (our PSMU case), it's unnecessary overhead. Secondary cause: commit <code>3a1bb09</code> added <code>reserve()</code> for VTCM sharing pointer stability, compounding the spike.</div>
+</section>
+
+<!-- Slide 17c: Bug #2 — SDK Comparison + Recommendation -->
+<section>
+  <h2>Bug #2: SDK Comparison &amp; Recommendation</h2>
+  <div class="two">
+    <div>
+      <h3>WPA runtime memory profile (onnxruntime process)</h3>
+      <table>
+        <tr><th>Aspect</th><th>SDK 1.8 (ORT 1.24)</th><th>SDK 2-preview2 (ORT 1.24)</th></tr>
+        <tr><td>Init peak</td><td>~302 MB</td><td>~300 MB</td></tr>
+        <tr><td><b>Steady state</b></td><td class="green"><b>~180 MB (stable)</b></td><td class="red"><b>Grows to 500+ MB</b></td></tr>
+        <tr><td>Pattern</td><td class="green">Spike → settles → flat</td><td class="red">Monotonic climb → crash</td></tr>
+        <tr><td>Page faults (init)</td><td class="red">102K (one burst)</td><td>7K (gradual)</td></tr>
+        <tr><td>Disk IO</td><td class="green">30 hard faults</td><td class="red">582 (20×)</td></tr>
+        <tr><td>OOM risk</td><td class="green">Low</td><td class="red">High (crash seen)</td></tr>
+      </table>
+      <div class="warn"><b>Use SDK 1.8 for production.</b> The 302 MB init spike is one-time and settles to 180 MB. SDK 2-preview2 has unbounded growth (likely WinML buffer leak) — memory climbs to 500+ MB and crashes.</div>
+    </div>
+    <div>
+      <h3>Proposed fixes</h3>
+      <table>
+        <tr><th>#</th><th>Action</th></tr>
+        <tr><td>1</td><td><b>ORT patch:</b> In <code>CreateContextFromListAsync()</code>, release each buffer after its context is created (single-model path). Keep accumulation only for multi-model async path.</td></tr>
+        <tr><td>2</td><td><b>File SDK 2-preview2 bug:</b> WPA trace shows WinML layer not releasing intermediate buffers between Run() calls. Provide trace as evidence.</td></tr>
+        <tr><td>3</td><td><b>Test <code>enable_htp_shared_memory_allocator|1</code></b> on SDK 1.8 — zero-copy path may bypass host-side buffer accumulation entirely.</td></tr>
+        <tr><td>4</td><td><b>Test <code>enable_arena=true</code></b> — ORT memory reuse should reduce the init spike by reusing committed pages.</td></tr>
+      </table>
+      <div class="say">💬 "Two separate problems in one regression. The page fault burst is an ORT code change in <code>qnn_backend_manager.cc</code> — fixable with a targeted patch. The unbounded growth in SDK 2-preview2 is a WinML-layer bug — needs a separate fix from the SDK team. Use SDK 1.8 until both are resolved."</div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 18: Bug #3 — Accuracy Across Platforms -->
+<section>
+  <h2>Bug #3: Accuracy Divergence Across Platforms</h2>
+  <p>Same .onnx model, three NPU platforms, three different numerical outputs.</p>
+  <div class="two">
+    <div>
+      <h3>Why it happens</h3>
+      <ol>
+        <li><b>Different partitioning.</b> QNN claims 47/50 nodes, OpenVINO 38, Vitis 30. More CPU fallback = more boundary crossings = more rounding error.</li>
+        <li><b>Vitis cluster-level rejection.</b> One unsupported op dumps the <em>entire subgraph</em> to CPU (vs per-op on QNN/OV).</li>
+        <li><b>Different rounding.</b> INT32→INT8 requantization uses implementation-defined rounding. Tiny diffs compound over layers.</li>
+        <li><b>Different QDQ fusion.</b> QNN fuses aggressively. OV may split differently. Changes the precision path.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Debug approach</h3>
+      <ol>
+        <li><b>CPU EP = golden reference.</b> Run on CPU first. If correct → problem is in EP, not model.</li>
+        <li><b>Compare node claims.</b> <code>log_severity_level=0</code>, grep <code>"nodes supported"</code> per platform.</li>
+        <li><b>Dump + diff graphs.</b> <code>session.save_optimized_model_path</code> → open in Netron → diff QDQ patterns.</li>
+        <li><b>Per-node output comparison.</b> Find exact layer where outputs diverge.</li>
+      </ol>
+      <h3>Fixes</h3>
+      <ul>
+        <li><code>models_caches: ["qnn;ov;vitis"]</code> — separate cached binaries per platform</li>
+        <li><b>OrtEpValidation</b> workload — automated cross-EP accuracy test</li>
+        <li><code>enable_htp_fp16_precision=1</code> — FP16 on sensitive layers</li>
+        <li><b>PS Eval pipeline</b> — per-API metrics (PSNR, WER, BLEU)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box"><b>Golden rule:</b> CPU EP correct + NPU EP wrong → bug is in quantization/EP handling. Diff the partitioned graphs.</div>
+</section>
+
+<!-- Slide 19: Bug #4 — NPU Concurrency (Part 1) -->
+<section>
+  <h2>Bug #4: Paint + Camera NPU Concurrency (Part 1)</h2>
+  <div class="two">
+    <div>
+      <h3>Symptom</h3>
+      <ul>
+        <li>Camera preview drops frames when Paint SR is running</li>
+        <li>Not always reproducible — depends on timing</li>
+        <li>Only happens on NPU (GPU path works fine)</li>
+      </ul>
+      <h3>Root Cause</h3>
+      <div class="warn">
+        <strong>NPU has a single hardware scheduler with no preemption.</strong><br>
+        Unlike GPUs (which can preempt mid-kernel), the NPU runs one graph to completion
+        before starting the next. If SR submits 36 tiles, Camera waits for all 36.
+      </div>
+    </div>
+    <div>
+      <h3>The Semaphore Repro</h3>
+      <p>Wrote a C test exe to guarantee 100% reproduction:</p>
+      <pre><code class="language-c">HANDLE sem = CreateSemaphore(NULL, 0, 2, NULL);
+
+// Thread A — Paint SR workload
+DWORD WINAPI SrThread(LPVOID) {
+  WaitForSingleObject(sem, INFINITE);
+  for (int tile = 0; tile < 36; tile++)
+    ComputeInference(srSession, tileData[tile]);
+  return 0;
+}
+
+// Thread B — Camera workload
+DWORD WINAPI CamThread(LPVOID) {
+  WaitForSingleObject(sem, INFINITE);
+  for (int f = 0; f < 30; f++) {
+    LARGE_INTEGER t0; QueryPerformanceCounter(&t0);
+    ComputeInference(camSession, frame[f]);
+    LARGE_INTEGER t1; QueryPerformanceCounter(&t1);
+    if (elapsed(t0,t1) > 33ms) log("DROPPED");
+  }
+  return 0;
+}
+
+// Main — release both threads simultaneously
+ReleaseSemaphore(sem, 2, NULL); // → BOOM</code></pre>
+      <div class="note"><strong>Key insight:</strong> The semaphore ensures both threads start NPU submission at exactly the same instant — no timing luck needed. 100% repro rate.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 20: Bug #4 — NPU Concurrency (Part 2) -->
+<section>
+  <h2>Bug #4: Paint + Camera NPU Concurrency (Part 2)</h2>
+  <div class="two">
+    <div>
+      <h3>GPUView Analysis</h3>
+      <div class="box">
+        <strong>GPUView</strong> = Windows tool that visualizes GPU/NPU scheduling timelines.
+        Shows exactly when each process's work starts and finishes on the hardware.
+      </div>
+      <p>GPUView timeline confirmed the starvation pattern:</p>
+      <table>
+        <tr><th>Time (ms)</th><th>NPU Queue</th></tr>
+        <tr><td>0</td><td>SR tile 0 starts</td></tr>
+        <tr><td>3</td><td>SR tile 0 done → tile 1 starts</td></tr>
+        <tr><td>3</td><td>Camera frame 0 <strong>queued, waiting</strong></td></tr>
+        <tr><td>6–105</td><td>SR tiles 1–35 run back-to-back</td></tr>
+        <tr><td>108</td><td>Camera frame 0 <strong>finally starts</strong></td></tr>
+      </table>
+      <div class="warn">
+        Camera frame 0 waited <strong>108 ms</strong> — that's 3.2 frame periods at 30fps.
+        User sees visible stutter.
+      </div>
+    </div>
+    <div>
+      <h3>Mitigations</h3>
+      <ol>
+        <li><strong>Throttle submission</strong> — SR submits tiles in batches of 4 with Sleep(1) gaps, letting Camera interleave</li>
+        <li><strong>MEP scheduler priority classes</strong> — tag Camera as HIGH, SR as LOW. Scheduler drains high-priority first.</li>
+        <li><strong>QNN hints</strong> — set <code>htp_performance_mode=balanced</code> for SR (slower but yields more) vs <code>burst</code> for Camera</li>
+        <li><strong>IHV firmware preemption</strong> — requested from Qualcomm. Future firmware may support mid-graph preemption.</li>
+      </ol>
+      <div class="warn">
+        <strong>Fundamental NPU limitation.</strong> GPUs solved this decades ago with hardware preemption.
+        NPU firmware doesn't support it yet.
+        Until IHVs add preemption, software scheduling is our only tool.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 6: MU MODEL                                             -->
+<!-- ============================================================ -->
+
+<!-- Slide 21: SR vs Mu -->
+<section>
+  <h2>SR vs Mu — Two Very Different Workloads</h2>
+  <div class="two">
+    <div>
+      <h3>Super Resolution (SR)</h3>
+      <ul>
+        <li><strong>1 model</strong> (single ONNX file)</li>
+        <li><strong>1 call per tile</strong> — input tile in, upscaled tile out</li>
+        <li><strong>No state</strong> — each tile is independent, order doesn't matter</li>
+        <li><strong>Stateless</strong> — no memory of previous tiles</li>
+        <li>Parallelizable: could run tiles on multiple NPUs</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Mu (Language Model)</h3>
+      <ul>
+        <li><strong>3 models</strong>:
+          <ul>
+            <li><strong>Embedder</strong> — runs on CPU (converts token IDs → vectors)</li>
+            <li><strong>Encoder</strong> — runs on NPU (processes full input sequence once)</li>
+            <li><strong>Decoder</strong> — runs on NPU (generates one token per call)</li>
+          </ul>
+        </li>
+        <li><strong>Autoregressive</strong> — each token depends on all previous tokens</li>
+        <li><strong>KV cache grows</strong> — every generated token adds to memory</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Mu Buffer Table</h3>
+  <table>
+    <tr><th>Buffer</th><th>Shape</th><th>Purpose</th><th>Grows?</th></tr>
+    <tr><td><code>kvCache</code></td><td>[batch, heads, seq_len, head_dim]</td><td>Stores Key &amp; Value vectors from all previous tokens — avoids re-computing them</td><td>Yes, +1 per token</td></tr>
+    <tr><td><code>kvCacheIterSelf</code></td><td>[batch, heads, 1, head_dim]</td><td>Current token's K/V contribution — merged into kvCache after each step</td><td>No (fixed)</td></tr>
+    <tr><td><code>attention_mask</code></td><td>[batch, 1, 1, seq_len]</td><td>Tells the model which positions are real tokens vs padding</td><td>Yes, +1 per token</td></tr>
+    <tr><td><code>position_ids</code></td><td>[batch, 1]</td><td>RoPE (Rotary Position Embedding) — encodes token's position in the sequence</td><td>No (increments)</td></tr>
+  </table>
+</section>
+
+<!-- Slide 22: Mu Generation Loop -->
+<section>
+  <h2>Mu Generation Loop</h2>
+  <p>Generating 200 tokens = 200 full round-trips through the entire stack:</p>
+  <div style="text-align:center; margin:10px 0;">
+    <div class="engine-box" style="background:#37474F; display:inline-block; padding:8px 16px;">
+      Input Text
+    </div>
+    <span class="pipeline-arrow"> → </span>
+    <div class="engine-box" style="background:#1565C0; display:inline-block; padding:8px 16px;">
+      Tokenize (CPU)
+    </div>
+    <span class="pipeline-arrow"> → </span>
+    <div class="engine-box" style="background:#6A1B9A; display:inline-block; padding:8px 16px;">
+      Embed (CPU)
+    </div>
+    <span class="pipeline-arrow"> → </span>
+    <div class="engine-box" style="background:#2E7D32; display:inline-block; padding:8px 16px;">
+      Encoder (NPU × 1)
+    </div>
+  </div>
+  <div style="text-align:center; margin:10px 0;">
+    <div style="border:3px solid var(--blue); border-radius:12px; display:inline-block; padding:10px 20px;">
+      <span style="font-size:0.7em; color:var(--blue); font-weight:bold;">🔄 LOOP (once per output token)</span><br>
+      <div class="engine-box" style="background:#E65100; display:inline-block; padding:6px 12px; margin:4px;">
+        Decoder (NPU)
+      </div>
+      <span class="pipeline-arrow"> → </span>
+      <div class="engine-box" style="background:#37474F; display:inline-block; padding:6px 12px; margin:4px;">
+        Sample Token
+      </div>
+      <span class="pipeline-arrow"> → </span>
+      <div class="engine-box" style="background:#1565C0; display:inline-block; padding:6px 12px; margin:4px;">
+        Update KV Cache
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center; margin:10px 0;">
+    <span class="pipeline-arrow"> → </span>
+    <div class="engine-box" style="background:#37474F; display:inline-block; padding:8px 16px;">
+      Output Text
+    </div>
+  </div>
+  <div class="two" style="margin-top:8px;">
+    <div class="box">
+      <strong>Each decoder call</strong> = full ComputeCore → ORT → QNN EP → HTP round-trip.
+      200 tokens = 200 NPU submissions. At 10ms/token = 2 seconds for 200 tokens.
+    </div>
+    <div class="warn">
+      <strong>Why Mu is harder than SR:</strong>
+      <ul style="margin:0;">
+        <li>Can't parallelize — token N depends on token N-1</li>
+        <li>KV cache grows linearly — memory pressure increases</li>
+        <li>Latency per token matters — user sees each token stream in</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 7: WRAP-UP                                              -->
+<!-- ============================================================ -->
+
+<!-- Slide 23: Summary -->
+<section>
+  <h2>Summary — Three Things to Remember</h2>
+  <div style="margin-top:20px;">
+    <div class="box" style="font-size:0.75em; padding:12px 16px; margin:12px 0;">
+      <strong>1. Six Layers, One Path</strong><br>
+      Every AI inference — SR, Mu, any model — flows through:
+      App → PS API → ComputeCore → ORT → EP → NPU.
+      Understanding this stack is the key to debugging any model issue.
+    </div>
+    <div class="say" style="font-size:0.75em; padding:12px 16px; margin:12px 0;">
+      <strong>2. Context Binary = Fast Path</strong><br>
+      First run compiles the model (slow, seconds). Subsequent runs load the cached context binary
+      (fast, milliseconds). <code>ep.context_enable=1</code> is critical for production.
+    </div>
+    <div class="note" style="font-size:0.75em; padding:12px 16px; margin:12px 0;">
+      <strong>3. Three NPUs, Different Tradeoffs</strong><br>
+      Qualcomm wins raw throughput thanks to 8 MB VTCM + HMX density.
+      Intel wins ecosystem compatibility. AMD wins scalability.
+      The real bottleneck is always memory bandwidth, not compute TOPS.
+    </div>
+  </div>
+</section>
+
+<!-- Slide 24: References -->
+<section>
+  <h2>References</h2>
+  <table>
+    <tr><th>Resource</th><th>Description</th></tr>
+    <tr><td><strong>Model_Execution_Flow.html</strong></td><td>Companion deep-dive — Om's 33-slide ORT→HTP detailed walkthrough. Covers the full ORT pipeline, QNN C API, and HTP internals in depth.</td></tr>
+    <tr><td><strong>ASG_DataPath_Flow.html §9</strong></td><td>Data-path flow for the ASG pipeline — context for how models integrate into the broader system.</td></tr>
+    <tr><td><strong>SR source code</strong></td><td>PerceptiveShell SR implementation — <code>SrProcess()</code>, tile plan, pre/post processing.</td></tr>
+    <tr><td><strong>ComputeCore</strong></td><td>Internal ORT wrapper — session management, model decryption, target selection.</td></tr>
+    <tr><td><strong>QNN EP (ORT repo)</strong></td><td><code>onnxruntime/core/providers/qnn/</code> — QNN Execution Provider source code.</td></tr>
+    <tr><td><strong>OpenVINO docs</strong></td><td>Intel OpenVINO toolkit documentation — EP options, device selection, NPU configuration.</td></tr>
+    <tr><td><strong>AMD XDNA docs</strong></td><td>Vitis AI / XDNA documentation — xcompiler, XRT runtime, AIE tile architecture.</td></tr>
+    <tr><td><strong>ETL traces</strong></td><td>Windows Performance Recorder traces for SR &amp; Mu workloads — WPA analysis, page fault data.</td></tr>
+    <tr><td><strong>Hexagon PRM</strong></td><td>Qualcomm Hexagon Programmer's Reference Manual — HMX, HVX, VTCM, VLIW ISA.</td></tr>
+  </table>
+</section>
+
+<!-- Slide 25: Q&A -->
+<section>
+  <h1 style="margin-top:2em;">Q &amp; A</h1>
+  <p>Questions? Feedback?</p>
+  <div class="say" style="font-size:0.75em; margin-top:20px;">
+    Om Singh — Tech Forum, April 2026<br>
+    Companion deep-dive: <em>Model_Execution_Flow.html</em>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- BACKUP SLIDES                                                -->
+<!-- ============================================================ -->
+
+<!-- Slide 26: QNN C API Quick Reference -->
+<section>
+  <h2>Backup: QNN C API Quick Reference</h2>
+  <p>The raw C API that the QNN EP calls under the hood:</p>
+  <table>
+    <tr><th>API Call</th><th>What It Does</th><th>When Called</th></tr>
+    <tr><td><code>QnnBackend_create()</code></td><td>Initialize QNN backend (loads DSP firmware)</td><td>Once at EP initialization</td></tr>
+    <tr><td><code>QnnDevice_create()</code></td><td>Acquire NPU device handle</td><td>Once at EP initialization</td></tr>
+    <tr><td><code>QnnContext_createFromBinary()</code></td><td>Load pre-compiled context binary into NPU memory</td><td>Session creation (fast path)</td></tr>
+    <tr><td><code>QnnContext_create()</code></td><td>Create empty context for online compilation</td><td>Session creation (slow path — first run)</td></tr>
+    <tr><td><code>QnnGraph_create()</code></td><td>Define a compute graph within a context</td><td>During <code>Compile()</code></td></tr>
+    <tr><td><code>QnnGraph_addNode()</code></td><td>Add an operation (Conv2D, MatMul, etc.) to graph</td><td>During <code>Compile()</code></td></tr>
+    <tr><td><code>QnnGraph_finalize()</code></td><td>Compile graph → HTP microcode (respects optimization_mode)</td><td>During <code>Compile()</code></td></tr>
+    <tr><td><code>QnnGraph_execute()</code></td><td>Run the compiled graph on NPU</td><td>Every inference call</td></tr>
+    <tr><td><code>QnnGraph_executeAsync()</code></td><td>Non-blocking execute with callback</td><td>Pipelined inference</td></tr>
+    <tr><td><code>QnnContext_getBinarySize()</code></td><td>Get size of compiled context for caching</td><td>Cache save</td></tr>
+    <tr><td><code>QnnContext_getBinary()</code></td><td>Serialize compiled context to byte buffer</td><td>Cache save</td></tr>
+    <tr><td><code>QnnBackend_free()</code></td><td>Release all QNN resources</td><td>Shutdown</td></tr>
+  </table>
+</section>
+
+<!-- Slide 27: HTP Generations -->
+<section>
+  <h2>Backup: HTP Generations</h2>
+  <table>
+    <tr><th>Generation</th><th>Hexagon Version</th><th>SoC Examples</th><th>TOPS (INT8)</th><th>VTCM</th><th>Key Improvement</th></tr>
+    <tr><td>HTP v68</td><td>Hexagon 698</td><td>Snapdragon 888</td><td>~15</td><td>4 MB</td><td>First HMX (matrix extension)</td></tr>
+    <tr><td>HTP v69</td><td>Hexagon 770</td><td>Snapdragon 8 Gen 1</td><td>~18</td><td>4 MB</td><td>Improved HMX efficiency</td></tr>
+    <tr><td>HTP v73</td><td>Hexagon 780</td><td>Snapdragon 8 Gen 2</td><td>~26</td><td>8 MB</td><td>VTCM doubled to 8 MB</td></tr>
+    <tr><td>HTP v75</td><td>Hexagon 790</td><td>Snapdragon 8 Gen 3</td><td>~36</td><td>8 MB</td><td>Wider HMX, better power</td></tr>
+    <tr><td>HTP v79</td><td>Hexagon 900</td><td>Snapdragon X Elite</td><td>~45</td><td>8 MB</td><td>Laptop-class, ARM64 host, shared DDR</td></tr>
+  </table>
+  <div class="two" style="margin-top:10px;">
+    <div class="box">
+      <strong>TOPS trend:</strong> ~3× increase from v68 to v79 over 4 generations.
+      Most gains from wider HMX arrays, not higher clock speeds.
+    </div>
+    <div class="say">
+      <strong>VTCM trend:</strong> Jumped from 4 MB to 8 MB at v73. This single change was the biggest
+      real-world performance boost — fewer DDR stalls on large models.
+    </div>
+  </div>
+</section>
+
+<!-- Slide 28: Glossary (Part 1) -->
+<section>
+  <h2>Backup: Glossary of Terms (1/2)</h2>
+  <table>
+    <tr><th>Term</th><th>Full Name</th><th>Plain English</th></tr>
+    <tr><td><strong>NPU</strong></td><td>Neural Processing Unit</td><td>Chip purpose-built for AI math (multiply-accumulate)</td></tr>
+    <tr><td><strong>TOPS</strong></td><td>Tera Operations Per Second</td><td>Trillion multiplies per second — peak throughput metric</td></tr>
+    <tr><td><strong>VTCM</strong></td><td>Vector Tightly Coupled Memory</td><td>Qualcomm's on-chip SRAM — compiler-managed, no cache misses</td></tr>
+    <tr><td><strong>SRAM</strong></td><td>Static Random Access Memory</td><td>Fast on-chip memory (vs slow off-chip DDR)</td></tr>
+    <tr><td><strong>HMX</strong></td><td>Hexagon Matrix Extension</td><td>64×64 INT8 MAC array — where QC's TOPS come from</td></tr>
+    <tr><td><strong>HVX</strong></td><td>Hexagon Vector Extension</td><td>1024-bit SIMD for post-processing (activations, element-wise)</td></tr>
+    <tr><td><strong>VLIW</strong></td><td>Very Long Instruction Word</td><td>CPU issues 4 independent instructions per cycle</td></tr>
+    <tr><td><strong>DMA</strong></td><td>Direct Memory Access</td><td>Hardware engine that moves data without CPU involvement</td></tr>
+    <tr><td><strong>DDR</strong></td><td>Double Data Rate (DRAM)</td><td>Main system memory — large but slow (~60 GB/s)</td></tr>
+    <tr><td><strong>FastRPC</strong></td><td>Fast Remote Procedure Call</td><td>Qualcomm's IPC between ARM host and Hexagon DSP</td></tr>
+    <tr><td><strong>EP</strong></td><td>Execution Provider</td><td>ORT plug-in that speaks a specific NPU's language</td></tr>
+    <tr><td><strong>ORT</strong></td><td>ONNX Runtime</td><td>Microsoft's inference engine — loads models, optimizes graphs, dispatches work</td></tr>
+    <tr><td><strong>ONNX</strong></td><td>Open Neural Network Exchange</td><td>Standard file format for AI models (.onnx files)</td></tr>
+  </table>
+</section>
+
+<!-- Slide 29: Glossary (Part 2) -->
+<section>
+  <h2>Backup: Glossary of Terms (2/2)</h2>
+  <table>
+    <tr><th>Term</th><th>Full Name</th><th>Plain English</th></tr>
+    <tr><td><strong>QDQ</strong></td><td>Quantize-DeQuantize</td><td>Nodes that convert FP32↔INT8. ORT fuses them for NPU efficiency.</td></tr>
+    <tr><td><strong>NCHW / NHWC</strong></td><td>Channel-first / Channel-last</td><td>Data layout: N=batch, C=channels, H=height, W=width. NPUs prefer NHWC.</td></tr>
+    <tr><td><strong>Context binary</strong></td><td>—</td><td>Pre-compiled NPU program cached to disk. Skips slow compilation on next launch.</td></tr>
+    <tr><td><strong>Tile plan</strong></td><td>—</td><td>Strategy for splitting a large image into smaller tiles for NPU processing.</td></tr>
+    <tr><td><strong>MAC</strong></td><td>Multiply-ACcumulate</td><td>The atomic AI operation: <code>result += weight × input</code></td></tr>
+    <tr><td><strong>SIMD</strong></td><td>Single Instruction Multiple Data</td><td>One instruction processes many data values in parallel (e.g., HVX's 1024 bits)</td></tr>
+    <tr><td><strong>KV cache</strong></td><td>Key-Value cache</td><td>Language model memory — stores previous tokens' attention data to avoid recomputation</td></tr>
+    <tr><td><strong>RoPE</strong></td><td>Rotary Position Embedding</td><td>Technique to encode token position in a sequence — used in Mu's decoder</td></tr>
+    <tr><td><strong>Level Zero</strong></td><td>—</td><td>Intel's low-level compute API (like Vulkan for compute workloads)</td></tr>
+    <tr><td><strong>XRT</strong></td><td>Xilinx Runtime</td><td>AMD's runtime for managing AIE tile execution</td></tr>
+    <tr><td><strong>XCLBIN</strong></td><td>Xilinx Container Binary</td><td>AMD's compiled artifact format — contains tile programs + metadata</td></tr>
+    <tr><td><strong>AIE</strong></td><td>AI Engine</td><td>AMD's compute tile (from Xilinx acquisition) — vector processor + local SRAM</td></tr>
+    <tr><td><strong>ETL</strong></td><td>Event Trace for Windows</td><td>Windows tracing system — records kernel events for performance analysis</td></tr>
+    <tr><td><strong>WPA</strong></td><td>Windows Performance Analyzer</td><td>GUI tool for analyzing ETL traces — heap graphs, CPU usage, page faults</td></tr>
+  </table>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+Reveal.initialize({
+  width: 1280,
+  height: 900,
+  margin: 0.04,
+  center: false,
+  transition: 'fade',
+  hash: true,
+  plugins: [ RevealHighlight ]
+});
+</script>
+</body>
+</html>

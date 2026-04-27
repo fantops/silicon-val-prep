@@ -1,0 +1,337 @@
+# Day 03 — Bits, MMIO, volatile, Polling, Endianness
+
+> **Source merge:** [30day_plan/day03_bit_manipulation.md](../30day_plan/day03_bit_manipulation.md), [30day_plan/day22_volatile_mmio.md](../30day_plan/day22_volatile_mmio.md), [30day_plan/day23_endianness.md](../30day_plan/day23_endianness.md). 30-day files are unchanged.
+
+## Concept
+
+Hardware registers are not variables — they are bit-field collections at memory-mapped addresses, and every byte on the wire has an endianness. Today consolidates: register field RMW, why `volatile` matters and where it ends, polling-with-timeout, and parsing little-/big-endian buffers without struct overlay.
+
+## Why this day in the flow
+
+Day 1 gave you the macros, Day 2 gave you layout. Day 3 puts them on a real register block: program a field, poll a status bit, parse a TLP/Ethernet/NVMe header. The next layer (caches, VM, DMA, PCIe, NVMe) is all *register programming + buffer parsing*. If today is solid, Days 8 (DMA), 10 (PCIe), 11 (NVMe) are scaffolding work, not new concepts.
+
+The two bug stories that anchor today:
+
+- **NVMe `CSTS.RDY` / AQA bug** (Day 11): wrong field width on `AQA`, polling on `CSTS.RDY` with a timeout caught the failure.
+- **PCU/ADR opcode-ordering bug** (Day 14): missing wait-for-ack between firmware opcodes — the polling-with-timeout discipline expressed in firmware.
+
+---
+
+## Deep Study Notes
+
+### 1. Hex ↔ binary (must be instant)
+
+```
+0x0=0000 0x1=0001 0x2=0010 0x3=0011  0x4=0100 0x5=0101 0x6=0110 0x7=0111
+0x8=1000 0x9=1001 0xA=1010 0xB=1011  0xC=1100 0xD=1101 0xE=1110 0xF=1111
+```
+
+`0xA5 = 1010_0101`. Split each hex digit into 4 bits and you can read any register dump.
+
+### 2. The six bitwise operators and the four register patterns
+
+| Op | Effect | Use |
+|---|---|---|
+| `&` | both 1 → 1 | mask in |
+| `\|` | either 1 → 1 | set bits |
+| `^` | differ → 1 | toggle |
+| `~` | flip all | clear-mask |
+| `<<` | × 2^n | shift up |
+| `>>` | / 2^n | shift down |
+
+```c
+reg |= (1U << bit);                /* set */
+reg &= ~(1U << bit);               /* clear */
+reg ^= (1U << bit);                /* toggle */
+if (reg & (1U << bit)) { ... }     /* test */
+```
+
+Always `1U`. `1 << 31` (signed) is undefined behaviour.
+
+### 3. Field extract and insert (the RMW pattern)
+
+```c
+uint32_t extract_field(uint32_t reg, int start, int width) {
+    return (reg >> start) & ((1U << width) - 1);
+}
+uint32_t insert_field(uint32_t reg, int start, int width, uint32_t v) {
+    uint32_t mask = ((1U << width) - 1) << start;
+    return (reg & ~mask) | ((v << start) & mask);
+}
+```
+
+The `& ~mask` clears the field; the `|` writes the new bits. Forgetting the clear is the #1 bug — old bits remain set, you OR in new bits, the field is wrong.
+
+**RMW gotchas to say out loud:**
+
+- Not atomic across cores.
+- Corrupts **W1C** (write-1-to-clear) status registers — reading then writing back the same value clears every set status bit silently.
+- Races against HW updates of the same register.
+
+### 4. `volatile` — what it is and isn't
+
+```c
+volatile uint32_t *status = (volatile uint32_t *)0xFE000010;
+while (!(*status & 0x1)) { }   /* compiler MUST re-read every iteration */
+```
+
+`volatile` says: every access to this address really happens, in source order, no caching, no elision, no reordering with respect to other `volatile` accesses.
+
+Three things `volatile` does:
+
+1. Every read goes to memory.
+2. Every write goes to memory.
+3. The compiler preserves order between `volatile` accesses.
+
+Three things `volatile` does **not** do:
+
+- It is **not** a memory barrier. CPU reordering of accesses to plain memory around the `volatile` access is still allowed.
+- It is **not** atomic against other CPUs.
+- It does **not** flush a cache.
+
+The classic interview trap: "the compiler hoisted my `*status_reg` out of the polling loop and the loop never terminates." Bug = missing `volatile`. Reproducible only with optimisations enabled, which is why embedded teams often disable inlining of register accessors.
+
+**On weakly ordered ISAs (ARM, RISC-V):** `volatile` orders within `volatile`, but the descriptor-then-doorbell pattern needs a barrier between the (cacheable) descriptor write and the (uncached) doorbell write:
+
+```c
+desc->cmd = ...;
+__asm__ volatile("dmb st" ::: "memory");   /* publish descriptor first */
+*(volatile uint32_t *)doorbell = 1;
+```
+
+On x86 (Total Store Order) `volatile` alone is usually enough for single-core MMIO, but a `mfence` is needed against device DMA reading from cacheable memory.
+
+### 5. Why struct overlay on MMIO is a bug class, not a style choice
+
+```c
+/* DANGEROUS for MMIO */
+typedef struct {
+    uint32_t ctrl;       /* offset 0x00 */
+    uint32_t status;     /* offset 0x04 — or 0x08 if compiler pads */
+    uint16_t config;     /* offset 0x08? alignment varies! */
+    uint32_t data;       /* offset?? */
+} regs_t;
+```
+
+Three failure modes:
+
+1. **Padding mismatch** — compiler may insert padding the hardware register map doesn't have.
+2. **Bulk struct copy** — `*regs = defaults;` becomes a `memcpy` that reads adjacent fields, including W1C status bits, as a side effect.
+3. **Field write order** — assigning multiple struct fields gives the compiler freedom to reorder, but hardware often requires a specific order (e.g., `DATA` before `TRIGGER`).
+
+**Fix:** explicit `reg_read32(base, offset)` / `reg_write32(base, offset, val)` accessors. Pay the verbosity cost.
+
+### 6. Polling-with-timeout (revisited)
+
+```c
+bool poll_ready(volatile void *base, uint32_t off,
+                uint32_t mask, uint32_t expected, uint32_t timeout_us) {
+    for (uint32_t i = 0; i < timeout_us; i++) {
+        if ((reg_read32(base, off) & mask) == expected) return true;
+        usleep(1);
+    }
+    return false;
+}
+```
+
+Always handle the timeout. The NVMe `CSTS.RDY` bug returned `false` after `CAP.TO × 500 ms`, which forced the host to dump `CSTS.CFS` and the AQA register — that dump is what revealed the field-width mismatch.
+
+### 7. Endianness — the picture you must be able to draw
+
+For `0xDEADBEEF` at address `0x100`:
+
+```
+Address:    0x100  0x101  0x102  0x103
+Big-Endian:  DE     AD     BE     EF      MSB at lowest address
+Little-End:  EF     BE     AD     DE      LSB at lowest address
+```
+
+- **LE:** x86, ARM (default), RISC-V, PCIe wire format, NVMe registers.
+- **BE:** network byte order (Ethernet, IP, TCP/UDP), some PowerPC and SPARC.
+- **ARM:** configurable per-core, but LE dominates in practice.
+
+### 8. Endian-safe parsing (no struct overlay, no casts)
+
+```c
+uint16_t read_le16(const uint8_t *b) { return (uint16_t)b[0] | ((uint16_t)b[1] << 8); }
+uint32_t read_le32(const uint8_t *b) {
+    return (uint32_t)b[0]       | ((uint32_t)b[1] << 8)
+         | ((uint32_t)b[2] << 16) | ((uint32_t)b[3] << 24);
+}
+uint16_t read_be16(const uint8_t *b) { return ((uint16_t)b[0] << 8) | (uint16_t)b[1]; }
+uint32_t read_be32(const uint8_t *b) {
+    return ((uint32_t)b[0] << 24) | ((uint32_t)b[1] << 16)
+         | ((uint32_t)b[2] << 8)  | (uint32_t)b[3];
+}
+void write_le32(uint8_t *b, uint32_t v) {
+    b[0] = (uint8_t)v; b[1] = (uint8_t)(v>>8); b[2] = (uint8_t)(v>>16); b[3] = (uint8_t)(v>>24);
+}
+uint32_t swap32(uint32_t x) {
+    return ((x>>24)&0xFFu) | ((x>>8)&0xFF00u) | ((x<<8)&0xFF0000u) | ((x<<24)&0xFF000000u);
+}
+```
+
+Why parse byte-by-byte instead of casting `uint8_t *` to `uint32_t *`?
+
+- **Endianness mismatch** between source format and host byte order silently flips bytes.
+- **Unaligned access** on some ARM/MIPS cores traps or emulates slowly.
+- **Strict aliasing** rules technically make the cast undefined behaviour.
+
+The byte-by-byte version generates the same code on a modern compiler with optimisation on, costs nothing, and is portable.
+
+### 9. Useful bit tricks
+
+| Trick | Code | Use |
+|---|---|---|
+| Power of 2 | `n && !(n & (n-1))` | validate alignment / sizes |
+| Clear lowest set | `n & (n-1)` | Kernighan popcount |
+| Isolate lowest set | `n & -n` | find first set bit |
+| Popcount | `while (n) { c++; n &= n-1; }` | bit count |
+| Align up | `(addr + a-1) & ~(a-1)` | page/cacheline alignment |
+
+---
+
+## Bugs in this Topic
+
+- **Compiler hoists status read out of polling loop:** missing `volatile`, loop spins forever. Reproducible only with `-O2`. Fix: declare the pointer `volatile uint32_t *`.
+- **W1C status corruption via RMW:** read-modify-write of a status register clears every set status bit. Fix: write-only, never RMW, on W1C registers.
+- **Endianness bug on TLP / Ethernet header:** read TCP port `0x0050` (port 80) on x86 as a `uint16_t` cast and get `0x5000`. Fix: `ntohs()` or `read_be16(buf)`.
+- **NVMe `CSTS.RDY` bug seen via the polling timeout:** `AQA` programmed with the wrong field width meant the device never asserted RDY; the timeout in `wait_csts_rdy` is what surfaced the failure rather than letting the host hang.
+- **Struct-overlay bulk copy hits W1C side effects:** `*regs = defaults;` becomes a `memcpy` that reads `STATUS` and clears every set bit as a side effect. Fix: explicit per-offset writes.
+
+---
+
+## Interview Explanation (60-90 sec)
+
+> "Hardware registers are bit-field collections at MMIO addresses; I always go through `volatile` accessors and a `BIT/MASK/FIELD_GET/FIELD_PREP` chain. `volatile` prevents compiler caching and reordering of accesses to that address, but it is not a memory barrier or atomic — on ARM I add a `dmb` between the descriptor write and the doorbell. RMW corrupts W1C status registers and is not atomic across cores, so I treat status registers as write-only. For polling I always use a timeout; the NVMe `CSTS.RDY` bug I worked on was surfaced by exactly that timeout. For wire formats and protocol headers I never cast a `uint8_t *` to `uint32_t *` — I parse byte-by-byte with `read_le32`/`read_be32`, which avoids endianness traps, unaligned access, and strict-aliasing UB. Struct overlay over MMIO is a bug class — I use explicit `reg_read32(base, offset)`."
+
+---
+
+## Practice Q&A
+
+**Q1. `volatile` vs memory barrier — when do you need each?**
+`volatile` prevents compiler reordering and elision. Barrier prevents CPU reordering across the barrier. On x86 (TSO) `volatile` alone usually suffices for single-core MMIO. On ARM/RISC-V you need a barrier for the descriptor-then-doorbell pattern.
+
+**Q2. Why is struct overlay on MMIO dangerous?**
+Padding mismatch with the register map, bulk struct assignment becomes a `memcpy` that hits W1C side effects, field write order is not guaranteed.
+
+**Q3. What does `READ_ONCE` / `WRITE_ONCE` (Linux) buy over `volatile *` casts?**
+Single-instruction access (no torn reads/writes), prevents the compiler from reading/writing twice, documents intent at the access site rather than the declaration.
+
+**Q4. RMW the divider in bits [15:12] of `0xABCD1234` to `0x9` in your head.**
+mask=`0xF000`; `(0xABCD1234 & ~0xF000) | (0x9<<12) = 0xABCD9234`.
+
+**Q5. Why `n & (n-1)` clears the lowest set bit?**
+`n-1` flips all bits at and below the lowest set bit; ANDing keeps only positions where both have 1, which excludes the lowest set.
+
+**Q6. Right-shifting a negative signed int — what does C guarantee?**
+Implementation-defined. Always operate on `unsigned` for register fields.
+
+**Q7. Draw `0x12345678` at `0x100` in LE and BE.**
+LE: `78 56 34 12`. BE: `12 34 56 78`.
+
+**Q8. Why does PCIe define LE byte order even though PCI was endian-neutral?**
+PCIe is x86-native; LE on the wire means zero conversion cost on the dominant host. BE hosts pay the swap.
+
+**Q9. Network packet field reads as `0x5000` on x86; correct value is port 80 (`0x0050`). Fix?**
+`ntohs()` or `read_be16(buf)`.
+
+**Q10. Why parse byte-by-byte instead of `uint8_t*` → `uint32_t*` cast?**
+Endianness mismatch, unaligned-access trap, strict-aliasing UB.
+
+---
+
+## Coding A — Systems C: device init harness with poll + RMW
+
+```c
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define BIT(n)               (1U << (n))
+#define MASK(msb, lsb)       (((1U << ((msb)-(lsb)+1)) - 1) << (lsb))
+
+static uint8_t mmio[256];
+
+static inline uint32_t reg_read(uint32_t off) {
+    uint32_t v; memcpy(&v, &mmio[off], 4); return v;
+}
+static inline void reg_write(uint32_t off, uint32_t v) {
+    memcpy(&mmio[off], &v, 4);
+}
+static inline void reg_rmw(uint32_t off, uint32_t mask, uint32_t v) {
+    uint32_t t = reg_read(off);
+    t = (t & ~mask) | (v & mask);
+    reg_write(off, t);
+}
+
+#define CTRL    0x00
+#define STATUS  0x04
+#define DATA    0x08
+#define CTRL_EN     BIT(0)
+#define CTRL_START  BIT(1)
+#define CTRL_RESET  BIT(31)
+#define STATUS_RDY  BIT(0)
+
+static bool poll_ready(uint32_t off, uint32_t mask, uint32_t exp, uint32_t tries) {
+    for (uint32_t i = 0; i < tries; i++) {
+        if ((reg_read(off) & mask) == exp) return true;
+        if (i == 2) reg_write(off, exp);  /* simulate HW asserting RDY */
+    }
+    return false;
+}
+
+int main(void) {
+    memset(mmio, 0, sizeof(mmio));
+
+    /* Reset */
+    reg_write(CTRL, CTRL_RESET);
+    reg_write(CTRL, 0);
+
+    /* Wait ready */
+    if (!poll_ready(STATUS, STATUS_RDY, STATUS_RDY, 5)) {
+        puts("ERR: device never ready"); return 1;
+    }
+
+    /* Enable + start (RMW preserves other bits) */
+    reg_rmw(CTRL, CTRL_EN, CTRL_EN);
+    reg_rmw(CTRL, CTRL_START, CTRL_START);
+
+    reg_write(DATA, 0xDEADBEEF);
+    printf("DATA readback = 0x%08X\n", reg_read(DATA));
+    return 0;
+}
+```
+
+## Coding B — Interview DS&A: Number of 1 Bits (LC 191)
+
+Kernighan's `n & (n-1)` — exactly the popcount in your bit-trick table.
+
+```python
+def hammingWeight(n):
+    c = 0
+    while n:
+        n &= n - 1
+        c += 1
+    return c
+```
+
+---
+
+## Bug Anchor
+
+- **Day 11 (NVMe):** `wait_csts_rdy` and AQA field-width bug.
+- **Day 14 (PCU/ADR):** missing wait-for-ack — polling discipline in firmware.
+- **Day 8 (DMA/doorbells):** descriptor-then-doorbell needs a barrier; `volatile` alone won't do it on ARM.
+
+## Exit Check
+
+- [ ] Stated `volatile` vs memory barrier in 30 seconds.
+- [ ] Listed the three failure modes of struct-overlay-on-MMIO.
+- [ ] Wrote `extract_field` / `insert_field` cold.
+- [ ] Wrote `read_le32` and `read_be32` cold.
+- [ ] Drew `0x12345678` in LE and BE memory at `0x100`.
+- [ ] Stated why W1C registers must be write-only.
+- [ ] Wrote `poll_ready` with timeout cold.
+- [ ] Predicted the result of `reg_rmw` on a sample value without running it.
