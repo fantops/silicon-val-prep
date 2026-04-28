@@ -512,7 +512,111 @@ So define f(t) = ln(t)/t. Compare f(x) vs f(y).
 
 ---
 
-## SECTION 8 - Quick technical reflexes (drop these in answers)
+## SECTION 8 - Coding practice (5 problems, 2-3 hrs, do today)
+
+> Mix of LC patterns + C systems concepts. Code these end-to-end today, rest tonight, skim notes tomorrow morning. Suggested order is warmup -> hardest.
+
+### Problem 1 (C systems, 25 min): MMIO field write + polling with timeout
+
+```c
+/*
+ * - REG_BASE = 0xFE000000, link-status reg at offset 0x10
+ * - Bits [7:4] = link speed (4 bits)
+ * - Bit  [0]   = link ready
+ *
+ * Implement:
+ *   void  set_field   (uintptr_t addr, uint32_t shift, uint32_t mask, uint32_t val);
+ *   int   wait_for_bit(uintptr_t addr, uint32_t bit, unsigned timeout_us);
+ *
+ * Stub the MMIO write/read with a static uint32_t for testing.
+ */
+```
+
+Practice: `volatile`, mask + shift, RMW pattern, polling-with-timeout, `udelay` stub.
+Probe-after: what if you forget `volatile`? What if two threads call `set_field` on the same reg?
+
+### Problem 2 (C concepts, 30 min): Array of function pointers - opcode VM
+
+```c
+typedef struct {
+    uint32_t reg[4];
+    uint32_t pc;
+    uint8_t  mem[256];
+    int      halted;
+} cpu_t;
+
+/* Opcodes:
+ *   0x01  ADD  Rd, Rs   (next byte: high nibble=Rd, low nibble=Rs)
+ *   0x02  MOV  Rd, imm8 (next byte: imm; one after: Rd)
+ *   0x03  JMP  addr8    (next byte: target)
+ *   0xFF  HALT
+ *
+ * Implement:
+ *   typedef void (*op_fn_t)(cpu_t *);
+ *   static op_fn_t handlers[256] = { [0x01] = op_add, ... };
+ *   void run(cpu_t *c);
+ *
+ * Test program: MOV r0,5; MOV r1,7; ADD r0,r1; HALT.  Expect r0 == 12.
+ */
+```
+
+Practice: function pointers, designated initializers, sparse dispatch table, NULL check, state-machine pattern.
+
+### Problem 3 (LC 206, 20 min): Reverse linked list - both ways
+
+```c
+struct ListNode { int val; struct ListNode *next; };
+
+struct ListNode* reverseList_iter(struct ListNode *head);
+struct ListNode* reverseList_rec (struct ListNode *head);
+```
+
+3-pointer iterative is the universal embedded-friendly answer. Bonus extension if time: LC 25 reverse-K-group.
+
+Practice: pointer surgery, edge cases (empty/single), iter vs recursion trade-off.
+
+### Problem 4 (LC 23, 40 min): Merge K Sorted Lists
+
+```c
+struct ListNode* mergeKLists(struct ListNode** lists, int listsSize);
+```
+
+Two approaches:
+1. **Divide and conquer:** pairwise merge; O(N log K). Simpler in C - do this.
+2. **Min-heap:** push K heads, pop smallest, push next; O(N log K). Mention as alternative.
+
+The trade-off discussion matters more than the code. *"Small K -> D&C. Huge K -> heap amortizes better."*
+
+### Problem 5 (LC 146, 50 min): LRU Cache - O(1) get/put
+
+```c
+typedef struct LRUCache LRUCache;
+
+LRUCache* lRUCacheCreate(int capacity);
+int       lRUCacheGet  (LRUCache* obj, int key);
+void      lRUCachePut  (LRUCache* obj, int key, int value);
+void      lRUCacheFree (LRUCache* obj);
+```
+
+Pattern: doubly-linked list (O(1) move-to-front, remove-tail) + hashmap (O(1) lookup -> node pointer).
+
+Why this matters for your role: **LRU is the eviction model used in CPU caches, page caches, TLB pseudo-LRU, NPU context cache.** Knowing it cold lets you discuss real cache replacement policies in interviews.
+
+Practice: dual data-structure design, struct layout, intrusive vs separate-allocation trade-off.
+
+### Coverage check vs the rest of this guide
+
+| Concept | Problem |
+|---|---|
+| MMIO + volatile + mask/shift + polling | #1 |
+| Function pointers + array-of-fp + state machine | #2 |
+| Pointers + linked lists + iter vs rec | #3 |
+| Algorithmic thinking + heap vs D&C | #4 |
+| Cache concepts + dual data structure | #5 |
+
+---
+
+## SECTION 9 - Quick technical reflexes (drop these in answers)
 
 ### One-liner reflexes
 
@@ -545,7 +649,7 @@ So define f(t) = ln(t)/t. Compare f(x) vs f(y).
 
 ---
 
-## SECTION 9 - Final 10-min checklist
+## SECTION 10 - Final 10-min checklist
 
 - [ ] Career narrative (60 sec) rehearsed out loud
 - [ ] Why this role / why now answer ready
