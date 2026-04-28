@@ -21,6 +21,14 @@ IF  ─►  ID  ─►  EX  ─►  MEM  ─►  WB
 fetch    decode  execute  memory   write-back
 ```
 
+| Stage | What happens | HW units |
+|---|---|---|
+| **IF** | PC → I-cache fetch; branch-predict next PC | I$, BPU |
+| **ID** | decode opcode; read source regs from regfile | decoder, regfile read ports |
+| **EX** | ALU op, branch decide, AGU computes load/store address | ALU, AGU, branch unit |
+| **MEM** | access D-cache for load/store (only if needed) | D$, LSQ |
+| **WB** | write result back to architectural register | regfile write port |
+
 Three hazard classes:
 
 | Hazard | Cause | Mitigation |
@@ -30,6 +38,55 @@ Three hazard classes:
 | **Control** | branch target unknown until EX | branch prediction + speculative fetch |
 
 Modern Intel/ARM cores are **14-20 stages deep**. Deeper = higher F (per-stage delay smaller) but **bigger mispredict penalty** because the whole pipeline must be flushed.
+
+### 1b. Walking a single instruction through the stages
+
+Interviewers love this concrete drill. Three flavours of `MOV` cover the picture:
+
+**`MOV A, B` — register-to-register copy (no ALU, no MEM):**
+
+| Stage | What happens |
+|---|---|
+| IF | fetch `MOV A,B` opcode bytes from I$ |
+| ID | decode → "copy reg B into reg A"; read B from regfile |
+| EX | **no ALU op needed** — value passes through (or `0 + B` in some impls) |
+| MEM | **skipped** — no memory access |
+| WB | write B's value into reg A |
+
+**Modern OoO twist — *move elimination*:** the rename stage just remaps A's logical-reg pointer to B's physical reg in the RAT. **Zero EX latency, zero ALU usage, zero issue slot.** Intel has done this since Ivy Bridge; ARM since Cortex-A57. This is why "how many cycles is `mov rax, rbx`?" can legitimately answer **zero**.
+
+**`MOV A, [B]` — load from memory (uses MEM stage):**
+
+| Stage | What happens |
+|---|---|
+| IF | fetch |
+| ID | decode; read B (the address) |
+| EX | AGU computes effective address = B (no ALU on data) |
+| MEM | **D-cache read at addr;** L1 miss → L2 → L3 → DRAM |
+| WB | result written into reg A |
+
+Latency depends on where it hits: L1 ≈ 4 cyc, L2 ≈ 12, L3 ≈ 40, DRAM ≈ 200-300. ROB fills while waiting on DRAM = backend stall.
+
+**`MOV [B], A` — store to memory (uses MEM stage, no WB):**
+
+| Stage | What happens |
+|---|---|
+| IF | fetch |
+| ID | decode; read A (data) and B (address) |
+| EX | AGU computes addr = B |
+| MEM | enqueue into store buffer; eventual D-cache write |
+| WB | nothing to write back |
+
+The store buffer decouples store latency from issue — TSO allows store→later-load reordering precisely because the store sits in the buffer while the load fires.
+
+**Hazards on `MOV A, B` specifically:**
+
+- RAW: a later instruction reading A — handled by EX→EX forwarding or rename.
+- WAR / WAW on A: killed by register renaming.
+- Structural: never — uses no specialized FU.
+- Control: never — not a branch.
+
+For the load form `MOV A, [B]` the extra hazards are **load-use hazard** (next instruction needs A immediately → 1-cycle stall even with forwarding) and **load latency** (TLB miss + cache miss can stretch the in-flight window for 100+ cycles).
 
 ### 2. The front end
 

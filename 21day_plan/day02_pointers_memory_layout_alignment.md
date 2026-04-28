@@ -135,6 +135,92 @@ The whole insight is the offset math: `member`'s address = `parent` address + `o
 
 Bare-metal firmware in the Intel/Qualcomm world is usually 100% static. User-space drivers (NVMe-of, vfio, ORT NPU runtime) use heap freely but pay attention to alignment.
 
+### 7. Function pointers (and arrays of them)
+
+C's substitute for virtual dispatch. Lets one piece of code call many implementations chosen at runtime — the foundation of driver `ops` tables, ISR vectors, state machines, and callbacks.
+
+**Declare / assign / call:**
+
+```c
+int add(int a, int b) { return a + b; }
+
+int (*fp)(int, int);     /* fp: pointer to fn taking (int,int) returning int */
+fp = &add;                /* `&` optional — function name decays to address */
+fp = add;                 /* equivalent */
+
+int r = fp(2, 3);         /* implicit call */
+int s = (*fp)(2, 3);      /* explicit deref — same effect */
+```
+
+**Read inside-out:** `fp` is the identifier; `(*fp)` says it's a pointer; `(int,int)` says the pointee takes two ints; the leading `int` is the return type.
+
+**Use a typedef** — keeps signatures readable, especially in headers:
+
+```c
+typedef int (*binop_fn_t)(int, int);
+binop_fn_t fp = add;
+```
+
+**Array of function pointers — opcode dispatch table:**
+
+```c
+typedef void (*op_handler_t)(cpu_t *cpu);
+
+void op_nop (cpu_t *c) { c->pc++; }
+void op_add (cpu_t *c) { c->reg[0] += c->reg[1]; c->pc++; }
+void op_halt(cpu_t *c) { c->halted = 1; }
+
+static op_handler_t handlers[256] = {
+    [0x00] = op_nop,
+    [0x01] = op_add,
+    [0xFF] = op_halt,
+    /* unfilled slots default to NULL — caller must check */
+};
+
+void step(cpu_t *cpu) {
+    uint8_t opc = cpu->mem[cpu->pc];
+    op_handler_t h = handlers[opc];
+    if (h) h(cpu);
+    else   trap_illegal_opcode(cpu);
+}
+```
+
+This is **literally how interpreters, NVMe admin command tables, ACPI method dispatch, and packet handlers work.**
+
+**Array of fn-ptrs — state machine:**
+
+```c
+typedef enum { S_IDLE, S_RUN, S_DONE, S_NUM } state_t;
+typedef state_t (*state_fn_t)(event_t e);
+
+state_t st_idle(event_t e) { return (e == EV_START) ? S_RUN  : S_IDLE; }
+state_t st_run (event_t e) { return (e == EV_STOP)  ? S_DONE : S_RUN;  }
+state_t st_done(event_t e) { (void)e; return S_DONE; }
+
+state_fn_t fsm[S_NUM] = { st_idle, st_run, st_done };
+
+state_t cur = S_IDLE;
+cur = fsm[cur](next_event());
+```
+
+Replaces large `switch` blocks; each state is self-contained.
+
+**Real places you've already seen them:**
+
+| Use case | Where |
+|---|---|
+| Driver ops table | Linux `struct file_operations { ssize_t (*read)(...); int (*open)(...); ... }` |
+| ISR vector table | array indexed by IRQ#, each entry an ISR address |
+| Callbacks | `qsort(arr, n, sz, cmp_fn)`, libuv async I/O, GUI event handlers |
+| Plugin / dynamic load | `dlsym()` returns `void*` cast to fn-ptr |
+| Test harness | array of test functions run in order |
+
+**Footguns:**
+
+- `void (*fp)()` is **not** `void (*fp)(void)` in C — the first means "unspecified args", the second means "no args". Always use `(void)` for no-arg fn-pointers.
+- Casting between fn-ptrs of different signatures and calling = UB.
+- `NULL` check before calling — sparse dispatch tables (like the opcode array above) leave entries zero.
+
 ---
 
 ## Bugs in this Topic

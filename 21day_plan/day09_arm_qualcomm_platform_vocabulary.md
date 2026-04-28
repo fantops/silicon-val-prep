@@ -137,6 +137,29 @@ Knobs that bite in validation:
 
 **Clock-domain crossing (CDC):** flops on one clock feeding flops on a different clock can metastable. Mitigations: 2-FF synchroniser (data), async FIFO (multi-bit), handshake (control). CDC bugs are the textbook *"passes simulation, fails silicon"* class.
 
+**CDC techniques in detail:**
+
+| Crossing | Standard solution | Why |
+|---|---|---|
+| 1-bit level / control | 2-FF synchroniser in destination clock | first flop may go metastable; second flop sees a stable value with very high MTBF |
+| 1-bit pulse | toggle-synchroniser (toggle in src, edge-detect in dst) | a short src pulse may be missed by slower dst clock; toggle survives |
+| Multi-bit data | **async FIFO with Gray-coded read/write pointers**, OR full **req/ack handshake** | multi-bit can sample mid-transition with multiple bits flipping → resync gives garbage |
+| Reset | reset synchroniser (async assert, **sync de-assert**) | otherwise violates flop recovery/removal time |
+
+**Why Gray code in async FIFOs:** binary-coded pointer increments can flip many bits per step (e.g., 0111 → 1000 flips 4 bits). If the destination clock samples mid-transition, each bit may resolve independently → reads a value that never existed → FIFO appears full when empty (or vice-versa). Gray code guarantees exactly **one bit changes per increment**, so worst-case the resync sees either the old or new pointer — both are valid. The pointer is converted Gray↔binary on each side for arithmetic.
+
+**2-FF MTBF math (informal):** MTBF grows exponentially with the time available for metastability to resolve. One flop = barely enough at modern clock rates; two flops = years; three flops are added in safety-critical paths. Combinational logic between sync stages is illegal — the second flop would sample a glitching net.
+
+**Power-domain crossings — isolation cells & retention flops:**
+
+When one rail is power-gated and a neighbouring rail stays alive, every signal that crosses needs an **isolation cell** (clamps the output to a safe value — usually 0 or 1) so the always-on side doesn't see a floating input as the gated rail collapses. Sequencing matters: **assert isolation enable BEFORE power-down; de-assert AFTER power-up.** Wrong order = floating inputs propagate, downstream flops latch garbage.
+
+**Retention flops** keep critical state across a power-down on a separate always-on supply ("balloon latch"). Used for the few bits that *must* survive C6/sleep so the wake sequence has somewhere to restore from. They cost area + leakage on the AON rail — used sparingly.
+
+**Level shifters** sit on signals crossing two different (live) voltage rails — e.g., 0.6 V core ↔ 1.8 V IO. Wrong direction shifter = signal arrives too dim or rails out.
+
+**Validation reflex:** a pre-Si CDC linter (Spyglass-CDC, Conformal-CDC) flags every crossing; the engineer signs off each waiver. A regression that only repros at a specific voltage / temperature / freq combo (not architectural) → suspect a CDC race, isolation-enable timing, or analog margin — not a logic bug.
+
 ### 10. Resets
 
 - **POR** (power-on reset) — held until rails stable, released asynchronously.
