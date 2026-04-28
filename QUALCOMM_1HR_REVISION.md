@@ -545,13 +545,133 @@ Pin freq (`governor=performance` or disable Turbo); `taskset -c`; warm-up runs; 
 
 ---
 
-## SECTION 4C — False Sharing one-liner (1 min)
+## SECTION 4C — Cache Coherence + False Sharing (4 min)
 
-Two threads writing different vars on the **same 64B cache line** → line ping-pongs M↔M between cores → IPC tanks, no MT scaling. **Fix:** pad to 64B (`__attribute__((aligned(64)))` + `char pad[60]`), or per-CPU vars. **Detect:** `OFFCORE_RESPONSE.*` snoop counters high. *Coherence basics: MESI/MESIF (Intel)/MOESI (AMD/ARM) — be ready to name them, depth not needed.*
+### Cache hierarchy — what each level costs
+
+| Level | Typical size | Latency | Scope |
+|---|---|---|---|
+| L1 (I + D) | 32-48 KB each | ~4 cycles | per-core, private |
+| L2 | 1-2 MB | ~12 cycles | per-core (Intel) / per-cluster (ARM) |
+| L3 / LLC | 1-3 MB per core | ~40 cycles | shared across cluster/socket |
+| DRAM | GBs | **~200-300 cycles** | shared |
+
+**Cache line = 64B** on x86 and ARMv8. All coherence traffic moves at line granularity, not byte.
+
+**Inclusive vs exclusive vs NINE:** Intel client used inclusive L3 (line in L1 ⇒ also in L3) — simple snoop, but L3 evict forces L1 evict. Modern Intel server (SKX onward) = NINE (non-inclusive, non-exclusive) — needs **snoop filter** to avoid broadcasting to every L2.
+
+### MESI — the baseline coherence protocol
+
+Each cache line in one of 4 states **per cache**:
+
+| State | Meaning | Can read? | Can write? | Other copies? |
+|---|---|---|---|---|
+| **M** odified | dirty, only valid copy | yes | yes | no |
+| **E** xclusive | clean, only copy | yes | yes (→M) | no |
+| **S** hared | clean, others may have it | yes | no (must invalidate first) | maybe |
+| **I** nvalid | not present | no | no | — |
+
+**Key transitions:**
+- Read miss + no other copies → fetch from memory, install as **E**.
+- Read miss + others have it → others go **S**, you install as **S**.
+- Write to **S** → broadcast **invalidate**, others go **I**, you go **M**.
+- Snoop hit on **M** from other core → write back (or forward) + transition to **S** or **I**.
+
+### MESIF (Intel) and MOESI (AMD/ARM)
+
+- **F** orward (Intel client/server): one of the S-copies tagged "F" — only that one responds to new requests. Avoids "all S-cores reply" snoop storm.
+- **O** wned (AMD/ARM): dirty + shared without writeback. Reader gets data direct cache-to-cache; memory stays stale until **O**-line is evicted. Saves DRAM bandwidth.
+
+### Snoop topologies — why they matter for validation
+
+| Topology | Where used | Failure mode |
+|---|---|---|
+| **Bus snoop** | small SMP, old | bus saturates fast |
+| **Snoop filter / directory** | Intel server, ARM CMN | filter overflow → false invalidations + perf cliff |
+| **Mesh / ring NoC** | Intel SKX+ mesh, AMD Infinity Fabric | NoC congestion under coherence storm |
+
+Validation reflex: a coherence regression that only shows above N cores often = **snoop filter overflow** or **directory eviction storm**. Counter: `OFFCORE_RESPONSE.*` snoop sources spike.
+
+### False sharing — descriptive walk-through
+
+**Setup:** two threads, two distinct counters, but the layout puts both on the same 64B line:
+
+```c
+struct counters {
+    uint64_t a;   // thread A++
+    uint64_t b;   // thread B++   ← same cache line as 'a'
+};
+struct counters c;   // 16 B total — fits in one 64B line
+```
+
+**What happens cycle-by-cycle:**
+
+1. Thread A on core 0: `c.a++` → line loads as **E** in core 0's L1 → write → **M** on core 0.
+2. Thread B on core 1: `c.b++` → read miss → core 0 must demote **M→S** (writeback or forward) → core 1 installs **S** → write needs M → invalidate sent to core 0 → core 0 goes **I**, core 1 goes **M**.
+3. Thread A again: same dance in reverse. **Line ping-pongs M↔M every iteration.**
+4. Each ping-pong = ~40-80 cycles cross-core latency + coherence message. The actual `add` is 1 cycle.
+5. Net effect: scalar work that was 1 cycle is now ~50 cycles. **Single-thread perf was fine; multi-thread perf is worse than single-thread.**
+
+**Counter signature (x86 / Intel):**
+- `MEM_LOAD_L3_HIT_RETIRED.XSNP_HITM` — load hit a modified line in another core's cache (the smoking gun).
+- `OFFCORE_RESPONSE.*.SNOOP_HITM` — snoop response indicating dirty in a sibling.
+- High `cycles_stalled_l1d` per access while L1 hit-rate paradoxically drops.
+
+**Detection workflow:**
+1. Notice MT scaling collapses (e.g., 2 threads ≤ 1.2× single thread).
+2. `perf c2c` (Linux) — designed for this; reports cache-line addresses with HITM events + which threads touched them.
+3. Map line address back to source struct via DWARF.
+4. Check the offsets within the line — if multiple threads write different offsets in same 64B → confirmed.
+
+**Fixes:**
+```c
+// Option 1: pad to 64B between contended fields
+struct counters {
+    uint64_t a;
+    char     pad[56];          // 8 + 56 = 64
+    uint64_t b;
+} __attribute__((aligned(64)));
+
+// Option 2: per-thread instances, sum on read
+__thread uint64_t counter_local;     // each thread's own line
+
+// Option 3: C++17
+struct counters {
+    alignas(std::hardware_destructive_interference_size) uint64_t a;
+    alignas(std::hardware_destructive_interference_size) uint64_t b;
+};
+```
+
+### True sharing / coherence storm
+
+**Different bug, same symptom shape.** Many cores all *legitimately* updating the **same** variable (shared atomic counter, lock cache line, shared queue head pointer). Coherence is doing the right thing — but the line still ping-pongs.
+
+- **Lock convoy:** N cores spinning on one lock variable → invalidation broadcast every release.
+- **Atomic counter under contention:** `__sync_fetch_and_add` on a global → same ping-pong.
+
+**Fixes:** per-CPU counters + sum on read (sloppy counters); RCU for read-mostly; **MCS / ticket / queued locks** so each waiter spins on its **own** line; backoff on CAS failure.
+
+### Atomics + memory barriers (one slide)
+
+| x86 instruction | Cost | Effect |
+|---|---|---|
+| plain `mov` | free | not ordered vs other cores' loads |
+| `lock add/xadd/cmpxchg` | ~20-40 cyc | full barrier, atomic, line goes M |
+| `mfence` | ~30 cyc | drains store buffer |
+| `sfence` | ~5 cyc | NT-store ordering only |
+
+| ARM instruction | Effect |
+|---|---|
+| `LDAR` | acquire load (no later read/write floats above) |
+| `STLR` | release store (no earlier read/write sinks below) |
+| `DMB ISH` | full data memory barrier in inner-shareable domain |
+| `LDXR/STXR` | LL/SC for atomics (newer: `CAS`, `LDADD` from ARMv8.1 LSE) |
+
+Validation lens: a benchmark that gets faster under `taskset -c 0,1` (same cluster) than `0,4` (cross-cluster) is paying coherence latency at the cluster boundary — design issue, not bug.
 
 ---
 
-## SECTION 5 — CPU Microarchitecture (Day 16) — DEEP (8 min)
+## SECTION 5 — CPU Microarchitecture (Day 16) — DEEP (10 min)
 
 > **Why deep here:** at Cambria I sat next to PCU + core PMA debug; even though my owned features were power flows, every cross-IP bug I touched (15+) eventually surfaced as a perfmon/MSR signature. This is the layer I read traces *at*.
 
@@ -571,7 +691,15 @@ Where validation actually pokes:
 - **ROB depth** caps in-flight instruction window (~512 on Golden Cove). Long-latency miss can fill ROB → backend stalls even with parallelism available.
 - **RS (reservation station)** wakes μops when operands ready. RS-full = scheduling bottleneck (rare; usually backend-memory wins first).
 
-### 5.2 Hazards — what each looks like in counters
+### 5.2 Out-of-order execution — the moving parts
+
+- **Rename / RAT** (Register Alias Table): map architectural regs → larger pool of physical regs (~280 on Golden Cove). Eliminates WAR/WAW; only true RAW remains. Rename-stall = physical reg pool exhausted.
+- **Reservation Station / Scheduler**: holds μops awaiting operands; wakes them up when source ready. Wakeup-select latency is why some FU back-to-back patterns show 1-cycle gaps.
+- **Load / Store Queue (LSQ)**: tracks in-flight memory ops; enforces memory-order rules; detects store→load forwarding opportunities.
+  - **Store-to-load forwarding**: load can grab data from a not-yet-retired store in the store buffer if address+size match (full SB hit = ~5 cyc; partial overlap = penalty + replay).
+- **ROB (Reorder Buffer)**: μops retire in program order even though they executed OoO. Holds results until retirement → enables precise exceptions. ROB-full = backend stall (memory or long-latency div/sqrt).
+
+### 5.3 Hazards — what each looks like in counters
 
 | Hazard | Mechanism | Counter signature | Mitigation |
 |---|---|---|---|
@@ -579,9 +707,11 @@ Where validation actually pokes:
 | Data RAW | dependency chain | low IPC, high `CYCLES_NO_EXECUTE` | break chain (parallel sums, FMA) |
 | Data WAR/WAW | killed by rename | (none — should not surface) | — |
 | Control | branch mispredict | `BR_MISP_RETIRED` high, `INT_MISC.RECOVERY_CYCLES` high | branchless / PGO / `__builtin_expect` |
-| Memory ordering | LSQ / store-buffer hazards | `MEMORY_ORDERING_ISSUES`, machine clears | rare on TSO; weak ARM more relevant |
+| Memory ordering | LSQ / store-buffer hazards | `MACHINE_CLEARS.MEMORY_ORDERING` | rare on TSO; weak ARM more relevant |
+| Store-fwd partial | load partially overlaps in-flight store | `LD_BLOCKS.STORE_FORWARD` | align stores to load size |
+| 4K aliasing | load/store addresses alias on low 12 bits | `LD_BLOCKS_PARTIAL.ADDRESS_ALIAS` | offset allocations |
 
-### 5.3 Branch prediction — what to know
+### 5.4 Branch prediction — what to know
 
 - **BTB** (Branch Target Buffer) caches target addresses per branch PC.
 - **TAGE / Perceptron** (modern direction predictors) — 97-99% on typical code.
@@ -589,7 +719,7 @@ Where validation actually pokes:
 - **Indirect branch predictor** — for `jmp [reg]` / vtable / interpreter dispatch. The Spectre-v2 mitigation (retpoline / IBRS) targets this.
 - Validation reflex: when low IPC + `BR_MISP_RETIRED` high, ask: branchy hot loop? Indirect dispatch? RSB underflow on deep call chain?
 
-### 5.4 SIMD + AVX license levels (the PCU connection — your territory)
+### 5.5 SIMD + AVX license levels (the PCU connection — your territory)
 
 | License | Window | F offset | Trigger |
 |---|---|---|---|
@@ -603,19 +733,34 @@ Where validation actually pokes:
 
 **Validation tie-back (my Cambria angle):** AVX license switch IS a PCU FW sequence. Ordering bug here = same shape as my ADR opcode-ordering hang — wrong opcode order between V-droop assertion, F cut, license window arming. PCU opcode trace on Zebu is how you'd catch it pre-Si.
 
-### 5.5 Prefetcher triage (standard reflex)
+### 5.6 Prefetchers — what runs and what hides bugs
 
-HW prefetchers (next-line, stride, spatial, NLP) hide latency — and hide bugs. Silicon A passes, silicon B with different prefetch heuristic regresses.
+| Prefetcher | What it does | Counter |
+|---|---|---|
+| L1 next-line / IP-stride | sequential & strided D-loads | `L1D.REPLACEMENT` |
+| L1 instruction PF | next I$ line | front-end bound bucket |
+| L2 streamer | multi-line ahead on detected stream | `L2_RQSTS.PF_HIT/MISS` |
+| L2 spatial / NLP | adjacent-line / next-line | same |
+
+**Why validation cares:** HW prefetch hides latency *and* hides software prefetch bugs — silicon A passes, silicon B with a different prefetch heuristic regresses.
 
 **Standard triage:** disable HW PF (Intel `MSR_MISC_FEATURE_CONTROL` 0x1A4, bits clear individual prefetchers), re-run. If symptom moves → SW had a prefetch-dependent path.
 
-### 5.6 Memory consistency (compressed)
+### 5.7 TLB + page walk
+
+- L1 dTLB: ~64 entries 4K, smaller for 2M/1G.
+- L2 STLB: ~1.5K entries, shared 4K + 2M.
+- TLB miss → **page walk** in HW (x86 page-walker is in MMU): up to 4 memory accesses (5 with 5-level paging). Costs 30-100+ cycles.
+- Counters: `DTLB_LOAD_MISSES.WALK_COMPLETED`, `WALK_DURATION`.
+- **Huge pages (2M/1G)** collapse walk depth and TLB pressure. Working sets >tens of MB usually need them.
+
+### 5.8 Memory consistency (compressed)
 
 - **TSO (x86):** only store→later-load can reorder (store buffer). `volatile` + WC for MMIO. `LOCK` is seq_cst.
 - **Weak (ARM, RISC-V, POWER):** any pair can reorder. Use `DMB ST/LD` or `STLR/LDAR`.
 - **Producer-consumer porting bug:** `data = X; ready = 1` works on x86, breaks on ARM without barrier between stores.
 
-### 5.7 Cross-IP bugs — what I saw on Cambria (15+ debugs)
+### 5.9 Cross-IP bugs — what I saw on Cambria (15+ debugs)
 
 The CPU is rarely the only actor in cross-IP issues. The shapes I saw:
 1. **Power-state coordination races** — Core PMA ↔ PCU ↔ uncore handshake (Core C6 wake-loss).
