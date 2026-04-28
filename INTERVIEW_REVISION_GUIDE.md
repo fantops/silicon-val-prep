@@ -575,17 +575,19 @@ struct ListNode* reverseList_rec (struct ListNode *head);
 
 Practice: pointer surgery, edge cases (empty/single), iter vs recursion trade-off.
 
-### Problem 4 (LC 23, 40 min): Merge K Sorted Lists
+### Problem 4 (LC 21, 25 min): Merge Two Sorted Lists
 
 ```c
-struct ListNode* mergeKLists(struct ListNode** lists, int listsSize);
+struct ListNode* mergeTwoLists(struct ListNode* l1, struct ListNode* l2);
 ```
 
-Two approaches:
-1. **Divide and conquer:** pairwise merge; O(N log K). Simpler in C - do this.
-2. **Min-heap:** push K heads, pop smallest, push next; O(N log K). Mention as alternative.
+Two acceptable styles - know both:
+1. **Iterative with dummy head** - cleaner, no special-case for empty lists.
+2. **Recursive** - elegant but eats stack on long lists; mention you'd avoid in embedded.
 
-The trade-off discussion matters more than the code. *"Small K -> D&C. Huge K -> heap amortizes better."*
+**Bonus discussion (don't code, just be ready to talk):** how you'd extend to K lists. *"Pairwise via this same function = O(N log K) divide-and-conquer. Or push K heads into a min-heap and pop-then-push-next = O(N log K). Small K -> D&C; huge K -> heap amortizes better."*
+
+Practice: dummy-head trick, pointer surgery, recursion-vs-iteration trade-off in embedded context.
 
 ### Problem 5 (LC 146, 50 min): LRU Cache - O(1) get/put
 
