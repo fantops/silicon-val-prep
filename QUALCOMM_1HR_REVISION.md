@@ -51,150 +51,58 @@
 
 ---
 
-## SECTION 2 — Platform Vocabulary (x86 lens, with QC mapping) (10 min)
+## SECTION 2 — Platform Vocabulary (x86 lens, QC mapping) (4 min)
 
-> **Framing for interview:** "I think in x86 vocabulary because that's where I worked at Intel. Here's how the same concepts map to Snapdragon — the architecture differs but the validation discipline is identical."
+> **Framing reflex:** "I think in x86 vocab — that's where I worked at Intel. Same concepts on Snapdragon, different names." Then drop the 1-line mapping.
 
-### 2.1 Privilege levels
+### 2.1 The translation table (memorize)
 
-**x86 (what I know):**
-- **Ring 3** = user-space apps
-- **Ring 0** = OS kernel
-- **VMX root** (VT-x) = hypervisor (KVM, Hyper-V)
-- **SMM** (System Management Mode) = firmware-only mode entered via SMI; runs PCU/BIOS handlers; opaque to OS
-
-Crossings: `SYSCALL` → ring 0; `VMCALL` → VMX root; SMI → SMM. Each crossing is a security boundary.
-
-**QC mapping (one line):** Ring 3/0/VMX/SMM → **EL0/EL1/EL2/EL3**, with EL3 hosting **ARM Trusted Firmware (ATF)** and TrustZone running S-EL1/S-EL0 alongside Non-Secure. ARMv9 adds Realm world.
-
-### 2.2 MMU / paging
-
-**x86:**
-- Page-table base in **CR3** (per-process)
-- **PCID** tags TLB entries → no flush on context switch
-- 4-level paging: PML4 → PDPT → PD → PT (4KB / 2MB / 1GB pages)
-- **MTRRs / PAT** = page-level memory type (WB, WC, UC, WT)
-
-**QC mapping:** CR3 → **TTBR0_EL1** (user) + **TTBR1_EL1** (kernel — two TTBRs, no top-half hack). PCID → **ASID**. MTRR/PAT → **MAIR_EL1 + page AttrIndex**. Granule selectable: 4 KB / 16 KB / 64 KB.
-
-### 2.3 Interrupt controller
-
-**x86:**
-- **Local APIC** per core; **I/O APIC** for legacy devices; **MSI/MSI-X** for PCIe (memory-write to APIC address)
-- **IPIs** via local APIC ICR
-- Interrupt vectors 0-255
-
-**QC mapping:** Local APIC + IOAPIC → **GIC** (Distributor GICD + Redistributor GICR + per-CPU CPU interface). MSI/MSI-X → **ITS** (Interrupt Translation Service) with LPIs.
-
-| ARM range | Class | x86 equivalent |
+| Concept | x86 (what I know) | Snapdragon (mapping) |
 |---|---|---|
-| 0-15 | SGI (Software-Generated) | IPIs |
-| 16-31 | PPI (Private Peripheral) | per-CPU APIC timer / watchdog |
-| 32+ | SPI (Shared Peripheral) | I/O APIC routed lines |
-| LPI via ITS | — | MSI/MSI-X |
+| Privilege rings | Ring 3 / 0 / VMX-root / SMM | EL0 / EL1 / EL2 / EL3 (TrustZone S-EL0/1) |
+| Page-table base | CR3 + PCID + PML4 (4-level) | TTBR0/1_EL1 + ASID, 4/16/64 KB granule |
+| Memory type per page | MTRR / PAT (WB/WC/UC/WT) | MAIR_EL1 + page AttrIndex |
+| Interrupt controller | Local APIC + I/O APIC | GIC (GICD + GICR + ITS for MSI) |
+| MSI / MSI-X | memory-write to APIC addr | LPIs via ITS |
+| IOMMU | VT-d, Requester ID = BDF | SMMU, Stream ID = BDF; CMDQ/EVTQ |
+| OS↔FW power API | ACPI _PSx / MWAIT / HWP | PSCI SMCs (CPU_ON/OFF, SYSTEM_SUSPEND) |
+| Power microcontroller | **PCU / PUnit** (my Cambria work) | RPMh aggregator (always-on) |
+| FW-to-IP bus | IOSF Sideband | RPMh + SPMI to PMIC |
+| Power-loss flow | ADR (PLI → PCU → WPQ flush) | (no direct equivalent — mobile not in scope) |
+| Topology | P-core/E-core (Thread Director) | big.LITTLE / DynamIQ in DSU; EAS scheduler |
+| Boot chain | SEC → PEI (MRC) → DXE → BDS → OS | PBL → SBL/XBL → ATF → ABL → Linux |
 
-### 2.4 IOMMU (DMA address translation + protection)
+### 2.2 Memory consistency — THE architectural difference
 
-**x86:**
-- Intel **VT-d** / AMD **IOMMU**
-- Identifies device by **Requester ID = BDF** (Bus/Device/Function)
-- DMAR ACPI table tells OS the IOMMU layout
-- Page faults logged in fault recording register; queued invalidation interface for TLB flushes
+**x86 (TSO):** stores can only be reordered after later loads (store buffer). Store→store, load→load, load→store all preserved. `MFENCE` rare; `LOCK` prefix is seq_cst. For MMIO, `volatile` + WC + occasional `SFENCE` is enough.
 
-**QC mapping:** VT-d → **SMMU**. Requester ID → **Stream ID**. Stage 1 = guest VA → IPA, Stage 2 = IPA → PA (virt). **CMDQ** for invalidation, **EVTQ** for faults. Snapdragon puts an SMMU in front of every DMA-capable IP — camera ISP, GPU, modem, NPU, USB, NVMe. **Bring-up bug:** Stream ID not registered → first DMA → EVTQ fault.
+**ARM weak:** almost any pair can reorder. Need `DMB ISH` (≈ MFENCE inner-shareable), `DSB SY` (full drain), `ISB` (pipeline serialise after sysreg write), `LDAR/STLR` (cheap acquire/release).
 
-### 2.5 Memory consistency (THE big architectural difference)
+**THE port-from-x86 bug:** producer writes `data; ready=1`. On x86 TSO, store→store preserved → consumer always sees data with ready. On ARM, `ready=1` can be globally visible **before** `data` → stale read. **Fix:** `DMB ST` between stores or use `STLR/LDAR`. Same pattern bites the doorbell flow.
 
-**x86 (TSO — Total Store Order):**
-- Stores can be reordered after **later loads only** (store buffer)
-- Store→store, load→load, load→store all preserved
-- `MFENCE` = full barrier (rare); `LFENCE` for load fence (Spectre); `SFENCE` for store fence
-- For MMIO, `volatile` + WC memory type + occasional `SFENCE` is usually enough
-- `LOCK`-prefixed RMW are seq_cst
+### 2.3 Power state coordination — deep, since I owned the x86 side
 
-**QC mapping:** ARM is **weakly ordered** — almost any pair can reorder.
+**x86 flow (Cambria):**
+- OS issues MWAIT C-state hint or sets HWP target via `MSR_IA32_HWP_REQUEST` (min/max/EPP)
+- **PCU / PUnit** (on-die microcontroller) runs the state machine
+- PCU talks to other IPs over **IOSF Sideband (IOSF-SB)** using **P2P opcodes** — opcode-level Zebu trace is how I found the ADR ordering bug
+- **P-channel** = standard Core PMA ↔ PCU power handshake protocol
+- **S3M SRAM** = always-on save/restore for C6 arch state
+- **CFC** = clock-forwarding/crossing FIFO between always-on and power-gated — where the C6 wake-loss race lived
+- PCU programs **FIVR / external VR** over SVID/PMBus
+- **PL1 / PL2 / Tau** = sustained / short-term limits with averaging window
 
-| ARM | x86 analogue |
-|---|---|
-| `DMB ISH` | similar to `MFENCE` but only inner-shareable domain |
-| `DSB SY` | `MFENCE` + drain all outstanding |
-| `ISB` | serialises pipeline (after writing system regs); rough x86 cousin: `CPUID` or `IRET` for self-modifying code |
-| `LDAR / STLR` | acquire-load / release-store — cheaper one-shot ordering |
+**QC mapping (one paragraph for interview):** "Same shape, different aggregator. OS uses **PSCI** SMCs at EL3 (ATF). On top, **RPMh** in always-on takes active/sleep/wake votes from every subsystem (Apps, Modem, ADSP, CDSP/HTP), picks **MAX per resource**, programs **PMIC over SPMI**. **TCS** = pre-loaded sequences for µs wake (analogue of Intel's PCU sequence ROMs). RPMh exists on top of PSCI because Snapdragon has many independent firmwares each able to vote on shared rails."
 
-**THE #1 ARM-from-x86 port bug:** producer writes `data; ready=1`. On x86 TSO, store→store preserved → consumer always sees data when it sees ready. **On ARM**, `ready=1` can be globally visible **before** `data` → consumer reads stale data. **Fix:** `DMB ST` between data store and flag store; `DMB LD` on consumer; or `STLR/LDAR`. Doorbell pattern needs this between descriptor write and doorbell write.
-
-### 2.6 Power state coordination
-
-**x86 (what I owned at Intel):**
-- OS uses **ACPI _PSx** / **MWAIT** with C-state hints; on modern Intel **HWP** (Hardware P-states) lets HW pick the OPP from OS hint
-- **PCU / PUnit** is the on-die microcontroller running the power state machine
-- PCU communicates with other IPs over **IOSF Sideband (IOSF-SB)**
-- **P-channel** = standardised Core PMA ↔ PCU power handshake
-- **S3M SRAM** = always-on save/restore SRAM holding arch state during C6
-- **CFC** = clock-forwarding/crossing FIFO (always-on ↔ power-gated)
-- **PMIC / VR** programmed by PCU over SVID/PMBus
-- **PL1/PL2/Tau** = sustained / short-term power limits with averaging window
-
-**QC mapping (one paragraph — say in interview):** OS uses **PSCI** SMCs (`CPU_ON`, `CPU_OFF`, `SYSTEM_SUSPEND`) implemented by ATF at EL3 — that's the standard API. On top of that, Snapdragon has **RPMh** (Resource Power Manager hardened, in always-on) which arbitrates: every subsystem (Apps, Modem, ADSP, CDSP/HTP, LPASS) sends **active/sleep/wake votes**; RPMh picks **MAX per resource** and programs the **PMIC over SPMI** + clock + bus. **TCS** = pre-loaded command sequences fire on idle entry/exit → µs wake (analogue of Intel's PCU sequence ROMs). PMIC is a separate die (PM8xxx). The reason RPMh exists on top of PSCI: Snapdragon has many independent firmwares (Modem, DSPs) each able to vote on shared rails — PSCI alone doesn't aggregate cross-subsystem votes.
-
-**Sleep-state debug ladder (same shape both sides):**
+### 2.4 Cross-platform debug ladder (same shape)
 
 | Step | x86 | QC |
 |---|---|---|
-| 1. OS requested right state? | MWAIT C-state, ACPI _CST | PSCI CPU_OFF / SYSTEM_SUSPEND |
-| 2. PMC/aggregator agreed? | PCU `MSR_PKG_C_STATE_RESIDENCY` | RPMh aggregated vote correctly? |
-| 3. Sequence fired? | PCU FW opcode trace | TCS fired? |
-| 4. Rail actually dropped? | VR telemetry / scope on rail | PMIC telemetry / SPMI trace |
-| 5. Wake clean? | PROCHOT, wake source MSR | RPMh wake votes, PMIC ramp before IP txn |
-
-### 2.7 SoC topology / scheduling
-
-**x86:**
-- Hybrid (Alder Lake+): **P-cores** (perf) + **E-cores** (efficiency) under **Thread Director** (HW telemetry feeds OS scheduler hints)
-- Per-core L2; shared L3 (LLC)
-- Mesh interconnect (server) or ring (client)
-- Per-core DVFS via HWP (rails/fuses depending on SKU)
-
-**QC mapping:** P-core/E-core → **big.LITTLE / DynamIQ** (e.g., 1+5+2 prime + perf + efficiency) in **DSU (DynamIQ Shared Unit)**. Cores share L3 + ACE/CHI interconnect. **Per-core frequency real; per-cluster voltage** rail = MAX across cores (PMIC LDO count is finite). **EAS (Energy Aware Scheduling)** = capacity + idle-cost aware, Linux equivalent of Thread Director.
-
-### 2.8 Boot chain
-
-**x86 (briefly):**
-```
-Reset → Microcode patch → CPU init → CRTM (root of trust) → SEC (Pre-EFI Init)
-     → PEI (memory init, MRC trains DDR) → DXE (drivers) → BDS (boot device select)
-     → OS loader → kernel
-```
-Equivalent to Snapdragon flow but UEFI-shaped. MRC ≈ SBL's LPDDR training step. Verified Boot signs each stage.
-
-**QC mapping:**
-```
-POR → PBL (ROM, EL3, validates SBL signature)
-   → SBL/XBL (LPDDR training — long step; loads ATF + TZ + ABL into DRAM)
-   → ATF (EL3, secure services, PSCI ready)
-   → TZ kernel (S-EL1, TrustZone services)
-   → ABL (Android Boot Loader, fastboot, verifies boot.img)
-   → Linux start_kernel(), DT probe, init userspace
-```
-Signature check at every handoff. ROM holds immutable root-of-trust key. Anti-rollback fuse blocks older signed images.
-
-### 2.9 LPDDR5/5X memory subsystem (shared between platforms)
-
-**5 training phases at every cold boot:**
-1. **CA training** — command/address eye centering
-2. **Read DQ training** — per-DQ delay vs strobe
-3. **Write DQ training** — same on write path
-4. **ZQ calibration** — termination resistance vs reference
-5. **VREF training** — receiver reference voltage centering
-
-Failure of any = no DRAM = hang. Self-refresh in deep sleep (sub-mW); refresh 2× above 85°C (MR4 register tracks). On Intel I called this the **MRC (Memory Reference Code)** step in SEC/PEI; on Snapdragon it's the SBL/XBL stage. Same physics.
-
-### 2.10 Clock / reset gotchas (architecture-agnostic)
-
-- Always poll `PLL_LOCK` before un-gating IP — otherwise flops capture random data
-- Glitch-free mux ≠ OR gate (runt pulses → metastable)
-- CDC: 2-FF synchroniser for data, async FIFO for multi-bit, handshake for control
-- Reset: assert async, **de-assert sync** to destination clock
+| OS requested right state? | MWAIT C-state, ACPI _CST | PSCI CPU_OFF / SYSTEM_SUSPEND |
+| Aggregator agreed? | PCU `MSR_PKG_C_STATE_RESIDENCY` | RPMh aggregated vote |
+| Sequence fired? | PCU FW opcode trace (Zebu) | TCS fired? |
+| Rail dropped? | VR telemetry / scope on rail | PMIC telemetry / SPMI trace |
+| Wake clean? | PROCHOT, wake source MSR | RPMh wake votes, PMIC ramp before IP txn |
 
 ---
 
@@ -595,251 +503,132 @@ Hold-up budget = **10-30 ms** from PSU bulk caps + supercaps. Every IP added to 
 
 ---
 
-## SECTION 4B — Thermal, RAPL, Perf Counters, Multi-IP (Day 15) (6 min)
+## SECTION 4B — Thermal + RAPL (essentials only) (3 min)
 
-### Junction temperature equation
+### Tj envelope
 
 $$T_j = T_{ambient} + P_{total} \cdot \theta_{JA}$$
 
-$$\theta_{JA} = \theta_{JC} + \theta_{CS} + \theta_{SA}$$
+- **Tjmax:** 100°C consumer / 105°C server. Cross → throttle.
+- **DTS** (Digital Thermal Sensor) per die region, read by PCU. Calibration fuses missing → reads off by 10-15°C → throttle misbehaves. Verify with thermocouple.
+- **PROCHOT#** = bidirectional throttle signal. Hot neighbour chip can throttle CPU.
+- **Hotspot vs avg:** AVX core can be 10-15°C above die avg; throttle must follow hotspot.
 
-| Term | Meaning |
-|---|---|
-| $T_j$ | silicon junction temp (hottest point) |
-| $\theta_{JC}$ | junction-to-case (silicon → IHS through TIM) |
-| $\theta_{CS}$ | case-to-sink (heatsink interface) |
-| $\theta_{SA}$ | sink-to-ambient (fin to air) |
+### RAPL — what EdgeOptimizer reads
 
-**Dried TIM** doubles $\theta_{CS}$ → Tj jumps → same workload now throttles. Classic field bug.
-
-**Tjmax** = spec limit (consumer 100°C, server 105°C). Cross → throttle. Continuous near-Tjmax → reliability degradation (electromigration accelerates).
-
-### PROCHOT# and DTS
-
-- **PROCHOT#** — bidirectional throttle signal. Asserted → CPU drops F/V. A hot neighbour chip on the shared signal can throttle CPU.
-- **DTS (Digital Thermal Sensor)** — on-die temp sensors read by PCU. Calibration fuses programmed at fab; if missing/wrong → DTS reads hot/cold by 10-15°C → throttle misbehaves. Verify with external thermocouple during validation.
-- **Hotspot** vs die-average: AVX-512 core can be **10-15°C above die avg**. Throttling must follow hotspot sensor, not average.
-
-### RAPL (Running Average Power Limit) — energy counters
-
-| Domain | Coverage |
-|---|---|
-| **PKG** | whole package |
-| **PP0** | cores |
-| **PP1** | client iGPU |
-| **DRAM** | server SKUs only |
-
-Read MSR twice, subtract joules, divide by elapsed → average watts.
-
-**RAPL ≠ wall power.** RAPL = VR input estimate. Ground truth needs external power meter (Quarch). Typical gap **20-30%** (VR loss + DRAM not in client RAPL + platform devices + PSU efficiency). Always say this in interviews — shows measurement literacy.
-
-ARM equivalent: SCMI / SCP firmware exposes per-rail energy. Snapdragon Profiler reads PMIC telemetry directly.
-
-### PMU — performance monitoring unit
-
-- **Fixed-function (3 on Intel):** instructions retired, core cycles, reference cycles
-- **General-purpose (4-8 per core):** programmable to count any of hundreds of events
-- **Uncore counters:** LLC, memory ctrl, NoC, IIO — chip-scope, not per-core
-
-| OS / Vendor | Tool |
-|---|---|
-| Linux any | `perf stat`, `perf record`, `perf top` |
-| Intel | PCM, VTune, EMON (internal) |
-| ARM | Streamline, Snapdragon Profiler, Linux `perf` |
-| AMD | μProf |
-| Windows | WPR/WPA, ETW, GPUView |
-
-### Top-down microarchitecture analysis (TMA) — Intel methodology
-
-Every pipeline slot lands in one bucket:
-
-```
-                Pipeline Slot
-                /          \
-           Frontend       Backend
-            Bound          /     \
-                       Memory   Core
-                        Bound    Bound
-                                 \
-                          Retiring  ← good
-                            \
-                       Bad Speculation (mispredict)
-```
-
-**Workflow:** collect TMA L1 → identify dominant bucket (e.g., "62% Backend Memory Bound") → drill L2/L3 (DRAM BW? LLC miss? Store buffer full?) → now you know **where** to optimise.
-
-**IPC alone is meaningless** without TMA. IPC=0.5 might be fine for memory-bound or terrible for compute-bound.
-
-### Counter signatures → root cause cheat sheet
-
-| Symptom | Counter signature | Likely cause |
+| Domain | MSR | Note |
 |---|---|---|
-| Low IPC, high cache-miss | LLC-miss high, DRAM BW high | working set > LLC; missing tile/blocking |
-| Low IPC, low cache miss | front-end bound, μop cache miss | I-cache thrash, large code footprint |
-| High IPC, slow wallclock | ref_cycles ≫ core_cycles | freq throttle (read `MSR_CORE_PERF_LIMIT_REASONS` 0x64F) |
-| ST fast, MT doesn't scale | LLC contention, snoop traffic high | false sharing or coherence storm |
-| Latency variance run-to-run | C-state residency high | idle states between bursts; pin governor `performance` |
-| `BR_MISP_RETIRED` high | branch mispredict bound | branchy hot loop; PGO / branchless |
-| `DTLB-misses` high | TLB-walk-cycles high | use **huge pages** (2 MB / 1 GB on x86; 2 MB on ARM) |
+| PKG | `MSR_PKG_ENERGY_STATUS` | whole package |
+| PP0 | `MSR_PP0_ENERGY_STATUS` | cores |
+| PP1 | `MSR_PP1_ENERGY_STATUS` | client iGPU |
+| DRAM | `MSR_DRAM_ENERGY_STATUS` | server only |
 
-### Multi-IP interference — five classes (modern SoC reality)
+Read MSR twice, subtract joules, divide by elapsed → avg watts.
+
+**MUST SAY:** RAPL is **VR-input estimate, not wall power** — typical gap **20-30%**. Ground truth = external Quarch. RAPL is for relative trending within a platform.
+
+**ARM equivalent:** SCMI/SCP firmware exposes per-rail; Snapdragon Profiler reads PMIC directly.
+
+### Counter signatures (drop in answers)
+
+| Symptom | Counter signature | Cause |
+|---|---|---|
+| High IPC, slow wallclock | `ref_cycles ≫ core_cycles` | freq throttle → read `MSR_CORE_PERF_LIMIT_REASONS` (0x64F) |
+| ST fast, MT doesn't scale | `OFFCORE_RESPONSE.*` snoop high | false sharing / coherence storm |
+| Low IPC, high cache miss | `LLC_MISS` high, DRAM BW high | working set > LLC; missing tile/blocking |
+| `BR_MISP_RETIRED` high | branch mispredict bound | branchy hot loop; needs PGO / branchless |
+| `DTLB-misses` high | TLB-walk-cycles high | use **huge pages** (2 MB / 1 GB) |
+
+### Benchmark hygiene one-liners
+
+Pin freq (`governor=performance` or disable Turbo); `taskset -c`; warm-up runs; report median + 95% CI (≥10 runs); **geomean** for ratios, **harmonic** for rates.
+
+---
+
+## SECTION 4C — False Sharing one-liner (1 min)
+
+Two threads writing different vars on the **same 64B cache line** → line ping-pongs M↔M between cores → IPC tanks, no MT scaling. **Fix:** pad to 64B (`__attribute__((aligned(64)))` + `char pad[60]`), or per-CPU vars. **Detect:** `OFFCORE_RESPONSE.*` snoop counters high. *Coherence basics: MESI/MESIF (Intel)/MOESI (AMD/ARM) — be ready to name them, depth not needed.*
+
+---
+
+## SECTION 5 — CPU Microarchitecture (Day 16) — DEEP (8 min)
+
+> **Why deep here:** at Cambria I sat next to PCU + core PMA debug; even though my owned features were power flows, every cross-IP bug I touched (15+) eventually surfaced as a perfmon/MSR signature. This is the layer I read traces *at*.
+
+### 5.1 Pipeline (validation-engineer view)
 
 ```
-CPU   GPU   NPU   ISP
- │     │     │     │
- ╪═════╪═════╪═════╪═══  shared NoC
- │     │     │     │
- └─────┴─────┴─────┴───→ shared LLC → Memory Ctrl → DDR
+Front-end                                Backend
+[I$] → [pre-dec] → [BPU] → [decode]   → [rename/RAT] → [RS] → [exec FU] → [ROB] → [retire]
+       ↑              ↓                       ↑                              ↓
+   variable-length  μop cache (DSB)      kills WAR/WAW                  in-order commit
 ```
 
-| # | Class | Counter to detect | Mitigation |
+Where validation actually pokes:
+- **BPU mispredict rate** = `BR_MISP_RETIRED.ANY / BR_INST_RETIRED.ANY`. >5% on a hot loop = branchy code or BPU pathology.
+- **Mispredict cost** ≈ pipeline depth × IPC. Modern Intel = 14-20 stages → 15-20 cycles wasted per misprediction. Counter: `INT_MISC.RECOVERY_CYCLES`.
+- **μop cache (DSB)** delivers 6+ μops/cycle vs ~4 from legacy decode. DSB miss → front-end starvation. Counter: `IDQ.DSB_UOPS` vs `IDQ.MITE_UOPS` (legacy decoder).
+- **ROB depth** caps in-flight instruction window (~512 on Golden Cove). Long-latency miss can fill ROB → backend stalls even with parallelism available.
+- **RS (reservation station)** wakes μops when operands ready. RS-full = scheduling bottleneck (rare; usually backend-memory wins first).
+
+### 5.2 Hazards — what each looks like in counters
+
+| Hazard | Mechanism | Counter signature | Mitigation |
 |---|---|---|---|
-| 1 | **Memory BW starvation** | per-agent BW counter at MC | QoS / priority / BW reservation |
-| 2 | **LLC thrashing** | per-agent LLC occupancy + miss | Cache Allocation Tech (CAT/CLOS) — way partitioning |
-| 3 | **NoC congestion** | NoC link util, back-pressure cycles | virtual channels, priority arbitration |
-| 4 | **Power-budget conflict** | RAPL package + per-domain | Dynamic Thermal Power Mgmt (DTPM) |
-| 5 | **IOTLB / shared IOMMU** | IOTLB miss + page-walk latency | per-agent IOTLB partition, huge pages |
+| Structural | resource contention (e.g., port pressure) | `UOPS_DISPATCHED_PORT.*` skewed | spread across ports / fewer FMAs |
+| Data RAW | dependency chain | low IPC, high `CYCLES_NO_EXECUTE` | break chain (parallel sums, FMA) |
+| Data WAR/WAW | killed by rename | (none — should not surface) | — |
+| Control | branch mispredict | `BR_MISP_RETIRED` high, `INT_MISC.RECOVERY_CYCLES` high | branchless / PGO / `__builtin_expect` |
+| Memory ordering | LSQ / store-buffer hazards | `MEMORY_ORDERING_ISSUES`, machine clears | rare on TSO; weak ARM more relevant |
 
-### Multi-IP validation methodology — 4 steps
+### 5.3 Branch prediction — what to know
 
-1. **Single-IP baseline** — measure each IP alone (BW, latency, IOPS, fps)
-2. **Pair-wise** — every 2-IP combination; degradation vs baseline
-3. **Full system** — all IPs active; measure worst case; check QoS
-4. **QoS validation** — enable QoS; repeat 2+3; verify guarantees deliver
+- **BTB** (Branch Target Buffer) caches target addresses per branch PC.
+- **TAGE / Perceptron** (modern direction predictors) — 97-99% on typical code.
+- **RAS** (Return Address Stack) — predicts `RET` from matching `CALL`. Mispredicted RAS = function-call hot path tanks (deep recursion or RSB underflow).
+- **Indirect branch predictor** — for `jmp [reg]` / vtable / interpreter dispatch. The Spectre-v2 mitigation (retpoline / IBRS) targets this.
+- Validation reflex: when low IPC + `BR_MISP_RETIRED` high, ask: branchy hot loop? Indirect dispatch? RSB underflow on deep call chain?
 
-**Skipping step 1 is the #1 mistake** — without baseline you can't measure interference.
+### 5.4 SIMD + AVX license levels (the PCU connection — your territory)
 
-### Benchmark hygiene (ALWAYS do these)
+| License | Window | F offset | Trigger |
+|---|---|---|---|
+| 0 | scalar | 0% | normal code |
+| 1 | AVX2-heavy | ~10% | sustained AVX2 / heavy 256-bit |
+| 2 | AVX-512-heavy | ~25% | AVX-512 with FMA / heavy 512-bit |
 
-- [ ] Pin freq (disable Turbo OR set `governor=performance`)
-- [ ] Disable HT for compute benchmarks
-- [ ] Pin to specific CPUs: `taskset -c 4-7`
-- [ ] Drop file caches: `echo 3 > /proc/sys/vm/drop_caches`
-- [ ] Stop background services
-- [ ] Warm up — discard first N runs (cache fill, JIT, freq ramp)
-- [ ] Repeat ≥10 runs; report **median + 95% CI**, not single number
-- [ ] Aggregate with **geomean** for ratios, **harmonic mean** for rates, **arithmetic** for absolute durations only
+**The mechanism (from PCU side):** AVX kernels draw enough current that V-rail would droop below Vmin at full F. PCU preemptively cuts F so V-margin stays safe. **Recovery to license 0 takes µs** (PCU runs the unwind sequence). Counter: `CORE_POWER.LVL2_TURBO_LICENSE`.
 
-### Perf-per-watt + EDP (figures of merit)
+**Anti-pattern:** sprinkle AVX-512 in mostly-scalar code → whole core stuck in license 2 for that window → scalar code around it runs slower → net throughput **lower** than AVX2-only. Use `-mprefer-vector-width=256` or restrict AVX-512 to long-running kernels.
 
-- **perf/W** = throughput / avg watts. Higher better. Mobile + DC primary metric.
-- **EDP** = Energy × Delay = $P \cdot t^2$ for fixed work. Lower better. Penalises both slow-and-efficient and fast-and-power-hungry.
-- **ED²P** weights latency more — DC use case.
-- **Pareto curve knee** = where $\Delta perf / \Delta watts$ collapses. Past it = burning watts for no gain. Find the knee per workload.
+**Validation tie-back (my Cambria angle):** AVX license switch IS a PCU FW sequence. Ordering bug here = same shape as my ADR opcode-ordering hang — wrong opcode order between V-droop assertion, F cut, license window arming. PCU opcode trace on Zebu is how you'd catch it pre-Si.
 
----
+### 5.5 Prefetcher triage (standard reflex)
 
-## SECTION 4C — Cache Coherence + False Sharing (Day 5) (3 min)
+HW prefetchers (next-line, stride, spatial, NLP) hide latency — and hide bugs. Silicon A passes, silicon B with different prefetch heuristic regresses.
 
-### MESI protocol
+**Standard triage:** disable HW PF (Intel `MSR_MISC_FEATURE_CONTROL` 0x1A4, bits clear individual prefetchers), re-run. If symptom moves → SW had a prefetch-dependent path.
 
-Each cache line in one of 4 states per core:
+### 5.6 Memory consistency (compressed)
 
-| State | Meaning |
-|---|---|
-| **M** odified | this core has only valid copy + dirty (must write back) |
-| **E** xclusive | this core has only copy + clean |
-| **S** hared | multiple cores have clean copies |
-| **I** nvalid | not present |
+- **TSO (x86):** only store→later-load can reorder (store buffer). `volatile` + WC for MMIO. `LOCK` is seq_cst.
+- **Weak (ARM, RISC-V, POWER):** any pair can reorder. Use `DMB ST/LD` or `STLR/LDAR`.
+- **Producer-consumer porting bug:** `data = X; ready = 1` works on x86, breaks on ARM without barrier between stores.
 
-**Reads:** I → S (or E if no other has it). **Writes:** must reach M → if other cores have it (S), broadcast invalidation first → S → I on others.
+### 5.7 Cross-IP bugs — what I saw on Cambria (15+ debugs)
 
-**MESIF** (Intel) adds **F**orward — designates one S-line as the responder for new requests (avoids all S-cores responding).
-**MOESI** (AMD/ARM) adds **O**wned — dirty + shared without writeback (lazy WB).
+The CPU is rarely the only actor in cross-IP issues. The shapes I saw:
+1. **Power-state coordination races** — Core PMA ↔ PCU ↔ uncore handshake (Core C6 wake-loss).
+2. **Memory ordering at MMIO** — store buffer drains in wrong order vs uncore expectation.
+3. **AVX licence + DVFS interplay** — license cut + concurrent P-state request collide → V-droop.
+4. **Cache snoop / coherence interaction with idle** — IIO snoop wakes a core that just entered C6.
+5. **Speculation + power-gated IP** — speculative load to a power-gated MMIO region returns garbage.
 
-### False sharing — THE coherence performance bug
-
-Two threads write to **different** variables that **happen to share the same 64B cache line**:
-
-```c
-struct {
-    int counter_a;   // thread A writes
-    int counter_b;   // thread B writes — same 64B line!
-} shared;
-```
-
-Each write invalidates the other core's copy → cache line ping-pongs M↔M between cores → BW saturation, IPC tanks, no scaling. Single-thread fast, multi-thread doesn't scale.
-
-**Fix:**
-```c
-struct {
-    int counter_a;
-    char pad[60];          // pad to 64B
-    int counter_b;
-} shared __attribute__((aligned(64)));
-```
-
-Or `alignas(64)` in C++. Or per-CPU variables.
-
-**Detect:** `LLC-load-misses`, `cache-references` per-core, snoop counters high. On Intel: `OFFCORE_RESPONSE.*`.
-
-### Coherence storm
-
-Many cores all writing to the same hot line (e.g., shared global counter under contention) → invalidations broadcast → directory/snoop traffic dominates → throughput collapses. Fix: per-CPU counters + sum on read; or atomic with backoff; or RCU for read-mostly.
+Method: pull PCU opcode trace + perfmon together; correlate event timestamps; if symptom only repros at PVT corner, it's analog/timing not architectural.
 
 ---
 
-## SECTION 5 — CPU Microarchitecture (Day 16) (5 min)
-
-### Pipeline + OoO
-
-Front-end: I-cache → pre-decode → branch predictor → decoders → μop cache → allocate.
-Backend: rename (RAT) → reservation station → execute → ROB → retire.
-
-- **Renaming** kills WAR/WAW (only RAW remains)
-- **ROB** retires in-order even though execution is OoO; bounds the in-flight window (~512 on Golden Cove)
-- **Mispredict cost:** ≈ pipeline depth × IPC (15-20 cycles wasted)
-- **μop cache (DSB)**: x86 needs it (variable length); ARM doesn't (fixed 4B)
-
-### Memory consistency
-
-| Model | Examples | Reorderings |
-|---|---|---|
-| **TSO** | x86 | only store→later-load via store buffer |
-| **Weak** | ARM, RISC-V, POWER | almost any pair can reorder |
-
-x86: `volatile` usually enough for MMIO. ARM: explicit `dmb`, `dsb`, `isb`. Producer-consumer: `dmb st` producer + `dmb ld` consumer (or `STLR/LDAR`).
-
-### C/C++11 memory orders (cross-platform reflexes)
-
-| Order | Use case |
-|---|---|
-| `relaxed` | counters, statistics — no ordering, only atomicity |
-| `acquire` | load that gates subsequent reads (consumer flag) |
-| `release` | store that publishes prior writes (producer flag) |
-| `acq_rel` | RMW that does both |
-| `seq_cst` | default; total order across all threads (most expensive) |
-
-**Producer-consumer pattern done right:**
-```c
-// Producer
-data = compute();
-atomic_store_explicit(&ready, 1, memory_order_release);
-
-// Consumer
-while (atomic_load_explicit(&ready, memory_order_acquire) == 0) ;
-use(data);   // guaranteed to see producer's writes
-```
-
-On x86 these are mostly no-ops (TSO does the work). On ARM the compiler emits `STLR` / `LDAR`. **Hand-rolled `volatile` flags are an x86-only bug.**
-
-### SIMD + Intel license levels
-
-| License | Window | F offset |
-|---|---|---|
-| 0 | scalar | 0% |
-| 1 | AVX2-heavy | ~10% |
-| 2 | AVX-512-heavy | ~25% |
-
-A few AVX-512 in mostly-scalar code drags the whole core down → net throughput LOWER than AVX2. Use `-mprefer-vector-width=256`.
-
-### Prefetcher triage
-
-HW prefetchers can hide a missing software prefetch — silicon A passes, B with different heuristic regresses. **Standard triage:** disable HW PF (Intel MSR `0x1A4`), re-run.
-
----
-
-## SECTION 6 — NPU Stack (Day 18) (8 min)
+## SECTION 6 — NPU Stack (Day 18) (5 min)
 
 ### The 6-layer NPU stack
 
@@ -852,166 +641,77 @@ HW prefetchers can hide a missing software prefetch — silicon A passes, B with
 6. Silicon — Hexagon HTP / Intel NPU / AMD XDNA; HMX + HVX + DMA over VTCM
 ```
 
-### EP partitioning
+### EP partitioning + the silent fallback
 
-ORT asks each EP per-op: "can you run this?" → contiguous subgraphs assigned. **More partitions = more CPU↔NPU handoffs = worse perf.** One unsupported op in middle of clean graph can cut throughput 5-10×.
+ORT asks each EP per-op: "can you run this?" → contiguous subgraphs assigned. **More partitions = more CPU↔NPU handoffs = worse perf.** One unsupported op → silently falls back to **CPU EP** → functional pass, perf collapse. Detect via per-node `EP_assignment` log or ETW.
 
-### EP fallback = THE silent perf cliff
+### QDQ fusion (one line)
 
-One op unsupported → silently falls back to CPU EP → functional pass, perf collapse. **Detection:**
-- `EP_assignment == CPU` per inference
-- ETW: QNN DLL loaded but CPU% high during inference window
-- ORT verbose: `[VERBOSE] node X assigned to CPUExecutionProvider`
+ONNX models for NPU are **QDQ-format** (`Quantize → Op → Dequantize`). Vendor compiler fuses to single INT8 op. Fusion fail → drops to CPU EP.
 
-### QDQ fusion
+### VTCM (NPU on-chip SRAM)
 
-ONNX models for NPUs are **QDQ-format**: `Quantize → Op → Dequantize`. Compiler's most important pass: fuse to single INT8 op. If fusion fails (model rebuilt without `keep_quantized_weights=true`, scale mismatch) → drops to CPU EP.
+Compiler tiles activations to fit on-chip. Tile-too-big → DMA round-trips → latency doubles.
 
-### Tiling + VTCM
-
-Activations rarely fit. Compiler tiles (e.g., 256×256 + halo) so each fits in VTCM.
-
-| NPU | On-chip SRAM |
+| NPU | VTCM |
 |---|---|
-| **Hexagon HTP v79** (X Elite) | **8 MB VTCM** |
+| **Hexagon HTP v79** (X Elite) | **8 MB** |
 | Intel NPU (LNL) | ~2 MB |
 | AMD XDNA | ~4 MB |
 
-VTCM is **software-managed, not in CPU coherence domain**. Compiler/runtime owns DMA scheduling. Tile-too-big → multiple DMA round-trips → per-tile latency doubles.
+VTCM is software-managed, not in CPU coherence domain.
 
 ### Context cache
 
-```
-First launch:  ONNX → partition → lower → fuse → tile → compile → SAVE bin
-Second launch: load bin → QnnContext_createFromBinary() → ready in ms
-```
+First launch: ONNX → partition → fuse → tile → compile → save bin. Second launch: load bin → ready in ms. Cache miss = pay compile every launch.
 
-Skipping cache (debug build, version mismatch) re-pays compile latency every launch.
-
-### Inference hot loop — the 3-engine pipeline
-
-```
-1. CPU prepares input in DDR
-2. CPU writes NPU command-queue doorbell (MMIO)
-3. NPU DMA: DDR → VTCM
-4. Steady state: DMA(N+1) ‖ HMX(N) ‖ HVX(N-1)    ← how you hit ~45 TOPS
-5. NPU DMA: VTCM → DDR
-6. NPU MSI-X to CPU
-7. ORT returns output
-```
-
-If any engine stalls (tile cliff, OOM, host starvation) → degrades to serial → latency multiplies.
-
-### Hexagon HTP family (memorize)
+### Hexagon HTP family (anchor numbers)
 
 | HTP | SoC | TOPS | VTCM |
 |---|---|---|---|
-| v68 | SD 888 | ~15 | 4 MB |
-| v69 | SD 8 Gen 1 | ~18 | 4 MB |
-| **v73** | SD 8 Gen 2 | ~26 | **8 MB** ← VTCM doubled |
+| v73 | SD 8 Gen 2 | ~26 | 8 MB ← VTCM doubled |
 | v75 | SD 8 Gen 3 | ~36 | 8 MB |
 | **v79** | **SD X Elite** | **~45** | **8 MB** |
 
-Other anchors: HMX 4096 MACs/instr; FastRPC wake ~100 µs; **DDR ~60 GB/s shared = real bottleneck**, not TOPS.
-
-### Three NPU compute engines
-
-| Engine | Job |
-|---|---|
-| **HMX** | INT8 matmul, 4096 MACs/instruction |
-| **HVX** | vector ops, requantisation |
-| **DMA** | tile fetch / output writeback |
-
----
-
-## SECTION 6B — EdgeOptimizer: Profiling Counters Defense (4 min)
-
-> When asked "how does EdgeOptimizer measure NPU vs CPU util / per-inference latency / energy-per-inference?" — these are the actual signals.
-
-### The backbone — ETW (Event Tracing for Windows)
-
-Kernel-level tracing infra. WPR captures → WPA visualizes. EdgeOptimizer subscribes to providers + correlates timestamps.
-
-| Provider | Gives you |
-|---|---|
-| **Kernel-Process / Thread / Power / Memory / PerfInfo** | proc lifecycle, C/P-state transitions, page faults, PMC samples |
-| **DxgKrnl** | NPU/GPU scheduler events (GPUView source) — dispatch + completion |
-| **Microsoft.ML.ONNXRuntime** | session events: model load, run start/end, **per-node EP assignment** |
-| **QNN custom provider** | per-graph compile time, context create, VTCM alloc, FastRPC wake |
-
-### CPU performance counters (PMC, via PCM/VTune/perf)
-
-User-mode tools call kernel drivers that read MSRs.
-
-| Counter | Use |
-|---|---|
-| `INST_RETIRED.ANY` / `CPU_CLK_UNHALTED.CORE` | IPC |
-| `CPU_CLK_UNHALTED.REF_TSC` | freq throttle (ref ≫ core = throttled); same as `aperf/mperf` on Linux |
-| `MEM_LOAD_RETIRED.L1/L2/L3_MISS` | memory-bound |
-| `BR_MISP_RETIRED.ANY` | branch-bound |
-| `DTLB_LOAD_MISSES.WALK_COMPLETED` | huge-page candidate |
-| `OFFCORE_RESPONSE.*` | snoop traffic / false sharing |
-| `MSR_CORE_PERF_LIMIT_REASONS` (0x64F) | throttle reason: thermal? PL1? PL2? Iccmax? |
-| `MSR_PKG_C*_RESIDENCY` | PkgC6/PC10 % during inference idle gaps |
-
-### RAPL — energy counters (THE energy-per-inference claim)
-
-| Domain | MSR |
-|---|---|
-| **PKG** | `MSR_PKG_ENERGY_STATUS` |
-| **PP0** (cores) | `MSR_PP0_ENERGY_STATUS` |
-| **PP1** (iGPU) | `MSR_PP1_ENERGY_STATUS` |
-| **DRAM** | `MSR_DRAM_ENERGY_STATUS` (server only) |
-
-**Pattern:** `joules_after - joules_before` over inference window → energy/inference.
-
-**CRITICAL caveat (must say):** RAPL is **VR-input estimate, not wall power**. Typical gap **20-30%** (VR loss + DRAM not in client RAPL + platform devices + PSU efficiency). Ground truth = external meter (**Quarch / Monsoon**). Use RAPL for relative trending within a platform; gate absolute claims to external meter.
-
-**ARM/Snapdragon equivalent:** SCMI/SCP firmware exposes per-rail energy; Snapdragon Profiler reads PMIC telemetry directly.
-
-### NPU-specific telemetry (what makes EdgeOptimizer earn its name)
-
-| Source | Metric |
-|---|---|
-| **ORT profiler** (`EnableProfiling`) | per-node EP assignment, per-op time → **silent fallback detector** |
-| **QNN profiler API** (`QnnProfile_create`) | HMX cycles, HVX cycles, DMA cycles, VTCM alloc, compile time, context cache hit/miss |
-| **DxgKrnl / GPUView** | NPU dispatch start/end, queue depth, no-preemption gaps (the Paint SR/Camera story) |
-| **PowrProf API + ACPI _BST** | battery discharge (mW), AC/DC, S0ix residency |
-
-### Memory regression signals (the QNN page-fault bug)
-
-| Signal | Source |
-|---|---|
-| Page fault count | ETW Kernel-Memory provider |
-| Peak working set / VirtualAlloc | `GetProcessMemoryInfo()` + ETW VirtualAlloc events |
-| Committed bytes | PerfCounter / WMI |
-
-### Per-inference attribution recipe (how I align everything)
-
-```
-1. ORT emits ETW event at inference start/end with unique correlation_id
-2. Snapshot RAPL joules + PMC counters at both timestamps
-3. Diff → energy + IPC + cache-miss-rate FOR THAT INFERENCE WINDOW ONLY
-4. Cross-reference with NPU dispatch timestamps from DxgKrnl
-5. Output row: (inference_id, model, EP, latency_ms, energy_mJ,
-                page_faults, peak_vm, ep_fallback_op_count)
-```
+HMX = 4096 MACs/instr; FastRPC wake ~100 µs; **DDR ~60 GB/s shared = real bottleneck**, not TOPS.
 
 ### Honest framing (must say)
 
-- "EdgeOptimizer **wraps existing infra** — ETW, WPR/WPA, RAPL MSRs, ORT profiler. I didn't write a kernel driver; I orchestrated and **correlated**."
-- "RAPL ≠ wall power; for ground-truth energy I cross-check Quarch on a small validation matrix."
-- "The novelty is **per-inference attribution** across CPU counters + NPU dispatch + energy domains, plus a **regression-gate format** that records EP version + ORT version + counter set together."
+"I do platform-side validation — graph partition, EP fallback, energy/inference, peak VM, version-matrix regression. I don't debug Hexagon RTL, claim VTCM defects, or own the HMX/HVX/DMA pipeline mechanics. My value-add is correlating ETW + ORT + RAPL counters per inference."
 
-### Likely probe answers (60s each)
+---
 
-**"How do you measure NPU utilization?"** Two signals correlated. (1) DxgKrnl events → NPU busy % over wall time. (2) QNN profiler exposes HMX/HVX/DMA cycles per graph → which engine is the bottleneck inside the busy window. CPU-only fallback shows up as zero NPU dispatch + high CPU% in inference window.
+## SECTION 6B — EdgeOptimizer: Profiling Counters (2 min)
 
-**"Detect silent EP fallback?"** Cheap: parse ORT verbose log for `node X assigned to CPUExecutionProvider`. Better: subscribe to ORT ETW provider, count `EP_assignment` events, regress if `(CPU_assigned_ops/total_ops) > threshold` for a model that was 100% NPU on previous drop.
+> When asked "how does EdgeOptimizer measure NPU vs CPU util / latency / energy?" — keep it short. It's a **correlator on top of Windows-exposed counters**, not a custom driver.
 
-**"EdgeOptimizer overhead?"** ETW kernel sampling at 1 kHz: ~1-2% CPU. RAPL MSR reads: ns. ORT profiler JSON: ~5% (used in characterisation only). Regression mode = ETW-only, <2%.
+### Key points (say these)
 
-**"Cross-vendor energy comparison?"** RAPL coverage differs (Intel PP0/PP1, AMD has equivalent, QC via SCMI/PMIC). Gate absolute energy claims to a fixed methodology — external Quarch over defined workload — and use RAPL/PMIC only for relative trending within one platform.
+- **Wraps existing infra** — ETW + WPR/WPA + ORT profiler + RAPL MSRs + PowrProf. No kernel driver written.
+- **Novelty = per-inference attribution** — align ORT correlation_id with PMC/RAPL snapshots so latency, energy, and counters all attach to the same inference window.
+- **Regression-gate output** — records EP version + ORT version + driver version + counter set together so a regression can be reproduced.
+- **RAPL ≠ wall power** — typical 20-30% gap; ground-truth energy uses external Quarch on a validation matrix. RAPL is for relative trending within one platform.
+
+### Top-level Windows-exposed counters used
+
+| Source | What it gives |
+|---|---|
+| **ETW Kernel providers** (Process / Thread / Power / Memory / PerfInfo) | C/P-state transitions, page faults, context switches, PMC samples |
+| **ETW DxgKrnl** (GPUView) | NPU/GPU dispatch start-end, queue depth, no-preempt gaps |
+| **ETW Microsoft.ML.ONNXRuntime** | model load, run start/end, **per-node EP assignment** (silent-fallback detector) |
+| **Windows Perf Counters** (PerfMon / WMI / `Get-Counter`) | CPU%, Committed Bytes, Working Set, Disk/Net I/O |
+| **PowrProf API + ACPI _BST** | battery discharge mW, AC/DC, S0ix residency |
+| **RAPL MSRs** (PKG / PP0 / PP1 / DRAM) | energy joules → energy/inference |
+| **MSR_CORE_PERF_LIMIT_REASONS** (0x64F) | throttle reason: thermal? PL1? PL2? |
+| **MSR_PKG_C\*_RESIDENCY** | PkgC6/PC10 % during inference idle gaps |
+| **ORT profiler JSON** (`EnableProfiling`) | per-op time, EP assignment (characterisation mode only — adds ~5% overhead) |
+
+### Likely probe answers (1 line each)
+
+- **NPU util?** DxgKrnl NPU dispatch busy% over wall-time + per-inference latency from ORT ETW.
+- **Silent EP fallback?** Subscribe to ORT ETW; count `EP_assignment == CPU` ops; regress if ratio rises vs previous drop.
+- **Overhead?** ETW kernel sampling ~1-2% CPU; ORT profiler ~5% (used in characterisation, not regression).
+- **Cross-vendor energy?** Gate absolute claims to external Quarch; use RAPL/PMIC for relative trending within one SKU.
 
 ---
 
