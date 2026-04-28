@@ -1,12 +1,10 @@
 # Qualcomm 2-hr Breadth Revision (concepts > depth)
 
-> Companion to `QUALCOMM_1HR_REVISION.md`. That file = depth on what you owned. This file = **breadth across all 21 days**, fitted to the actual probe pattern from the first interview.
->
-> **Rule for this round:** answer **clearly, concretely, in 60-90 sec**. One concrete example beats three textbook bullets. If they want depth, they will drill — let them lead.
+> **Rule for this round:** answer **clearly, concretely, in 60-90 sec**. One concrete example beats three textbook bullets. If they want depth, they will drill - let them lead.
 
 ---
 
-## SECTION 0 — Last-5-min cheat sheet
+## SECTION 0 - Last-5-min cheat sheet
 
 | Reflex | One-liner |
 |---|---|
@@ -29,7 +27,7 @@
 
 ---
 
-## SECTION 1 — C-states (full flow + bugs) — DIRECT HIT
+## SECTION 1 - C-states (full flow + bugs) - DIRECT HIT
 
 ### 1.1 What a C-state is
 
@@ -57,7 +55,7 @@ ARM equivalent terminology: WFI / WFE / power-down via PSCI `CPU_OFF`, `CPU_SUSP
 3. Save arch state (GPRs, MSRs, FPU/vector regs) to power-gated SRAM
 4. Flush dirty L1/L2 lines per target depth (C6+ flushes private $)
 5. Notify uncore / PCU (Intel) / RPMh (QC):
-       "core ready for C6 — pull my voltage rail"
+       "core ready for C6 - pull my voltage rail"
 6. PCU asserts handshake to FIVR / IVR → V-rail droops to retention voltage
 7. PCU gates clocks → power-gates the core → core is dark
 8. PCU stays awake, monitors wake events (interrupts, snoop, IPI, timer)
@@ -74,7 +72,7 @@ ARM equivalent terminology: WFI / WFE / power-down via PSCI `CPU_OFF`, `CPU_SUSP
    - IO device MSI-X targeted at this core
 2. PCU starts wake sequence:
    a. ungate power (V-rail back to operating voltage)
-   b. release reset + ungate clocks (PLL relock — biggest latency contributor)
+   b. release reset + ungate clocks (PLL relock - biggest latency contributor)
    c. core fetches reset vector → microcode restores arch state from SRAM
    d. caches re-warm via demand fetches (cold-cache penalty)
 3. Core re-enters C0; resumes the instruction after MWAIT/WFI
@@ -89,17 +87,17 @@ ARM equivalent terminology: WFI / WFE / power-down via PSCI `CPU_OFF`, `CPU_SUSP
 
 ### 1.6 Real C-state bug to tell (your Cambria Core C6 wake-loss)
 
-> "On Cambria pre-Si, Core C6 wake occasionally lost. Symptom: thread blocked forever after a timer interrupt that should have woken it. Other cores fine. Root cause: a 1-deep CFC FIFO between core PMA and PCU dropped the wake-ack when a back-to-back snoop + timer arrived in adjacent PCU cycles. PCU saw the wake intent, never confirmed completion, core stayed power-gated. Repro on Zebu emulation needed forcing the snoop+IRQ overlap. Fix: PCU FW added an explicit re-arm after timeout. Caught pre-Si — would have been a P0 silicon bug."
+> "On Cambria pre-Si, Core C6 wake occasionally lost. Symptom: thread blocked forever after a timer interrupt that should have woken it. Other cores fine. Root cause: a 1-deep CFC FIFO between core PMA and PCU dropped the wake-ack when a back-to-back snoop + timer arrived in adjacent PCU cycles. PCU saw the wake intent, never confirmed completion, core stayed power-gated. Repro on Zebu emulation needed forcing the snoop+IRQ overlap. Fix: PCU FW added an explicit re-arm after timeout. Caught pre-Si - would have been a P0 silicon bug."
 
 ### 1.7 Common interview probes
 
-- *"Why can't we always stay in C6?"* — wake latency hurts bursty workloads; OS scheduler avoids it under load via cpuidle governor.
-- *"Why is PkgC6 harder than Core C6?"* — needs **all** cores in C6 + uncore conditions met (no IO traffic, no DMA, no LLC dirty lines that need snooping). One stray driver wakeup blocks the whole package.
-- *"What's the relation between C-states and S-states?"* — C-states are CPU-only (running OS). S-states are system-wide sleep (S0 active, S3 suspend-to-RAM, S4 hibernate). Modern Connected Standby = **S0ix** which uses deep PkgC10 with S0 still nominally active.
+- *"Why can't we always stay in C6?"* - wake latency hurts bursty workloads; OS scheduler avoids it under load via cpuidle governor.
+- *"Why is PkgC6 harder than Core C6?"* - needs **all** cores in C6 + uncore conditions met (no IO traffic, no DMA, no LLC dirty lines that need snooping). One stray driver wakeup blocks the whole package.
+- *"What's the relation between C-states and S-states?"* - C-states are CPU-only (running OS). S-states are system-wide sleep (S0 active, S3 suspend-to-RAM, S4 hibernate). Modern Connected Standby = **S0ix** which uses deep PkgC10 with S0 still nominally active.
 
 ---
 
-## SECTION 2 — Cross-domain crossings (CDC) — DIRECT HIT
+## SECTION 2 - Cross-domain crossings (CDC) - DIRECT HIT
 
 ### 2.1 What is a domain
 
@@ -127,7 +125,7 @@ ARM equivalent terminology: WFI / WFE / power-down via PSCI `CPU_OFF`, `CPU_SUSP
 ### 2.4 Bug shapes
 
 - **2-FF MTBF too low:** synchronizer depth insufficient at high freq → resync fails 1-in-N years → field corruption.
-- **Combinational logic between sync stages:** illegal — second flop now sampling glitching net.
+- **Combinational logic between sync stages:** illegal - second flop now sampling glitching net.
 - **Unrelated signals taking different sync paths:** arrive in different cycles in destination → ordering broken (e.g., data valid before address valid).
 - **Reset CDC missed:** async reset asserted mid-clock → some flops reset, some don't → inconsistent state.
 
@@ -135,7 +133,7 @@ ARM equivalent terminology: WFI / WFE / power-down via PSCI `CPU_OFF`, `CPU_SUSP
 
 - Pre-Si: CDC linter (Spyglass-CDC, Conformal-CDC) flags every crossing; engineer signs off each waiver.
 - Post-Si: a regression that only repros at certain voltage / temperature / freq combo → suspect CDC or analog timing margin.
-- Power-domain gating: check **isolation enable timing** — must assert before power-down, deassert after power-up.
+- Power-domain gating: check **isolation enable timing** - must assert before power-down, deassert after power-up.
 
 ### 2.6 Firmware angle (where your Cambria PCU work lives)
 
@@ -143,7 +141,7 @@ PCU FW writes opcodes that toggle V-rails, clock gates, PLL bypasses across many
 
 ---
 
-## SECTION 3 — CPU pipeline (concept-level) — DIRECT HIT
+## SECTION 3 - CPU pipeline (concept-level) - DIRECT HIT
 
 ### 3.1 Classic 5-stage RISC pipeline (the textbook + the one to draw)
 
@@ -163,7 +161,7 @@ PCU FW writes opcodes that toggle V-rails, clock gates, PLL bypasses across many
 
 Every cycle, ideal throughput = 1 instruction completes (CPI = 1). Modern OoO superscalar = same 5 logical stages but **wider** (4-6 wide) and **deeper** (14-20 stages because Fetch + Decode + Rename + Dispatch + Schedule + Execute ports + Commit each split into multiple sub-stages).
 
-### 3.2 Walkthrough — `MOV A, B` (register-to-register)
+### 3.2 Walkthrough - `MOV A, B` (register-to-register)
 
 Assume `A`, `B` are CPU registers (not memory).
 
@@ -171,13 +169,13 @@ Assume `A`, `B` are CPU registers (not memory).
 |---|---|
 | IF | fetch the `MOV A,B` opcode bytes from I$ |
 | ID | decode → "copy reg B to reg A"; read register B value from regfile |
-| EX | **no ALU op needed** — value just passes through (or 0+B in some impls) |
-| MEM | **skipped** — no memory access |
+| EX | **no ALU op needed** - value just passes through (or 0+B in some impls) |
+| MEM | **skipped** - no memory access |
 | WB | write B's value into reg A in regfile |
 
 **Modern OoO twist:** the rename stage **eliminates** reg-reg `MOV` entirely. The Register Alias Table just remaps A's logical-reg pointer to point at B's physical reg. Zero ALU usage, zero EX latency. (This is called **move elimination**, present on Intel since Ivy Bridge.)
 
-### 3.3 Walkthrough — `MOV A, [B]` (load) and `MOV [B], A` (store)
+### 3.3 Walkthrough - `MOV A, [B]` (load) and `MOV [B], A` (store)
 
 | Stage | Load: `MOV A, [B]` | Store: `MOV [B], A` |
 |---|---|---|
@@ -196,23 +194,23 @@ Assume `A`, `B` are CPU registers (not memory).
 | **Data WAR / WAW** | output dependency | register renaming (kills both) |
 | **Control** | branch: next PC unknown until EX | branch prediction; misprediction → flush + refetch |
 
-For `MOV A, B`: only RAW possible if a later instr reads A and A was written here — handled by forwarding or rename.
+For `MOV A, B`: only RAW possible if a later instr reads A and A was written here - handled by forwarding or rename.
 
 ### 3.5 Key one-liners interview-ready
 
-- *"Why pipeline at all?"* — overlaps stages → throughput = 1 instr/cycle ideally instead of 1/N.
-- *"What's the cost of a branch mispredict?"* — flush all in-flight stages = ~pipeline depth × IPC = 15-20 cycles modern.
-- *"What does superscalar add?"* — multiple instructions enter the pipeline per cycle (4-6 wide).
-- *"What does OoO add?"* — execution order ≠ program order → independent instructions don't wait on slow ones; retirement still in order for precise exceptions.
+- *"Why pipeline at all?"* - overlaps stages → throughput = 1 instr/cycle ideally instead of 1/N.
+- *"What's the cost of a branch mispredict?"* - flush all in-flight stages = ~pipeline depth × IPC = 15-20 cycles modern.
+- *"What does superscalar add?"* - multiple instructions enter the pipeline per cycle (4-6 wide).
+- *"What does OoO add?"* - execution order ≠ program order → independent instructions don't wait on slow ones; retirement still in order for precise exceptions.
 
 ---
 
-## SECTION 4 — Virtual Memory + MMU + TLB — DIRECT HIT
+## SECTION 4 - Virtual Memory + MMU + TLB - DIRECT HIT
 
 ### 4.1 Virtual vs Physical
 
-- **Virtual address (VA)** — what the program/CPU uses. Each process sees its own large flat address space.
-- **Physical address (PA)** — what actually goes on the memory bus to DRAM.
+- **Virtual address (VA)** - what the program/CPU uses. Each process sees its own large flat address space.
+- **Physical address (PA)** - what actually goes on the memory bus to DRAM.
 - Translation enables: process isolation, demand paging, swap, shared memory, ASLR, DMA isolation (via IOMMU).
 
 ### 4.2 The translation chain
@@ -234,7 +232,7 @@ Page table is typically a **multi-level tree** (x86-64: 4-level or 5-level; ARMv
 
 ### 4.4 TLB
 
-- Translation Lookaside Buffer — small fully-associative or set-associative cache of recent VA→PA mappings.
+- Translation Lookaside Buffer - small fully-associative or set-associative cache of recent VA→PA mappings.
 - Hit = ~1 cycle (parallel to L1 access). Miss = page walk → 4-5 memory accesses worst case → 30-100+ cycles.
 - L1 dTLB: tens of entries. L2 STLB: ~1.5K entries (Intel client). Separate iTLB for instructions.
 - **Huge pages (2 MB / 1 GB)** map larger ranges per entry → fewer TLB misses on big working sets. Standard fix for memory-heavy workloads (DBs, ML, NPU input buffers).
@@ -288,7 +286,7 @@ Same MMU concept but for DMA-capable devices: each device sees an **IO Virtual A
 
 ---
 
-## SECTION 5 — MMIO + Bit Manipulation (code-ready)
+## SECTION 5 - MMIO + Bit Manipulation (code-ready)
 
 ### 5.1 MMIO read
 
@@ -319,7 +317,7 @@ write_reg(REG_STATUS, 0x1);
 
 - Tells compiler **do not** cache the value, **do not** reorder, **do not** elide repeat reads.
 - Without `volatile`, a polling loop `while (*reg & 1) ;` would be hoisted out and never see a status-bit change. Compiler thinks the value can't change.
-- `volatile` does **not** give CPU memory ordering — it's a compiler-only directive. For HW ordering use `mb()` / `dmb` / `mfence` or use UC/WC mappings.
+- `volatile` does **not** give CPU memory ordering - it's a compiler-only directive. For HW ordering use `mb()` / `dmb` / `mfence` or use UC/WC mappings.
 
 ### 5.4 Bit manipulation reflexes
 
@@ -348,7 +346,7 @@ status &= ~(LINK_SPEED_MASK << LINK_SPEED_SHIFT);
 status |=  ((new_speed & LINK_SPEED_MASK) << LINK_SPEED_SHIFT);
 ```
 
-### 5.6 Polling pattern (with timeout — interview gold)
+### 5.6 Polling pattern (with timeout - interview gold)
 
 ```c
 static inline int poll_bit_set(uintptr_t reg, uint32_t mask, unsigned us) {
@@ -365,11 +363,11 @@ Always include the timeout. Polling without bound = the bug story they love.
 ### 5.7 Endianness one-liner
 
 - **Little-endian** (x86, ARM default): least-significant byte at lowest address.
-- For MMIO across endianness boundaries (e.g., big-endian device on little-endian CPU) use `cpu_to_le32` / `le32_to_cpu` helpers — never raw cast.
+- For MMIO across endianness boundaries (e.g., big-endian device on little-endian CPU) use `cpu_to_le32` / `le32_to_cpu` helpers - never raw cast.
 
 ---
 
-## SECTION 6 — Function Pointers (code-ready)
+## SECTION 6 - Function Pointers (code-ready)
 
 ### 6.1 Declare + assign + call
 
@@ -378,11 +376,11 @@ int add(int a, int b) { return a + b; }
 
 int (*fp)(int, int);   /* declaration: pointer to fn taking (int,int) returning int */
 
-fp = &add;             /* assign — & is optional, fn name decays to addr */
+fp = &add;             /* assign - & is optional, fn name decays to addr */
 fp = add;              /* equivalent */
 
-int r1 = (*fp)(2, 3);  /* call — explicit deref */
-int r2 =   fp (2, 3);  /* call — implicit, more common */
+int r1 = (*fp)(2, 3);  /* call - explicit deref */
+int r2 =   fp (2, 3);  /* call - implicit, more common */
 ```
 
 ### 6.2 typedef makes it readable
@@ -400,7 +398,7 @@ int r = fp(2, 3);
 |---|---|
 | **Driver ops table** | Linux `struct file_operations { ssize_t (*read)(...); int (*open)(...); ... };` |
 | **Interrupt vector table** | array indexed by IRQ#, each entry = ISR function pointer |
-| **State machine** | `state_t (*handlers[NUM_STATES])(event_t)` — dispatch by current state |
+| **State machine** | `state_t (*handlers[NUM_STATES])(event_t)` - dispatch by current state |
 | **Callbacks** | `qsort(arr, n, sz, compare_fn)`, libuv async I/O, GUI events |
 | **Plugin / dynamic dispatch** | `dlsym()` returns a `void*` cast to fn pointer |
 | **Test harness** | array of test fn pointers run in order |
@@ -412,7 +410,7 @@ int r = fp(2, 3);
 
 ---
 
-## SECTION 7 — Array of Function Pointers (code-ready) — DIRECT HIT
+## SECTION 7 - Array of Function Pointers (code-ready) - DIRECT HIT
 
 ### 7.1 Declaration
 
@@ -444,7 +442,7 @@ for (size_t i = 0; i < n; i++) {
 }
 ```
 
-### 7.4 Real example — opcode dispatch table (interpreter style)
+### 7.4 Real example - opcode dispatch table (interpreter style)
 
 ```c
 typedef void (*op_handler_t)(cpu_t *cpu);
@@ -457,7 +455,7 @@ op_handler_t handlers[256] = {
     [0x00] = op_nop,
     [0x01] = op_add,
     [0xFF] = op_halt,
-    /* others NULL — caller checks */
+    /* others NULL - caller checks */
 };
 
 void step(cpu_t *cpu) {
@@ -470,7 +468,7 @@ void step(cpu_t *cpu) {
 
 This is **literally how interpreters and bytecode VMs dispatch.** Same shape used in network packet handlers, NVMe admin command tables, ACPI method dispatch.
 
-### 7.5 Real example — state machine
+### 7.5 Real example - state machine
 
 ```c
 typedef enum { S_IDLE, S_RUN, S_DONE, S_NUM } state_t;
@@ -490,13 +488,13 @@ Eliminates large `switch` blocks; each state is a self-contained function.
 
 ---
 
-## SECTION 8 — All 21 days at concept-breadth (don't volunteer depth)
+## SECTION 8 - All 21 days at concept-breadth (don't volunteer depth)
 
 ### Day 1-2: C address fluency, pointers, alignment
 - Pointer = address; `*p` deref, `&x` address-of.
-- `int *p` vs `int **pp` — pointer levels.
+- `int *p` vs `int **pp` - pointer levels.
 - Alignment: type T must sit at addr divisible by `alignof(T)`. Misaligned access on ARM = trap (or slow); on x86 = slow but allowed.
-- `container_of(ptr, type, member)` — kernel idiom to recover the enclosing struct from a pointer to one of its fields.
+- `container_of(ptr, type, member)` - kernel idiom to recover the enclosing struct from a pointer to one of its fields.
 
 ### Day 3: Bits / MMIO / volatile / polling
 Covered §5.
@@ -516,7 +514,7 @@ Covered §4.
 
 ### Day 8: DMA, doorbells, ordering, barriers
 - DMA = device moves data without CPU; CPU just sets up descriptors + writes a doorbell MMIO reg to kick.
-- **Critical ordering:** descriptor must be visible in memory **before** doorbell write (`wmb()` between them) — or device reads stale descriptor.
+- **Critical ordering:** descriptor must be visible in memory **before** doorbell write (`wmb()` between them) - or device reads stale descriptor.
 - x86 TSO usually enough; ARM weak ordering needs explicit `dmb st`.
 
 ### Day 9: ARM/Qualcomm vocabulary (skim, don't claim)
@@ -547,7 +545,7 @@ Covered §4.
 Covered §1.
 
 ### Day 14: ADR, PCU FW, Core C6 bugs
-- ADR = Asynchronous DRAM Refresh — on power loss, platform has ~100 µs (battery/cap) to flush write-pending queues (WPQ) to NVDIMM.
+- ADR = Asynchronous DRAM Refresh - on power loss, platform has ~100 µs (battery/cap) to flush write-pending queues (WPQ) to NVDIMM.
 - PCU FW = micro-engine running opcodes that sequence V/F/clock/power changes.
 - Core C6 bug story = your strongest bullet.
 
@@ -580,31 +578,31 @@ Covered §3 + (in 1HR file). Extra: TSO (x86) vs weak (ARM); AVX license levels 
 
 ---
 
-## SECTION 9 — Behavioral / fluency reflexes
+## SECTION 9 - Behavioral / fluency reflexes
 
 | Question | 30-sec answer shape |
 |---|---|
 | "Walk me through your background." | M.Tech CSE NIT-D 2018 → L&T@SanDisk NVMe post-Si → Intel Cambria pre-Si emulation (PCIe Gen6, ADR, C-states) → Microsoft NPU platform validation (Copilot+ PCs, EdgeOptimizer). Common thread = silicon validation across the stack. |
 | "Why Qualcomm?" | Want to do silicon work on cutting-edge mobile/PC SoC (X Elite, premium tier). My x86 background gives me a translation lens; eager to learn ARM/Snapdragon native tooling. |
-| "Tell me a hard bug." | Pick **one** — Core C6 wake-loss (PCU/CFC FIFO) or NVMe CSTS.RDY (CC.MPS misconfig). STAR: situation, task, action (debug ladder), result. |
-| "Strength?" | Cross-stack debug — comfortable from RTL traces up to ETW / OS scheduler. |
+| "Tell me a hard bug." | Pick **one** - Core C6 wake-loss (PCU/CFC FIFO) or NVMe CSTS.RDY (CC.MPS misconfig). STAR: situation, task, action (debug ladder), result. |
+| "Strength?" | Cross-stack debug - comfortable from RTL traces up to ETW / OS scheduler. |
 | "Weakness?" | ARM/Snapdragon native vocabulary still building; mitigating by mapping to x86 equivalents I know deeply. |
 | "Question for us?" | Team's split between pre-Si and post-Si? What's the regression cadence? Tooling stack? |
 
 ---
 
-## SECTION 10 — Final 10-min checklist before walking in
+## SECTION 10 - Final 10-min checklist before walking in
 
 - [ ] `MOV A, B` walkthrough rehearsed (5 stages + "rename elides it" twist)
-- [ ] C-state entry+exit flows (8 steps each) — out loud, no notes
-- [ ] CDC: 2-FF synchronizer / async FIFO / Gray code — why each
+- [ ] C-state entry+exit flows (8 steps each) - out loud, no notes
+- [ ] CDC: 2-FF synchronizer / async FIFO / Gray code - why each
 - [ ] Virtual → Physical: "MMU at runtime, every access, TLB caches it, PA assigned on first touch (page fault)"
 - [ ] MMIO read/write code with `volatile`, mask-shift, set/clear bit macros
 - [ ] Function pointer: declare + typedef + array + state-machine example
 - [ ] One bug story you OWN end-to-end (Core C6 OR NVMe CSTS.RDY)
-- [ ] Honest framing: "I do platform/system validation; for ARM specifics I'm mapping from x86 — call out anything I should sharpen"
+- [ ] Honest framing: "I do platform/system validation; for ARM specifics I'm mapping from x86 - call out anything I should sharpen"
 - [ ] Breathe. Concrete > exhaustive. Let them drill if they want depth.
 
 ---
 
-> **Key meta:** previous interview was depth-on-CPU-core. This 2-hr will likely sweep more areas. Aim for **clear, concrete, 60-90 sec answers** on each topic. Have one good code/diagram per topic ready. If you don't know — say so cleanly and pivot to the closest thing you do know. Confidence + clarity beats over-claim every time.
+> **Key meta:** previous interview was depth-on-CPU-core. This 2-hr will likely sweep more areas. Aim for **clear, concrete, 60-90 sec answers** on each topic. Have one good code/diagram per topic ready. If you don't know - say so cleanly and pivot to the closest thing you do know. Confidence + clarity beats over-claim every time.
