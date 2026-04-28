@@ -924,6 +924,97 @@ Other anchors: HMX 4096 MACs/instr; FastRPC wake ~100 µs; **DDR ~60 GB/s shared
 
 ---
 
+## SECTION 6B — EdgeOptimizer: Profiling Counters Defense (4 min)
+
+> When asked "how does EdgeOptimizer measure NPU vs CPU util / per-inference latency / energy-per-inference?" — these are the actual signals.
+
+### The backbone — ETW (Event Tracing for Windows)
+
+Kernel-level tracing infra. WPR captures → WPA visualizes. EdgeOptimizer subscribes to providers + correlates timestamps.
+
+| Provider | Gives you |
+|---|---|
+| **Kernel-Process / Thread / Power / Memory / PerfInfo** | proc lifecycle, C/P-state transitions, page faults, PMC samples |
+| **DxgKrnl** | NPU/GPU scheduler events (GPUView source) — dispatch + completion |
+| **Microsoft.ML.ONNXRuntime** | session events: model load, run start/end, **per-node EP assignment** |
+| **QNN custom provider** | per-graph compile time, context create, VTCM alloc, FastRPC wake |
+
+### CPU performance counters (PMC, via PCM/VTune/perf)
+
+User-mode tools call kernel drivers that read MSRs.
+
+| Counter | Use |
+|---|---|
+| `INST_RETIRED.ANY` / `CPU_CLK_UNHALTED.CORE` | IPC |
+| `CPU_CLK_UNHALTED.REF_TSC` | freq throttle (ref ≫ core = throttled); same as `aperf/mperf` on Linux |
+| `MEM_LOAD_RETIRED.L1/L2/L3_MISS` | memory-bound |
+| `BR_MISP_RETIRED.ANY` | branch-bound |
+| `DTLB_LOAD_MISSES.WALK_COMPLETED` | huge-page candidate |
+| `OFFCORE_RESPONSE.*` | snoop traffic / false sharing |
+| `MSR_CORE_PERF_LIMIT_REASONS` (0x64F) | throttle reason: thermal? PL1? PL2? Iccmax? |
+| `MSR_PKG_C*_RESIDENCY` | PkgC6/PC10 % during inference idle gaps |
+
+### RAPL — energy counters (THE energy-per-inference claim)
+
+| Domain | MSR |
+|---|---|
+| **PKG** | `MSR_PKG_ENERGY_STATUS` |
+| **PP0** (cores) | `MSR_PP0_ENERGY_STATUS` |
+| **PP1** (iGPU) | `MSR_PP1_ENERGY_STATUS` |
+| **DRAM** | `MSR_DRAM_ENERGY_STATUS` (server only) |
+
+**Pattern:** `joules_after - joules_before` over inference window → energy/inference.
+
+**CRITICAL caveat (must say):** RAPL is **VR-input estimate, not wall power**. Typical gap **20-30%** (VR loss + DRAM not in client RAPL + platform devices + PSU efficiency). Ground truth = external meter (**Quarch / Monsoon**). Use RAPL for relative trending within a platform; gate absolute claims to external meter.
+
+**ARM/Snapdragon equivalent:** SCMI/SCP firmware exposes per-rail energy; Snapdragon Profiler reads PMIC telemetry directly.
+
+### NPU-specific telemetry (what makes EdgeOptimizer earn its name)
+
+| Source | Metric |
+|---|---|
+| **ORT profiler** (`EnableProfiling`) | per-node EP assignment, per-op time → **silent fallback detector** |
+| **QNN profiler API** (`QnnProfile_create`) | HMX cycles, HVX cycles, DMA cycles, VTCM alloc, compile time, context cache hit/miss |
+| **DxgKrnl / GPUView** | NPU dispatch start/end, queue depth, no-preemption gaps (the Paint SR/Camera story) |
+| **PowrProf API + ACPI _BST** | battery discharge (mW), AC/DC, S0ix residency |
+
+### Memory regression signals (the QNN page-fault bug)
+
+| Signal | Source |
+|---|---|
+| Page fault count | ETW Kernel-Memory provider |
+| Peak working set / VirtualAlloc | `GetProcessMemoryInfo()` + ETW VirtualAlloc events |
+| Committed bytes | PerfCounter / WMI |
+
+### Per-inference attribution recipe (how I align everything)
+
+```
+1. ORT emits ETW event at inference start/end with unique correlation_id
+2. Snapshot RAPL joules + PMC counters at both timestamps
+3. Diff → energy + IPC + cache-miss-rate FOR THAT INFERENCE WINDOW ONLY
+4. Cross-reference with NPU dispatch timestamps from DxgKrnl
+5. Output row: (inference_id, model, EP, latency_ms, energy_mJ,
+                page_faults, peak_vm, ep_fallback_op_count)
+```
+
+### Honest framing (must say)
+
+- "EdgeOptimizer **wraps existing infra** — ETW, WPR/WPA, RAPL MSRs, ORT profiler. I didn't write a kernel driver; I orchestrated and **correlated**."
+- "RAPL ≠ wall power; for ground-truth energy I cross-check Quarch on a small validation matrix."
+- "The novelty is **per-inference attribution** across CPU counters + NPU dispatch + energy domains, plus a **regression-gate format** that records EP version + ORT version + counter set together."
+
+### Likely probe answers (60s each)
+
+**"How do you measure NPU utilization?"** Two signals correlated. (1) DxgKrnl events → NPU busy % over wall time. (2) QNN profiler exposes HMX/HVX/DMA cycles per graph → which engine is the bottleneck inside the busy window. CPU-only fallback shows up as zero NPU dispatch + high CPU% in inference window.
+
+**"Detect silent EP fallback?"** Cheap: parse ORT verbose log for `node X assigned to CPUExecutionProvider`. Better: subscribe to ORT ETW provider, count `EP_assignment` events, regress if `(CPU_assigned_ops/total_ops) > threshold` for a model that was 100% NPU on previous drop.
+
+**"EdgeOptimizer overhead?"** ETW kernel sampling at 1 kHz: ~1-2% CPU. RAPL MSR reads: ns. ORT profiler JSON: ~5% (used in characterisation only). Regression mode = ETW-only, <2%.
+
+**"Cross-vendor energy comparison?"** RAPL coverage differs (Intel PP0/PP1, AMD has equivalent, QC via SCMI/PMIC). Gate absolute energy claims to a fixed methodology — external Quarch over defined workload — and use RAPL/PMIC only for relative trending within one platform.
+
+---
+
 ## SECTION 7 — Debug Methodology (Day 20) (5 min)
 
 ### 7-step framework
