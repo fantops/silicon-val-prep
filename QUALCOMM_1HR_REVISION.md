@@ -8,9 +8,11 @@
 
 **Pitch (60s):** Silicon Validation Engineer, ~8 yrs, full lifecycle. **Microsoft now** — post-Si NPU platform validation on Copilot+ PCs across **Intel LNL, AMD Strix, Qualcomm SD X Elite (Hexagon HTP v79, 8 MB VTCM, ~45 TOPS)**. Built **EdgeOptimizer** (ETW/WPA-based instrumentation). **Intel before** — pre-Si Cambria Xeon Emulation Engineer: C-states, ADR, PCIe Gen6 transactor on Zebu; Star of the Month for CXL FW. **L&T@SanDisk before that** — NVMe post-Si bring-up, 25+ Python power scenarios, SDExpress POC (Spot Award). M.Tech CSE NIT Durgapur 2018.
 
-**Why Qualcomm:** "Snapdragon X Elite + Oryon is where laptop ARM is being defined. CPU system validation — RPMh power coordination, weak memory model, DynamIQ scheduling — is exactly the cross of pre-Si discipline (Intel C-state) and platform validation (MSFT multi-vendor) I want to own end-to-end."
+**Why Qualcomm:** "Snapdragon X Elite + Oryon is where laptop ARM is being defined. CPU system validation — power-state coordination, weak memory model, big.LITTLE scheduling — is exactly the cross of pre-Si discipline (Intel C-state) and platform validation (MSFT multi-vendor) I want to own end-to-end."
 
 **Why leaving MSFT:** Going *toward* vendor-side ownership, not running. MSFT gave 3-vendor breadth + ETL/EdgeOptimizer rigor. Next: own silicon pre-Si → PV inside a vendor.
+
+**Framing reflex (USE THIS):** "I think in x86 vocabulary because that's where I worked at Intel. Here's how the same concept maps to Snapdragon — architecture differs, validation discipline is identical." Then explain the x86 flow in depth + one-line QC mapping.
 
 **3 bug stories ready (90 sec each):**
 1. **Core C6 wake-loss** (Intel Cambria pre-Si) — CFC FIFO 2-clock-domain race
@@ -18,7 +20,8 @@
 3. **QNN/ORT page-fault regression** (MSFT) — version-matrix isolation
 
 **The reflexes:**
-- "DMB ST between descriptor and doorbell" = #1 ARM driver bug
+- "On x86 it's PCU + IOSF-SB + P-channel; on Snapdragon it's RPMh + SPMI + TCS — same shape"
+- "TSO on x86 hides the bug; ARM weak model exposes it — DMB ST between descriptor and doorbell"
 - "Pre-Si = built it right; Post-Si = built the right thing"
 - "Reproducibility rate is the first triage signal"
 - "Lead with the symptom; one hypothesis at a time; end with the lesson"
@@ -498,7 +501,7 @@ PCU / PUnit  (on-die power microcontroller, runs PCU FW)
 - **DPM (Dynamic Power Management)** — combines DVFS + clock gating + power gating
 - **ATPM / DTPM (Dynamic Thermal Power Management)** — budgets power across IPs (CPU vs GPU vs NPU) under shared thermal cap
 
-### 4.10 DVFS validation — what you actually do
+### 4.11 DVFS validation — what you actually do
 
 1. **OPP table sanity:** every (V,F) point in the table must run a stress workload (e.g., dhrystone, mprime) for N hours without errors at every PVT corner the SKU ships into.
 2. **Transition stress:** rapid P-state hopping (every 100 µs to every 100 ms) — looking for V/F sequencing bugs.
@@ -508,7 +511,7 @@ PCU / PUnit  (on-die power microcontroller, runs PCU FW)
 6. **Cross-IP power budget:** GPU + NPU + CPU all at max → does package power stay under PL1? Does the right IP throttle first per policy?
 7. **Workload characterisation:** measure actual perf-per-watt at each OPP for representative workloads → identify the **knee of the Pareto curve** (past it, more watts buys near-zero perf).
 
-### 4.11 Common DVFS bugs (interview-worthy)
+### 4.12 Common DVFS bugs (interview-worthy)
 
 | Bug | Symptom | Root cause |
 |---|---|---|
@@ -522,7 +525,7 @@ PCU / PUnit  (on-die power microcontroller, runs PCU FW)
 | **CPR oscillation** | V flickers, intermittent failures | CPRh closed-loop unstable; gain too high; needs damping |
 | **DVFS thrashing under bursty load** | Net power UP, not down | Governor too aggressive → spends time in transitions |
 
-### C-states (idle)
+### C-states (idle, x86) — what I owned at Cambria
 
 | State | Mechanism | State preserved | Wake | Power saved |
 |---|---|---|---|---|
@@ -530,38 +533,65 @@ PCU / PUnit  (on-die power microcontroller, runs PCU FW)
 | **C1/C1E** | **clock-gated** | flops keep state | ~1-2 µs | dynamic only |
 | **C6** | **power-gated** | saved to retention SRAM (S3M); rail collapses | ~100 µs+ | dynamic + leakage |
 
-### PkgC6 — cross-IP idle dance
+OS entry: **MWAIT** with C-state hint (Linux `intel_idle`, Windows PPM). Each step deeper saves more, costs more wake latency, more code path to validate.
+
+### Core C6 entry sequence (Intel, block-by-block)
+
+```
+1. OS issues MWAIT with C6 hint
+2. Core flushes L1/L2 (data evictable to LLC)
+3. Core saves arch state (regs, MSRs) to S3M SRAM
+4. Core asserts P-channel C6_REQ to PCU
+5. PCU checks blockers (LTSSM not in L1.x? VR settling? IIO outstanding? Thermal?)
+6. If clear: PCU opens core power-gate FET → core voltage drops to 0
+7. Only retention SRAM + interrupt-wake logic remain powered
+```
+
+### PkgC6 — cross-IP idle dance (THE Intel cross-IP story)
 
 Triggers when ALL cores in C6 AND every uncore IP asserts idle:
 - LLC, memory ctrl, **PCIe ctrl (link in L1.2!)**, display, USB, NIC, IRQ ctrl
 - Then PCU flushes LLC→DRAM, gates uncore fabric, collapses package Vcc
 - Exit dominated by **LLC reload from DRAM** (~hundreds µs)
-- **#1 PkgC6 blocker = PCIe link not in L1.2**
+- **#1 PkgC6 blocker = PCIe link not in L1.2** (needs ASPM both sides + L1 PM Substates cap + CLKREQ# routed + permissive LTR)
+- Triage MSR: read PCU **blocking-reason** MSR → which IP refused?
 
-### S0ix / Modern Standby
+### S0ix / Modern Standby (Intel)
 
-OS-visible connected standby targeting PkgC10. <100 mW budget. If PkgC6 broken → S0ix over budget. Snapdragon analogue: deep-sleep state RPMh aggregates into via PSCI.
+OS-visible connected standby targeting PkgC10. <100 mW budget. If PkgC6 broken → S0ix over budget.
 
-### ADR (Asynchronous DRAM Refresh) — power-loss flow
+**QC mapping (one line):** Snapdragon analogue is the deep-sleep state RPMh aggregates into via PSCI `SYSTEM_SUSPEND`; the cross-IP "every IP asserts idle" check is replaced by RPMh seeing every subsystem's sleep vote land — same shape, different aggregator.
+
+### ADR (Asynchronous DRAM Refresh) — power-loss flow (Intel, my Cambria bug)
 
 ```
-PSU AC loss → PLI asserted → PCH asserts ADR_TRIGGER → PCU FW sequence:
+PSU AC loss → PLI (Power Loss Imminent) asserted → PCH asserts ADR_TRIGGER → PCU FW sequence:
   IO_QUIESCE → FABRIC_QUIESCE → (eADR: LLC writeback) →
-  WPQ_FLUSH (IMC drains) → DDR_SELF_REFRESH → (NVDIMM SAVE_n#) → rails off
+  WPQ_FLUSH (IMC drains Write Pending Queue) → DDR_SELF_REFRESH →
+  (NVDIMM SAVE_n# if populated) → rails off
 ```
 
-Hold-up budget = 10-30 ms from PSU caps + supercaps. eADR adds LLC writeback so PMem stores persist without explicit `clwb`/`clflushopt`.
+Hold-up budget = **10-30 ms** from PSU bulk caps + supercaps. Every IP added to platform eats budget.
 
-### Intel power-mgmt vocabulary (use precisely!)
+- **eADR vs ADR:** eADR adds LLC writeback so PMem stores persist without explicit `clwb`/`clflushopt`. Costs more hold-up time, removes a SW ordering trap.
+- **Cross-socket ADR:** UPI link teardown ordering matters. Socket 0 must not power off while Socket 1 still draining over UPI.
+
+### Intel power-mgmt vocabulary (use these precisely — interviewer pattern-matches)
 
 - **PCU / PUnit / PMC FW** — on-die microcontroller running power state machine
-- **IOSF Sideband (IOSF-SB)** — bus PCU uses to talk to other IPs
-- **P2P opcodes** — PUnit-to-PUnit message opcodes
-- **P-channel** — Core PMA ↔ PCU power handshake
-- **S3M SRAM** — always-on save/restore SRAM for C6 state
-- **CFC** — clock-forwarding/crossing FIFO (always-on ↔ power-gated)
-- **WPQ** — Write Pending Queue inside IMC
-- **PLI** — Power Loss Imminent
+- **IOSF Sideband (IOSF-SB)** — bus PCU uses to talk to other IPs (not coherent)
+- **P2P opcodes** — PUnit-to-PUnit messages; what I traced for the ADR bug
+- **P-channel** — Core PMA ↔ PCU power handshake protocol
+- **S3M SRAM** — always-on save/restore SRAM for C6 arch state
+- **CFC** — clock-forwarding/crossing FIFO (always-on ↔ power-gated); the wake-loss bug lived here
+- **WPQ** — Write Pending Queue inside IMC; ADR drains this
+- **PLI** — Power Loss Imminent (PSU-driven trigger for ADR)
+- **DTS** — Digital Thermal Sensor; per-region on-die temp, read by PCU
+- **PROCHOT#** — bidirectional thermal throttle signal
+- **RAPL** — Running Average Power Limit; joules per domain via MSR
+- **AER / MCA** — PCIe Advanced Error Reporting / Machine Check Architecture for error log
+- **HWP** — Hardware P-states (autonomous OPP selection)
+- **HSD** — Hardware/Software Defect tracking system at Intel; how I filed bugs
 
 ---
 
@@ -1114,13 +1144,14 @@ def isValid(s):
 
 - [ ] Said the 60-sec pitch aloud
 - [ ] Said one bug story aloud (rotate Story 1/2/3)
-- [ ] Recited: "DMB ST between descriptor and doorbell"
-- [ ] Recited RPMh: "votes → MAX aggregate → PMIC over SPMI; TCS for fast wake"
+- [ ] Recited Intel DVFS path: "OS → MSR_IA32_PERF_CTL or HWP → PCU → IOSF-SB → VR + PLL → P-channel ACK"
+- [ ] Recited QC mapping in one line: "RPMh aggregates votes → MAX → PMIC over SPMI; TCS for fast wake"
 - [ ] Recited DVFS rule: "V first then F going up; F first then V going down"
 - [ ] Recited HTP v79: "8 MB VTCM, ~45 TOPS, 4096 MACs/instr HMX, 60 GB/s DDR is real bottleneck"
 - [ ] Recited PkgC6: "all cores C6 + every uncore IP idle + PCIe L1.2 → flush LLC → collapse rail"
 - [ ] Recited TMA: "IPC alone is meaningless — bucket the slot first (Frontend/Memory/Core/BadSpec/Retiring)"
 - [ ] Have honest framing ready: "OEM/platform validation, I correlate ETW + version matrices; I don't debug Hexagon RTL"
+- [ ] Have framing reflex ready: "I'll explain in x86 vocab since that's where I worked, then map to Snapdragon"
 - [ ] Breathe. You know this.
 
 **Lead with calm. Lead with data. Good luck.**
