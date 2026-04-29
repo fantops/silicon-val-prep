@@ -131,6 +131,12 @@ Bug stories are deliberately woven across the days so the same root mechanism ap
 
 If your loop is in <14 days, follow the **Tier-1 path** in [Day 21 section 3](day21_final_mock_company_tailoring.md). The night-before re-read order is also there.
 
+**Per-company tailoring lives in [Day 21 §3](day21_final_mock_company_tailoring.md):**
+- Qualcomm — Snapdragon / Hexagon HTP / NVMe.
+- Intel (generic) — Cambria / PCIe Gen6 / ADR / CXL.
+- **Intel Ireland (NPU validation, Leixlip / Shannon)** — pre-Si + post-Si seam, JD line-by-line mapping, country/culture framing. Pair with [INTERVIEW_REVISION_GUIDE.md §2.5 + §11](../INTERVIEW_REVISION_GUIDE.md) for the relocation/culture behavioural block and the JD evidence map.
+- Microsoft — Copilot+ PC / EdgeOptimizer / multi-vendor breadth.
+
 ## A Note on the Bug Stories
 
 The **same** four polished bug stories appear in two places by design:

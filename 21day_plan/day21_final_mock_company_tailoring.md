@@ -156,6 +156,64 @@ Same core narrative; emphasis adjusted to the team's product.
 
 **Day-anchors:** Day 10-11 (PCIe + NVMe), Day 12-14 (DVFS, C-states, ADR), Day 15 (RAPL/perf-counters), Day 16 (TSO + pipeline), Day 20 (stories).
 
+#### Intel Ireland — NPU Validation (Leixlip / Shannon)
+
+This is a **specialisation** of the generic Intel framing above for the Ireland AI silicon (NPU) validation team. Same Cambria/PCIe Gen6/ADR foundation, but lead with the AI-silicon-validation framing the JD asks for.
+
+**Lead with:** **NPU validation across pre-Si and post-Si** is exactly what I do today. Microsoft = post-Si NPU on three vendors (incl. Intel LNL NPU). Intel Cambria = pre-Si validation infra (Zebu, transactor C++, Perspec). The JD asks for both halves; I have both halves.
+
+**JD ↔ my evidence (memorise the mapping):**
+
+| JD bullet | My evidence |
+|---|---|
+| Validate next-gen AI silicon (NPU) across workloads | EdgeOptimizer across LNL / XDNA / Hexagon HTP v79; ResNet/MobileNet/Llama-class quant models; Photoshop / Paint SR / Camera SR field workloads |
+| Debug pre- and post-Si — intermittent, multi-domain | Cambria Core C6 wake-loss (1-deep CFC FIFO race, pre-Si Zebu); QNN page-fault regression (post-Si, multi-driver bisect) |
+| Develop validation infra (sim / emul / FPGA / post-Si) | Zebu emulation flows, Perspec test content, PCIe Gen6 transactor in C++ (10+ enhancements); EdgeOptimizer post-Si profiler |
+| Characterise & profile silicon power/perf on AI workloads | RAPL + ETW + WPA, energy-per-inference, EDP, geomean across model suite; per-IP RAPL domain attribution |
+| Power/perf tuning with arch / design / SW | EP fallback root-causing with ORT + driver teams; PL1/PL2 / Tau tuning, EPP exploration |
+| Read HW arch specs → derive targeted tests | PCIe Gen6 spec → FLIT / L0p test scenarios; CXL.io/.cache/.mem coverage; NVMe spec → CSTS.RDY / AQA bring-up |
+| Share findings, debug techniques | Internal Microsoft EdgeOptimizer docs / brown-bags; cross-vendor methodology write-ups |
+| C/C++ + memory models + concurrency | Days 1-3, 5, 16, 17 — SPSC ring, MESI, TSO vs weak, atomics |
+| Python for automation / data analysis | L&T NVMe Python power-scenario harness; EdgeOptimizer ETW post-processing in Python |
+| OS-level driver exposure (Linux/Windows) | Windows: ETW / DxgKrnl / WPA / WPR; KMDF basics; Linux: cpuidle / cpufreq governors, perf, ftrace |
+| Embedded toolchains (compiler, debugger, build, VCS) | gcc/clang, gdb, JTAG/Metaware (L&T), Make/CMake, git, Perforce (Intel) |
+| FPGA / emulation / RTL sim | Zebu emulation owner (Cambria); Perspec, PCIe Gen6 transactor; pre-Si signal-level debug |
+| Bash / PowerShell / Tcl | Bash + PowerShell daily; Tcl from EDA flow exposure |
+| Perf profiling / benchmarking / power measurement | EdgeOptimizer (RAPL + ETW + per-inference attribution); Quarch external power as ground truth |
+| Silicon validation / bring-up / FW | L&T NVMe post-Si bring-up; Intel pre-Si Cambria PCU/PMA flows |
+
+**Anchor sentences:**
+
+- "Intel Ireland is the team I'd join because the charter is **NPU validation across pre-Si and post-Si**, which is exactly the seam I sit on today: post-Si NPU at Microsoft on LNL/XDNA/Hexagon, and pre-Si Xeon at Intel India on Cambria. Closing that loop on one product is what I want next."
+- "On the AI workload side I run the **same six-stage methodology** I built at Microsoft — bring-up sanity, functional matrix, perf characterisation, energy-per-inference, sustained-thermal, and stress — and I've already applied it to Intel LNL NPU on Copilot+ PCs, so I know the silicon's behaviour from the customer side."
+- "On the pre-Si side I've owned C-state / ADR / PCIe Gen6 flows on **Zebu**, written **C++ transactor** enhancements, and developed **Perspec** test content for cross-IP validation — so I can build infra, not just consume it."
+- "Spec → test case is how I work: I read the PCIe Gen6 FLIT mode and L0p sections, derived targeted scenarios for the transactor, and the same approach applies to NPU IP specs — read the architectural intent, then derive workloads that exercise the corner."
+
+**Bug stories to lead with:** ADR opcode-ordering (1) → Core C6 ARAT wake-loss (3) → QNN page-fault regression (4) → silent EP fallback (5). The first two prove pre-Si depth; the last two prove post-Si NPU depth. Save NVMe CSTS.RDY (2) for "any other bring-up experience?" follow-ups.
+
+**Why Ireland specifically (sentence 4 of the "why this company" template):**
+
+- "Intel Ireland's Leixlip campus is one of two global Intel sites doing leading-edge NPU silicon validation. The team sits inside the design centre, which means validation findings feed directly back into the next stepping — that close-the-loop is the missing piece in my current OEM-side post-Si role."
+- "Ireland is also a deliberate personal step — English-speaking, EU base, strong engineering culture, and Intel's biggest non-US site. I'm relocating with intent, not just for a role."
+
+**Day-anchors to revise night-before (Intel Ireland order):**
+
+1. Day 21 §3 (this section).
+2. Day 18-19 (NPU stack + bugs) — the AI-silicon angle the JD leads with.
+3. Day 14 (ADR + Core C6) — pre-Si Intel credibility.
+4. Day 12-13 (DVFS + C-states) — the power/perf charter.
+5. Day 15 (RAPL + multi-IP + EDP) — characterisation methodology.
+6. Day 10 (PCIe Gen6 + LTSSM) — your transactor work.
+7. Day 16-17 (memory model + concurrency) — C/C++ coding round.
+8. Day 20 (debug method + 4 polished stories).
+
+**Likely Intel-Ireland-specific drill questions:**
+
+- *"How would you build pre-Si validation infra for an NPU IP that doesn't have post-Si silicon yet?"* → simulator (Hz–kHz) for unit-level functional, emulation (Zebu, MHz) for graph-level + driver bring-up, FPGA proto (10–100 MHz) for end-to-end perf with real ORT, post-Si for PVT corners. Build one harness that drives all four with the same test content (Perspec-style).
+- *"How do you test an NPU spec corner you can't easily hit in software?"* → constrained-random workloads in the transactor; synthetic ops crafted to land on the corner (e.g., VTCM eviction, DMA-of-1-byte, op at tile boundary); inject from the EP layer down.
+- *"You see a 10 % regression on geomean across 30 models on a new stepping. How do you proceed?"* → bisect by stepping/driver/runtime/model; rank by geomean contribution (one model can dominate); per-op profile the top contributor; correlate with ETW + RAPL; isolate to silicon vs FW vs SW; reproduce smallest case; file with hypothesis.
+- *"How do you derive test cases from a HW arch spec?"* → read the spec section; list architectural intents (functional, perf, error, security); for each intent list observable signals; design one positive test, one negative test, one corner test; map each test to pre-Si (sim/emul/FPGA) or post-Si; document expected vs observed; review with the IP arch.
+
 #### Microsoft (Copilot+ PC, Azure, Surface)
 
 **Lead with:** the **current job** — multi-vendor post-Si platform validation, EdgeOptimizer profiler, ETL/WPA, agentic Copilot CLI workflows; the **breadth across Intel + AMD + Qualcomm** is the differentiator.

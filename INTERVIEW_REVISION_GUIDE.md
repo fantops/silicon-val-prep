@@ -17,6 +17,8 @@
 | Theme | One-liner reflex |
 |---|---|
 | Why this role | NPU post-Si is where my Microsoft EdgeOptimizer work + Intel pre-Si experience converge - I've validated NPU silicon from bring-up to OEM ship |
+| Why Intel Ireland | Closes the loop — pre-Si + post-Si on one product, design centre on-site, EU base, English-speaking, deliberate long-horizon move |
+| Why relocate | Role-first not place-first; Leixlip is Intel's flagship non-US engineering site; family-stable, EU base, strong eng culture |
 | Lead-team-of-15 | I'd run as a tech lead, not pure manager. Daily standups, weekly 1:1s, clear ownership matrix, escalate blockers fast. Most senior IC + small-team lead is my comfort zone |
 | Underperforming teammate | First conversation: understand if it's **can't** (skill/blocker) or **won't** (motivation). Different responses for each |
 | Thermal goes up, don't want perf drop | Headroom buying: better cooling, lower V at same F (binning), spread load across cores, schedule heavy work to cool periods, use bigger/LITTLE cluster |
@@ -122,6 +124,99 @@ Have 3 ready:
 2. "What's the regression cadence? How does a silicon escape get diagnosed?"
 3. "Where is the team in its growth - hiring to fill gaps, or hiring to scale?"
 4. "What does success look like in this role at 6 months and 12 months?"
+
+---
+
+## SECTION 2.5 - Intel Ireland: relocation, culture, and "why us" behavioral block
+
+> Intel Ireland (Leixlip / Shannon) means a country move, a culture move, and an Intel-specific values move. Senior interviews here drill on **intent** ("why Ireland, why Intel, why now") far more than US loops do. Have these answers concrete, calm, and short. Never sound like Ireland is "a backup" or "for the visa."
+
+### Q: "Why Ireland? Why are you willing to relocate?"
+
+**Answer (60-90 sec):**
+> "Three reasons, in order. First, the **role** — Intel Ireland's NPU validation team owns the seam between pre-Si and post-Si on AI silicon, which is exactly the loop I want to close. I've done both halves separately (pre-Si Cambria at Intel India, post-Si NPU at Microsoft); I want to do them on one product. Second, the **site** — Leixlip is one of Intel's two flagship sites globally and the largest non-US engineering campus, with the design centre on-site, so validation findings feed directly back into the next stepping. Third, the **country** — Ireland is English-speaking, EU-based, has a strong engineering culture, and a large international tech community. For my family it's a stable, long-horizon move, not a stepping-stone. I've thought about this seriously; I'm relocating with intent."
+
+**Watch-outs:**
+- Don't list weather, taxes, or pay as drivers — even if true, they read as transactional.
+- If asked about family / dependants, answer factually and briefly, then return to the role.
+- Do **not** compare unfavourably to current location ("India is too crowded" etc.) — read as negative.
+
+### Q: "Have you worked with European / Irish teams before?"
+
+> "Yes — at Intel India I worked daily with Hudson (US) and Haifa (Israel) on Cambria, with overlap windows that taught me how to write decisions down so the next time-zone could act without me. At Microsoft I work with the Redmond and Vancouver teams. Ireland-time UTC+0/+1 is similar to working with Israel and gives clean overlap with both US-East and India, so I'd be a useful timezone bridge for a globally distributed silicon team."
+
+### Q: "What do you know about Intel's culture, especially in Ireland?"
+
+> "Three things stand out. First, Intel's engineering culture is **disagree-and-commit**, with a strong written-decision habit — that fits how I work. Second, the Ireland site is fab + design + validation co-located, which is unusual; it means validation engineers see manufacturing reality, not just lab silicon. Third, post-IDM 2.0 there's been heavy investment in Ireland (Fab 34, AI silicon programs), so it's a growth site, not a maintenance site. I'd want to be where the next-gen NPU is being built, and that's there."
+
+*(If you don't know Fab 34 / IDM 2.0, drop those names and just say "the AI silicon investment is concentrated there.")*
+
+### Q: "How do you handle a long-distance / remote-from-HQ working setup?"
+
+> "Two habits. First, default to writing — design docs, decision logs, async reviews — so the absence of a corridor conversation isn't a blocker. Second, protect one or two real-time overlap windows per week with the partner timezone for the conversations that genuinely need voice. I learned this on Cambria where the architects were in Hudson and the IP owners in Haifa; the teams that wrote things down moved faster than the teams that relied on calls."
+
+### Q: "Why are you leaving Microsoft / India?"
+
+**Frame positively, role-first not place-first:**
+> "Microsoft has been excellent — three vendors of NPU silicon, full ETW/RAPL tooling charter, and the agentic-Copilot CLI tooling I built has scaled across the team. But I'm one layer away from where the silicon is designed; I qualify it, I don't shape it. The next thing for me is depth at the silicon side — owning validation end-to-end at the vendor, on one product, across pre-Si and post-Si. Intel Ireland is exactly that role. The country move is a side-effect of where the right role lives, not the driver."
+
+### Q: "Are you prepared for a pay / cost-of-living change?"
+
+> "I've researched Dublin / Leixlip cost-of-living, housing, and the Intel Ireland comp band. I've planned for the transition (initial accommodation, schooling if relevant, first-year ramp). I'd like to discuss the package as part of the offer conversation, but it's not a blocker."
+
+*(Don't open numbers in the loop. Defer to recruiter.)*
+
+### Q: "What's your visa / work-permit situation?"
+
+**Be factual, brief, and proactive:**
+> "I'd be on Intel-sponsored Critical Skills Employment Permit / Stamp 1; that's the standard route for senior engineering hires into Ireland. I'm aware of the process and timelines and I'd work with Intel's mobility team. I have no current visa restrictions that would slow this down."
+
+*(If you're not sure of the actual visa class — say "Intel's standard sponsored route" and don't invent specifics.)*
+
+### Q: "What if you're asked to be on-site full-time?"
+
+> "I'd expect a silicon-validation role to be predominantly on-site — the lab, scopes, JTAG rigs, and emulators aren't remote-friendly. I plan to relocate to Leixlip / Maynooth area and be on-site by default; I'd value flexibility for occasional remote work on the spec-reading and analysis side, but I'm not coming in expecting a hybrid contract."
+
+### Q: "Tell me about a time you adapted to a new culture / team."
+
+**Pick one and rehearse (STAR):**
+- Joining Microsoft from Intel: different review style (PR/code-review heavy vs design-doc heavy), different on-call rhythm, different tool ecosystem. Action: spent first 30 days just learning, didn't push my Intel patterns; by day 60 I'd contributed an EdgeOptimizer prototype using *their* WPA conventions, not mine.
+- Or any cross-team rotation you've done.
+
+**Lesson to land:** "I assume the new culture is right until I understand why it's that way. Pushing your old patterns on day one is the fastest way to lose credibility with a new team."
+
+### Q: "How would your day 1 / day 30 / day 90 look at Intel Ireland?"
+
+> "**Day 1-30:** lab access, dev env, build & boot the validation rigs, shadow the senior validators on a live workload, read the IP arch spec for the NPU I'd be assigned, learn the regression flow. No new ideas yet — earn the right to propose by understanding what already exists.
+>
+> **Day 30-60:** own a small workstream — a workload, a regression bucket, or one piece of infra. Ship one improvement (a script, a triage doc, a missing test). File at least one bug found end-to-end.
+>
+> **Day 60-90:** lead a debug from symptom to root cause in front of the team; propose one infra improvement that scales beyond me. By 90 days I'd want a peer to say 'I trust their findings,' which is the only metric that matters in validation."
+
+### Q: "Why now? Why not in 2 years when you have more NPU vendor depth?"
+
+> "Two reasons. One — the AI silicon design cycles are accelerating; the team that ships the NPU in the next 3-year stepping is being formed now, and being part of that arc is more valuable than coming in two years and inheriting decisions. Two — my pre-Si muscle from Cambria is still recent enough to be sharp; if I wait another two years on pure post-Si, that re-engagement gets harder."
+
+### Q: "What are you most worried about in this move?"
+
+**Show self-awareness without selling fear:**
+> "Honest answer — first 6 months of context-load. New silicon, new team norms, new country at the same time. My mitigation: ask for a buddy on the team for the first quarter, write everything I learn down for my own re-reference, and resist the urge to over-volunteer in the first month. Beyond that, I don't have specific worries — the role and the site are well-matched to where I want to go."
+
+### Q: "What questions do *you* have about Ireland / the team?" (have 4 ready)
+
+1. "How is the team split between the Leixlip and Shannon sites, and what's the cadence of cross-site collaboration?"
+2. "What does the relocation support look like — is there a buddy / mentor program for international hires in the first quarter?"
+3. "How does the site interact with the US-based architecture and design teams — overlap hours, decision forums, escalation paths?"
+4. "What's the mix between pre-Si validation infra work and post-Si bring-up in this role on a typical sprint?"
+
+### Cultural reflexes (small things that read big)
+
+- **Tone:** Irish workplace tone is **direct but warm and understated**. Don't oversell. Confidence is fine; bravado is not. "I think I can help here" lands better than "I will absolutely transform this team."
+- **Humour:** self-deprecating is welcome; punching at others is not. Safe topic.
+- **Punctuality:** show up 5 min early to the call. Don't apologise repeatedly if you're 1 min late — apologise once and move on.
+- **Names:** use first names in interviews unless explicitly told otherwise. Hierarchy is flat in tone.
+- **Disagreement:** allowed and expected, but lead with the data and frame as a question, not a verdict ("Has the team considered ... ?" beats "That's wrong because ...").
+- **Closing the loop:** send a short thank-you email within 24h to the recruiter; one or two lines, no need to re-pitch yourself.
 
 ---
 
@@ -672,4 +767,60 @@ Practice: dual data-structure design, struct layout, intrusive vs separate-alloc
 
 ---
 
+## SECTION 11 - Intel Ireland JD: line-by-line mapping (read morning of)
+
+> The JD is your interview script. For each bullet they wrote, know the one example and the one day-anchor that backs it. Recruiters and hiring managers grade on "did they speak to our JD?" — answer in *their* vocabulary.
+
+### "What you'll do" → my evidence
+
+| JD bullet | One-sentence answer | Day anchor | Bug story to deploy |
+|---|---|---|---|
+| Validate next-gen AI silicon (NPU) across workloads | "I run NPU validation today on Intel LNL, AMD XDNA, and Qualcomm Hexagon HTP v79 across Photoshop, Paint SR, Camera SR, and Llama-class quant models." | Day 18-19 | Silent EP fallback (5) |
+| Debug pre- and post-Si — intermittent, multi-domain | "Pre-Si: Cambria Core C6 wake-loss, 1-deep CFC FIFO race, caught only under overlapping snoop+IRQ. Post-Si: QNN context-cache invalidation regression across a driver bump." | Day 14, 19 | Core C6 (3), QNN page-fault (4) |
+| Develop validation infra (sim / emul / FPGA / post-Si) | "Zebu emulation flows + Perspec test content + 10+ PCIe Gen6 transactor enhancements in C++ at Intel; EdgeOptimizer post-Si profiler at Microsoft." | Day 10, 21 | n/a |
+| Characterise + profile silicon power/perf on AI workloads | "RAPL + ETW + WPA pipeline, energy-per-inference, EDP, geomean across model suite, per-IP RAPL domain attribution." | Day 15, 18 | n/a |
+| Power/perf tuning with arch / design / SW | "Worked with ORT + driver teams to root-cause EP fallback regressions; tuned PL1/PL2/Tau for sustained NPU workloads." | Day 12, 15 | n/a |
+| Read HW arch specs → derive targeted tests | "PCIe Gen6 spec → FLIT mode + L0p test scenarios for transactor; CXL spec → .io/.cache/.mem coverage planning." | Day 10 | n/a |
+| Share findings + best practices | "Internal EdgeOptimizer docs, brown-bags, cross-vendor methodology write-ups; agentic-Copilot CLI workflow shared with the team." | n/a | n/a |
+
+### "Required" → my evidence
+
+| Required | Answer (one liner) |
+|---|---|
+| Strong debug instinct | "Observe → reproduce → isolate → hypothesise → test → root-cause → fix. Convert vague failure into one controlled signal." (Day 20.) |
+| Full-stack curiosity | "I'm comfortable from RTL/emulation traces up through firmware, kernel drivers, ETW, and OS scheduler — that's literally how my four headline bug stories were debugged." |
+| Learning agility | "Picked up QNN, Hexagon HTP, and ORT EP from spec + source in ~2 months at Microsoft, with no vendor training. Same with PCIe Gen6 at Intel." |
+| C/C++ + memory model + concurrency | "C daily for systems code; understand TSO vs weak memory models, atomics, false sharing, SPSC ring patterns." (Day 5, 16, 17.) |
+| Python scripting | "Python harness for NVMe power scenarios at L&T; ETW post-processing in EdgeOptimizer; data analysis with pandas." |
+| Communication | "Three polished 90-sec bug stories ready; written design docs + decision logs are how I work." |
+
+### "Desired" → my evidence
+
+| Desired | Answer |
+|---|---|
+| OS-level driver experience (Linux/Windows) | "Windows: ETW, DxgKrnl events, WPA, WPR; KMDF basics. Linux: cpuidle / cpufreq governors, perf, ftrace, cgroups." |
+| Embedded toolchains | "gcc/clang, gdb, JTAG/Metaware (L&T NVMe), Make/CMake, git, Perforce (Intel)." |
+| FPGA / emulation / RTL sim | "Zebu emulation owner on Cambria; Perspec; PCIe Gen6 transactor in C++; pre-Si signal-level debug." |
+| Bash / PowerShell / Tcl | "Bash + PowerShell daily; Tcl exposure from EDA flows." |
+| Perf profiling / benchmarking / power measurement | "EdgeOptimizer = the answer. RAPL + ETW + per-inference attribution; Quarch external power as ground truth; energy-per-inference metric." |
+| Silicon validation / hardware bring-up / FW | "L&T NVMe post-Si bring-up (JTAG, scope, Lecroy); Intel pre-Si Cambria PCU/PMA flows." |
+
+### "Stand-out" angles to volunteer (don't wait to be asked)
+
+- **Cross-vendor methodology** — most validators see one silicon family; I've validated three NPU architectures with one common methodology, so I know what's vendor-specific vs what's universal.
+- **Tool-builder mindset** — EdgeOptimizer + agentic Copilot CLI scaled the team from 2-hour WPA triage to 15-min report. Any team I join, I look for the same multiplier.
+- **Pre-Si + post-Si seam** — the JD specifically wants both, and I've done both (separately). Joining Intel Ireland is the chance to do both on one product.
+- **Spec-to-test discipline** — at Intel I derived PCIe Gen6 transactor scenarios directly from the spec; same approach scales to NPU IP specs.
+
+### What to bring to the loop (logistics)
+
+- 2-3 printed copies of the 30 / 60 / 90 sec narratives.
+- One whiteboard-ready diagram each: NPU stack (5 layers), ECAM formula, MESI, C-state entry/exit, RAPL domains.
+- Photo IDs + visa/permit indicative answers ready in case HR asks.
+- Bottle of water; arrive at the building 20 min early.
+
+---
+
 > **Senior-bar reminder:** at this level they're checking judgment more than knowledge. When they ask a tech question, give the **structured answer + the trade-off + what you'd actually do.** When they ask a behavioral question, give the **framework + a real example + the lesson.** When they ask a puzzle, **think aloud** - they want to see how you reason, not whether you've seen it before.
+
+
