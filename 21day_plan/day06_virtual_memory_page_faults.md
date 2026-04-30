@@ -244,6 +244,38 @@ def search(nums, target):
 
 ---
 
+## System Thinking — Why virtual memory exists at all
+
+**Frame:** virtual memory is an indirection layer between the program's view ("my address space") and physical RAM. The indirection is not free — every load goes through a TLB lookup (Day 7), and a miss costs a multi-level page walk. Why pay this cost on *every memory access for the entire life of the machine*? Because VM solves three problems simultaneously, and no other mechanism solves all three.
+
+### Q: What three problems does VM solve?
+
+1. **Isolation.** Process A cannot see or corrupt process B's memory, because their virtual addresses map to disjoint physical pages. Without VM you'd need every program to be cooperative — one bug crashes everything (DOS, classic Mac OS).
+2. **Sharing.** The kernel maps libc's pages into every process *with the same physical pages, different virtual addresses*. One copy of libc in RAM, used by 100 processes. Same trick for shared memory (`mmap`), copy-on-write (`fork`), and zero-copy IPC.
+3. **Oversubscription.** The sum of process address spaces can exceed physical RAM. Pages not currently used get evicted (swap, file-backed). The page fault handler brings them back on demand. Without this, you'd run out of RAM at 100% utilization; with it, you run a 16 GB workload on an 8 GB machine (slowly, but you run).
+
+**No simpler mechanism gives you all three.** Segmentation gives isolation but not granular sharing. Static partitioning gives isolation but not oversubscription. The page-table indirection is the unique solution.
+
+### Q: A page fault sounds like a bug — why is it a *feature*?
+
+Because it lets the kernel be *lazy*. The page table can say "this VA is not currently mapped" and the CPU traps; the handler decides what to do:
+- **Demand paging:** "never been touched, give it a zero page." → lazy allocation, `malloc` of a 1 GB region is essentially free until you touch it.
+- **File-backed:** "this region is `mmap`'d to a file, read the page from disk." → `mmap` is just "set up the page table to fault on first touch."
+- **Copy-on-write:** "shared with parent process; allocate a private copy now that you're writing." → `fork()` doesn't copy memory, it copies *page-table entries marked read-only*.
+- **Swap:** "this page was evicted to disk, fetch it back." → invisible-to-program oversubscription.
+
+A page fault is the kernel's signal to do work *only when actually needed*. The cost of a page fault (~μs) is paid only on first touch / eviction return; everything else is just-as-fast loads.
+
+### Q: Why multi-level page tables instead of one big flat table?
+
+A flat table for a 48-bit address space at 4 KB pages would be `2^36` entries × 8 bytes = 512 GB *per process*. Multi-level tables (4 levels on x86-64, ARMv8) only allocate the levels actually used: a sparse address space costs only the populated levels (~tens of KB total). The cost is a 4-step walk on TLB miss — which is exactly why TLBs and huge pages exist (Day 7).
+
+### One-liner
+
+*"Virtual memory is an indirection that solves isolation, sharing, and oversubscription with one mechanism — page tables. The page fault is not a bug, it's the kernel's signal to do allocation, swap-in, copy-on-write, or file-mapping lazily. The cost is a TLB lookup on every load and a page walk on every TLB miss; we pay it because no simpler mechanism gives all three properties at once."*
+
+---
+
 ## Bug Anchor
 
 - **Day 19 (QNN/ORT page-fault):** the canonical bug for this layer.

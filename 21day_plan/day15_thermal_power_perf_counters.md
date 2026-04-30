@@ -323,6 +323,42 @@ def maxSlidingWindow(nums, k):
 
 ---
 
+## System Thinking — Why thermal management is a *control loop*, not a setting
+
+**Frame:** a chip running at full speed dissipates more power than its package can shed without exceeding $T_j$ (junction temperature) limits. You can't fix this by static design — the *workload* determines power, and workloads are unknown ahead of time. The chip must measure temperature in real time and modulate frequency/voltage to stay within thermal limits. That's a feedback control loop running in firmware (PCU/RPMh) on a millisecond timescale. Performance counters exist to give software *visibility* into what that loop and the workload are actually doing — because by the time the user notices throttling, the bug has already happened.
+
+### Q: Why does thermal throttling exist? Can't designers just spec the cooling?
+
+Three reasons static cooling spec is wrong:
+1. **Worst-case is too expensive.** Designing the cooler for sustained max-power means a much bigger heat-sink/fan than the *typical* workload needs. Throttling lets you ship smaller cooling for typical loads and gracefully degrade on the rare 100% sustained workload.
+2. **Ambient varies.** The same laptop runs in a 20°C office and a 35°C cafe. With $T_j = T_a + P \cdot \theta_{JA}$, ambient is a free 15°C of headroom you'd waste by spec'ing for the cafe.
+3. **Leakage feedback.** Hot → more leakage → hotter. Without throttling, this is unstable — the chip would runaway. Throttling is the negative feedback that breaks the loop.
+
+**Throttle types as different control responses:** PROCHOT (cap frequency), VRM-current limit (cap power), $T_j$ critical (forced shutdown). Modern silicon has 5+ throttle inputs feeding the same governor; understanding which one fired is the first debug step in any "why is my CPU slow" investigation.
+
+### Q: Why are performance counters sampled, not always-on summaries?
+
+Because counting every event would cost area and power that's not worth it for events you don't care about. PMU is built around a small number of *programmable* counters (4-8 typical, 32 on big servers) that you configure to count specific events: cache misses, branch mispredicts, TLB misses, retired instructions, FP ops, etc. You sample because:
+- **Selection.** You only care about a few events at a time. Programmable beats fixed.
+- **Cost.** A counter increments every event — each increment is cheap, but the wires + flops cost area. Fixed-function counters for everything would balloon the PMU.
+- **Statistical sufficiency.** For most analysis, sampling at 1 kHz over a 10-second run gives a reliable distribution of where time was spent.
+
+**Tradeoff:** you can miss bursty events between samples. For correctness debugging (find *the* miscompiled load) you use precise events (PEBS / SPE) that capture the exact PC of the sampled event — higher overhead, but no aliasing.
+
+### Q: Why is the $T_j$ feedback loop dangerous?
+
+Leakage power rises exponentially with temperature: $P_{leak} \propto e^{T/T_0}$. Combined with $T_j = T_a + P \cdot \theta_{JA}$:
+
+- Workload runs hot → $T_j$ rises → leakage rises → total $P$ rises → $T_j$ rises faster.
+
+Without intervention, this is a runaway. The control loop must (a) detect $T_j$ rising fast, (b) drop V/F before steady-state is reached, (c) hold there until $T_j$ trends down. **Slow control loops oscillate** (drop F → cools → raise F → hot again → drop F…) — visible as choppy performance under sustained load. Tuning the loop's gain and time constant is a real validation activity.
+
+### One-liner
+
+*"Thermal management is a feedback control loop because workload power isn't predictable and worst-case cooling is too expensive. Throttling is the negative feedback that breaks the leakage-temperature runaway. Perf counters are sampled because programmable beats fixed and statistical sampling is enough for most analysis. When you see weird performance under load, the first question is always: which throttle reason fired, and is the control loop oscillating?"*
+
+---
+
 ## Bug Anchor
 
 - **Day 12 (DVFS):** Turbo / V-droop / license-level interactions live there.

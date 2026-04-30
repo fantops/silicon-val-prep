@@ -277,6 +277,53 @@ def numIslands(grid):
 
 ---
 
+## System Thinking — Why debugging is a *method*, not intuition
+
+**Frame:** great debuggers don't "see" the bug — they apply a small set of methods systematically faster than novices apply intuition. Method beats intuition because intuition has bias (you go look where you remember last week's bug, not where this week's bug actually is). Every bug story you tell in an interview is a chance to demonstrate method: how you bounded the problem, how you generated and tested hypotheses, how you knew when you were wrong. The interviewer cares less about the bug than about how you found it.
+
+### Q: Why is bisection the universal debugging tool?
+
+Because it works on any monotonic search space, with no domain knowledge:
+- **Time bisection** (`git bisect`): when did this regress? Cuts N commits to log₂(N) builds.
+- **Code bisection** (`#if 0` halves of a function): which half is wrong?
+- **Input bisection** (binary-chop the failing input): which byte triggers it?
+- **Configuration bisection** (toggle features off pairwise): which interaction is broken?
+
+Each step costs one experiment but **halves uncertainty**. After 10 steps you've narrowed 1024 candidates to one. *Most engineers reach for printf or gdb first; mature engineers reach for bisection first because it converges in known time.*
+
+### Q: Why "symptom vs cause" discipline?
+
+Because the symptom and the cause are usually in different places. Examples:
+- Symptom: occasional NPU output corruption. Cause: missing cache clean before DMA (Day 8).
+- Symptom: NVMe doesn't enumerate. Cause: wrong DSTRD shift in doorbell address (Day 11).
+- Symptom: PkgC10 residency drops. Cause: PCIe device firmware refuses L1.2 (Day 10/13).
+
+**The naive fix addresses the symptom and the bug returns under different conditions.** The discipline: keep asking "why" until you reach a *mechanism* that explains the symptom and predicts what other symptoms it would cause. Then verify those other symptoms exist. *That's the difference between "workaround" and "root cause."*
+
+### Q: Why does bug-story polish matter for interviews?
+
+Because the interviewer is testing **how you think under pressure**, not what you know. A bug story is a 3-minute window into your debugging method. Polish four moves into every story:
+1. **Frame the symptom precisely.** "Once every ~10 minutes under sustained 70% load, NPU output had a zero-tile." Not "sometimes it broke."
+2. **State the hypothesis you tested first and why.** "I suspected a non-coherent DMA write — because the corruption was tile-aligned and the symptom only appeared under sustained throughput where store buffers fill up."
+3. **Describe how you bounded it.** "I added a barrier before the doorbell write — if the bug was ordering, this would mask it. Bug disappeared. Then removed barrier, added explicit cache clean instead — also disappeared. Confirmed root cause."
+4. **State the fix and the validation hook you added.** "Driver patched to clean+barrier on every descriptor submit. Added a stress test that runs sustained 80% load for 1 hour with output checksum — now in CI."
+
+The story is **method demonstrated through a concrete bug**. Without the method, it's a war story. With method, it's a hiring signal.
+
+### Q: Occam's razor — when does it fail?
+
+When the system has hidden state. Occam says: prefer the simpler explanation. But in HW/firmware:
+- The simplest explanation often is *not* the cause because it would have been caught in earlier testing. 
+- Multi-day flakiness usually means a *combination* of conditions (load + temperature + frequency + concurrent IO) that none of the individual tests cover.
+
+**Modified rule:** prefer the simplest explanation that *also* explains why the bug evaded existing tests. If your hypothesis would have been caught in CI, it's probably wrong.
+
+### One-liner
+
+*"Debugging is method — bisection, symptom-vs-cause, hypothesis-and-bound — because intuition has bias and method has guaranteed convergence. A polished bug story is method demonstrated through a concrete artifact: precise symptom, first hypothesis, bounding experiment, fix, and the test that prevents regression. The interviewer is hiring the method, not the trivia."*
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe):** Story 2 (CSTS.RDY) lives here.

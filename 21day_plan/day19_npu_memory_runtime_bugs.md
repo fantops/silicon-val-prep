@@ -367,6 +367,51 @@ class LRUCache:
 
 ---
 
+## System Thinking — Why NPU bugs look like model bugs (but aren't)
+
+**Frame:** when an inference engine on an NPU produces wrong results, hangs, or runs 10× slower than expected, the first instinct is "the model is wrong" or "the quantization is off." Usually it isn't. The bug is almost always at the **boundary** between two domains — CPU↔NPU memory, host VA↔device IOVA, coherent↔non-coherent fabric, runtime↔driver — because each domain works correctly in isolation but the contract between them is fragile. *This is the highest-value validation skill for AI accelerators.*
+
+### Q: Why is the CPU↔NPU memory contract so error-prone?
+
+Because the two domains have different assumptions:
+
+| Property | CPU side | NPU/HTP side |
+|---|---|---|
+| Addressing | Virtual (per-process) | IOVA (per-IOMMU context) or physical |
+| Cache | Coherent within CPU cluster | Often non-coherent with CPU caches |
+| Page size | 4 KB / huge pages | Often only 4 KB or device-specific |
+| Pinning | Pages may be swapped | Must be pinned for DMA |
+| Memory model | TSO / weak (with barriers) | Usually weak, vendor-specific |
+
+A buffer the CPU thinks it wrote is, from the NPU's view: in the wrong address space (no IOMMU map), behind a dirty cache line (need clean), in a swappable page (need pin), or visible only after a barrier the driver forgot. **All four bug classes look identical from the model's perspective: "output is wrong / NaN / zero / stale."**
+
+### Q: How do the three classic miss types converge here?
+
+Day 4-7 distinguished cache miss / TLB miss / page fault. On a heterogeneous NPU path *all three exist on both sides*:
+- **Page fault on CPU side**: model weights mmap'd from disk, first touch faults. **Cold-start latency anomaly** the user blames on the NPU.
+- **TLB miss on CPU side**: huge weight tensor, walks 4-level page table per access. Fix: huge pages.
+- **IOMMU TLB miss on NPU side**: similar to CPU TLB miss but for the device. SMMU does a page walk on every cold IOVA. Fix: pinned + huge IOMMU mappings.
+- **Cache coherence miss across CPU↔NPU**: the bug Day 8 warned about.
+
+*Diagnostic discipline:* never say "the NPU is slow" — say "there's a 3 ms anomaly; let me check whether it correlates with major faults, TLB MPKI, IOMMU faults, or cache management calls." That's the difference between an L3 engineer and an L5.
+
+### Q: Why do FastRPC / EP runtime layers exist between the model and the NPU?
+
+Because the NPU is a separate process domain (PD) on a separate processor (Hexagon). You cannot just call into it like a function. **FastRPC** (Qualcomm's RPC over shared memory) and equivalent runtimes (Apple's IOSurface + neural-engine, Intel's NPU UMD) are the marshalling layer:
+1. CPU prepares input tensor in shared memory.
+2. RPC packs handles, IOMMU maps, calls into the kernel driver.
+3. Driver wakes the NPU PD, hands off the work descriptor.
+4. NPU executes, writes output to shared memory.
+5. RPC returns; CPU sees output.
+
+**Each step is a place a bug can hide:** wrong handle, wrong size, wrong offset, missed cache flush, missed IOMMU map. The bug usually fires only on long sequences or under load, because the early calls happen to leak handles slowly until exhaustion.
+
+### One-liner
+
+*"NPU bugs almost always live at the boundary — CPU↔NPU memory, VA↔IOVA, coherent↔non-coherent, runtime↔driver — because each domain is correct in isolation but the contract is fragile. The first diagnostic is to attribute slowdowns to a specific miss class (page fault, TLB, IOMMU, coherence), not to blame the model. FastRPC / EP runtimes are the marshalling layer where most leak/handle bugs hide."*
+
+---
+
 ## Bug Anchor
 
 - **Day 6 (virtual memory):** the page-fault counter that Bug 1 hangs on.

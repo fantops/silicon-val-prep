@@ -315,6 +315,52 @@ def topKFrequent(nums, k):
 
 ---
 
+## System Thinking — Why NPUs exist as separate compute domains
+
+**Frame:** CPUs and GPUs can run neural-network inference, but they spend most of their energy on the *wrong* things — instruction fetch, scheduling, cache coherence, register renaming. NPUs (Hexagon HTP, Apple ANE, Intel NPU, Google TPU) strip all that out and dedicate silicon to **one operation at extreme energy-efficiency: int8 matmul + activation**. The cost is a separate execution domain with its own ISA, its own memory, its own driver, and its own validation surface. The Execution Provider (EP) abstraction in ORT/TFLite exists so a single model graph can target any of these backends without rewriting.
+
+### Q: Why a separate NPU instead of just AVX/SVE on the CPU?
+
+**Energy per op.** A CPU spends ~70% of energy on overhead (decode, dispatch, OoO machinery) and ~30% on the actual ALU. SIMD widens the ALU but doesn't reduce overhead per *instruction*. NPUs amortize overhead over thousands of MACs per instruction:
+
+| Compute domain | Energy per int8 MAC | Throughput |
+|---|---|---|
+| CPU scalar | ~50 pJ | 1 op / cycle |
+| CPU AVX-512 | ~5 pJ | 64 ops / cycle |
+| GPU SIMT | ~1 pJ | 1000s ops / cycle |
+| **NPU (HTP / TPU)** | **~0.2 pJ** | **10K-100K ops / cycle** |
+
+For a 1B-parameter model, the energy difference is 100-1000× — the difference between 30 minutes and 5 hours of laptop battery on continuous inference. **That's why NPUs ship in every phone, laptop, and edge SoC now.**
+
+### Q: Why an Execution Provider abstraction (EP) instead of one runtime per backend?
+
+Because models outlive backends. A model trained in PyTorch should run on:
+- CPU EP for development.
+- CUDA EP for desktop training/inference.
+- DirectML EP on Windows.
+- CoreML EP on Apple.
+- QNN EP on Snapdragon.
+- TensorRT EP on NVIDIA edge.
+
+Each EP is a plugin that takes the same ONNX graph, partitions it into subgraphs the backend can run natively, and falls back to CPU for the rest. **The graph is portable; the kernel implementations are not.** Validation per EP focuses on (a) correctness vs CPU reference (`atol`/`rtol` per op), (b) op coverage (which ops fall back to CPU?), and (c) partition boundaries (each fallback is a CPU↔NPU memory copy = latency).
+
+### Q: Why is HTP a separate domain, not just "part of the SoC"?
+
+Because it has its own:
+- **ISA** — Hexagon VLIW + HVX/HMX vector extensions, not ARM.
+- **Memory** — VTCM (Vector Tightly-Coupled Memory), separately allocated, often non-coherent with CPU caches (Day 8 / Day 19).
+- **Address space** — a separate IOMMU/SMMU context (Day 7) for DMA.
+- **Power domain** — powered up/down independently (RPMh vote).
+- **Firmware** — loaded by the CPU at runtime, runs the kernel scheduler on HTP itself.
+
+This isolation is *what makes it efficient* (no coherence overhead, no shared L1 contention) but *also* what makes it hard to debug — a CPU stack trace cannot see HTP state; you need PD (Process Domain) signals, FastRPC traces, and HTP firmware logs. *Day 19 covers the bug classes this isolation enables.*
+
+### One-liner
+
+*"NPUs exist because dedicated matmul silicon is 100-1000× more energy-efficient than CPU SIMD — the cost is a separate ISA, memory, address space, and power domain. The EP abstraction lets one model target many backends; each EP is a partitioner + a kernel library. HTP is a separate compute domain with its own everything; that isolation is its efficiency advantage and its debug pain."*
+
+---
+
 ## Bug Anchor
 
 - **Day 6 (virtual memory):** page-fault counters that explode in the QNN regression on Day 19.

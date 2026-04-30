@@ -315,6 +315,49 @@ def evalRPN(tokens):
 
 ---
 
+## System Thinking — Why queues are the universal fabric primitive
+
+**Frame:** every interesting system has multiple producers and consumers running at different rates that need to communicate. **A queue is the single data structure that decouples them in time** — producer doesn't wait for consumer, consumer doesn't wait for producer (within capacity). NIC RX rings, NVMe SQ/CQ, GPU command buffers, kernel work queues, NPU command streams — all queues. Master the lock-free queue and you understand 80% of system-level data movement. Lock-free isn't an optimization; it's *required* whenever the producer and consumer can't share a lock (different cores, different IPs, CPU↔device).
+
+### Q: Why lock-free? Aren't locks fine if uncontended?
+
+Uncontended locks are cheap (~10 ns). Contended locks are catastrophic:
+- **Cache line bouncing** — the lock word ping-pongs M→I→M between cores (Day 5).
+- **Convoy effect** — a context-switched lock holder blocks every waiter.
+- **Priority inversion** — a low-prio holder blocks a high-prio waiter.
+- **Cross-domain impossibility** — you cannot share a mutex with a device. Devices don't run mutex code.
+
+Lock-free queues use atomic CAS or producer-consumer index pairs to avoid all of this. The cost is *much* harder reasoning about correctness (memory order, ABA, retry loops). **Use lock-free where you must (cross-IP, hot path, real-time); use locks where you can (cold paths, complex critical sections).**
+
+### Q: SPSC vs MPMC — why so many flavors?
+
+Because the *minimum* synchronization depends on the producer/consumer count:
+- **SPSC** (single producer, single consumer): just two indices (`head`, `tail`), no atomics needed for the indices themselves — only memory barriers between data write and index update. **Fastest possible queue.** This is the NIC ring, the NVMe SQ.
+- **MPSC / SPMC**: one side needs atomic CAS to claim a slot, the other side is single. Used in work-stealing, telemetry collection.
+- **MPMC**: both sides atomic CAS, sequence numbers per slot to avoid ABA, much more state and slower per op. Used in general-purpose work queues.
+
+**You always pick the most-restrictive flavor that fits the workload.** Using MPMC where SPSC suffices is a 5-10× perf loss for nothing.
+
+### Q: What is the ABA problem and why does it haunt lock-free code?
+
+A classic CAS bug:
+1. Thread A reads pointer `head = X`.
+2. Thread A is preempted.
+3. Thread B pops X, pushes Y, pushes X again. `head = X` again, but the list shape has changed.
+4. Thread A wakes, does `CAS(&head, X, X->next)` — succeeds! — but `X->next` is stale, pointing into freed memory.
+
+The value matched, but the *world changed and changed back*. CAS only checks the value, not the history. **Fix:** tagged pointers (pack a generation counter into spare pointer bits, increment on every modify), hazard pointers, or RCU. *Most lock-free queue bugs in the wild are unhandled ABA.*
+
+### Q: Why cache-line padding between `head` and `tail` in every ring?
+
+Day 5 false sharing. Producer writes `head` constantly; consumer writes `tail` constantly. If they're on the same cache line, the line bounces between cores on every op — hundreds of cycles per push/pop instead of single cycles. **Pad `head` and `tail` to separate 64-byte cache lines** (`alignas(64)` between them) and throughput jumps 5-10×. *This single change is the difference between a textbook lock-free queue and a production one.*
+
+### One-liner
+
+*"Queues are the universal primitive for decoupling producers and consumers across cores, IPs, and CPU↔device boundaries. Lock-free is required where locks can't reach (devices, real-time, hot paths). Pick the most-restrictive flavor that fits — SPSC is dramatically faster than MPMC. ABA is the value-matched-but-world-changed bug that makes naive CAS wrong; tagged pointers or hazard pointers fix it. Cache-line padding between head and tail is the difference between toy code and shipped code."*
+
+---
+
 ## Bug Anchor
 
 - **Day 5 (MESI / false sharing):** ring `head`/`tail` cache-line padding lives there.

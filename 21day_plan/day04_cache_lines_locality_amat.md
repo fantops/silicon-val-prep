@@ -336,6 +336,77 @@ class LRUCache:
 
 ---
 
+---
+
+## Interview Reasoning Pack (system-level thinking)
+
+These are the "why" framings the interviewer is testing. Practice saying them out loud — the answer is never the fact, it's the tradeoff.
+
+### Q: Why multi-level caches instead of one big cache?
+
+**Frame it as a physics + economics tradeoff, not as a list.**
+
+1. **Speed and size are inversely coupled.** A cache's access time grows roughly with $\sqrt{\text{size}}$ — bigger array = longer wires, more decode, more sense-amp delay. So a single cache cannot be both *fast* (1-cycle access for the pipeline) and *big* (cover the working set).
+2. **The pipeline needs ~1-cycle data.** L1 is sized so it fits inside one clock at 3-4 GHz → ~32-64 KB, 4-8 way. Any bigger and you stall every load.
+3. **Working sets have a long tail.** Most accesses hit a small hot set (→ L1 catches them), but a long tail of cold/streaming data needs capacity. L2/L3 exist to catch that tail without slowing L1.
+4. **Cost per bit goes down with distance.** L1 is 6T SRAM optimized for speed (large cells, wide sense amps). LLC is high-density SRAM optimized for area. DRAM is 1T1C, off-die, optimized for $/GB. The hierarchy is just "use the cheapest tier that meets the latency budget."
+5. **Sharing changes the calculus.** Per-core L1/L2 keep private data fast; shared LLC lets cores communicate without going to DRAM. A single monolithic cache cannot be both private and shared.
+
+**One-liner:** *"You cannot build one cache that is simultaneously 1-cycle fast, 32 MB large, and shared across 8 cores — physics, area, and contention forbid it. The hierarchy is the resolution: each level trades one constraint for another."*
+
+### Q: How does the CPU decide what to store in cache?
+
+**The CPU does not "decide" — it reacts to the access pattern. Three mechanisms collaborate:**
+
+1. **Demand fetch (reactive).** On a miss, the line containing the requested address is brought in. *Default policy is "bring it in" — caches are inclusive of recent demand.*
+2. **Prefetch (predictive).** Hardware prefetchers (next-line, stride, NLP — see Day 16) watch the miss stream and speculatively pull lines they predict you'll need. Wrong guesses pollute the cache; right guesses hide DRAM latency.
+3. **Replacement (eviction).** When a set is full, **replacement policy** picks who leaves. PLRU approximates LRU cheaply (1 bit per pair, tree-walked). Random is used in some L1s because PLRU state itself costs area. The *assumption* is temporal locality: the least-recently-used line is least likely to be needed.
+
+**Allocation policy** is the other half:
+- **Write-allocate + write-back:** writes that miss bring the line in (assume you'll write more). Pairs with WB because you're already dirty-tracking.
+- **No-write-allocate + write-through:** write misses go straight to memory (assume streaming write, don't pollute cache). Used for some I/O-mapped or non-temporal stores.
+
+**One-liner:** *"The CPU caches the line on demand, predicts the next line via prefetchers, and evicts via PLRU. The 'decision' is locality — the cache assumes that what you touched, you'll touch again, and what's adjacent, you'll touch soon."*
+
+### Q: Walk me through a cache lookup.
+
+**Memorize this 6-step path. Say it as a story, not a list.**
+
+Given a load to virtual address `VA`:
+
+1. **TLB lookup** translates `VA → PA` in parallel with L1 indexing (VIPT trick on most ARM L1s — index from VA bits below the page offset, tag-compare against PA).
+2. **Address split:** `PA = [tag | set index | block offset]`. For 32 KB / 4-way / 64 B lines: offset = 6 bits, sets = 32K/(4·64) = 128 → index = 7 bits, tag = rest.
+3. **Set read:** the index selects one set (4 ways); all 4 tags + valid bits are read in parallel.
+4. **Tag compare:** the 4 tags are compared against the PA tag. At most one matches (or none = miss).
+5. **Hit:** the matching way's data array is muxed out using the offset → byte/word delivered to the pipeline. Update PLRU bits for this set.
+6. **Miss:** allocate a victim (PLRU), if dirty write it back to L2, send the fill request down. When L2 returns the line, install it, set valid+tag, forward the requested word to the pipeline (critical-word-first).
+
+**Add the coherence wrinkle:** on a write hit, the line must be in **M or E** state (MESI, Day 5) — if it's S, send an invalidate to peers first. *That's why false sharing hurts: the line bounces M→I→M between cores even though the data words don't overlap.*
+
+### Q: SRAM vs DRAM — explain it like I've never heard of it.
+
+**The bitcell is the whole story. Lead with that.**
+
+| | SRAM | DRAM |
+|---|---|---|
+| Bitcell | **6 transistors** (cross-coupled inverter latch + 2 access) | **1 transistor + 1 capacitor** |
+| Storage | Bistable latch — holds value as long as power is on | Charge on a tiny cap — **leaks in ~64 ms** |
+| Refresh | None | **Periodic refresh** required (every row, every ~64 ms) — costs bandwidth and power |
+| Speed | ~1 ns access (on-die) | ~15 ns array access + ~50 ns bus + queueing → ~80-100 ns observed |
+| Density | Low (6 transistors per bit) | High (1T1C — ~6× denser) |
+| Cost / bit | High | Low |
+| Volatile | Yes | Yes |
+| Where used | L1/L2/L3 caches, register file, TLBs | Main memory (DDR/LPDDR), GPU VRAM |
+
+**Why this matters for validation:**
+- DRAM **refresh stalls** create periodic latency spikes — visible as jitter in tail latency benchmarks.
+- DRAM **self-refresh** entry/exit (during S0ix / PkgC10) is a multi-microsecond cost — the reason aggressive idle states have a residency floor.
+- SRAM has a **retention voltage** below which the latch loses state — relevant during power-gating sequences (Day 13).
+
+**One-liner:** *"SRAM is a 6T latch — fast, big, volatile only on power loss. DRAM is a 1T1C capacitor — dense, cheap, leaks in milliseconds and needs refresh. You use SRAM where latency dominates and DRAM where capacity dominates. The hierarchy is just: SRAM near the pipe, DRAM far away."*
+
+---
+
 ## Bug Anchor
 
 - **Day 5:** false sharing is a coherence-miss class.

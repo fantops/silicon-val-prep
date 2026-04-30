@@ -338,6 +338,45 @@ def climbStairs(n):
 
 ---
 
+## System Thinking — Why PCIe looks like a network
+
+**Frame:** PCIe is the universal interconnect because it stopped pretending to be a bus. Old PCI was a parallel bus — shared, slow, doesn't scale past a few devices. PCIe is a **packet-switched, point-to-point, layered serial network** that just happens to fit inside a chassis. Every PCIe concept (TLP, LTSSM, credits, equalization) maps to something in Ethernet/IP — but optimized for a 1-meter wire and microsecond latency.
+
+### Q: Why is PCIe layered (PHY → DLL → TLP)?
+
+Same reason TCP/IP is layered: separation of concerns lets each layer be replaced independently. 
+- **PHY** (electrical + 8b/10b or 128b/130b encoding + equalization): hardware bit transport. Replaced going from Gen1 → Gen5 → Gen6 — PHY rate doubled, upper layers unchanged.
+- **Data Link Layer (DLL)**: per-hop reliability — sequence numbers, ACK/NAK, replay buffer, CRC. *This is why PCIe can use a non-FEC PHY and still be reliable.*
+- **Transaction Layer (TLP)**: end-to-end semantics — memory read/write, config, message, completion. The driver lives at this layer.
+
+Layering is also what enables **PCIe-over-cable, PCIe-over-CXL, PCIe-over-optical** — swap the PHY, keep DLL+TLP.
+
+### Q: Why LTSSM (Link Training and Status State Machine)?
+
+Because a multi-Gbps serial link cannot just turn on and work. The two ends must agree on:
+- **Lane count** (x1, x2, x4, x8, x16) and which lanes are usable.
+- **Lane reversal / polarity inversion** (the board layout may have flipped pairs).
+- **Equalization coefficients** — the receiver tells the transmitter "boost this much, de-emphasize that much" so the eye opens.
+- **Speed** (Gen1 → Gen2 → ... up to highest mutually supported).
+
+All of this is a negotiation, and it's stateful with timeouts — hence a state machine. **Most boot-time PCIe bugs are LTSSM bugs:** stuck in Polling, stuck in Recovery, can't reach L0 at the expected speed. Reading the LTSSM state from a config register is the first thing you do when a device doesn't enumerate.
+
+### Q: Why credit-based flow control instead of ACK/NAK pacing?
+
+Because ACK/NAK pacing wastes bandwidth: the sender must wait for permission per-packet (or guess and retransmit). Credit-based flow control inverts it: the receiver advertises buffer space ("I have N credits for posted writes"), the sender consumes credits as it transmits, and the receiver returns credits as it processes. The sender can transmit *up to the credit limit* without waiting — zero idle time on a lossless link.
+
+**Tradeoff:** requires per-VC, per-type credit tracking (huge state). But on a chassis-scale lossless link, that state is worth it. Ethernet doesn't do credits because cross-DC topology makes the credit math impossible — different design point, different choice.
+
+### Q: Why power states (L0, L0s, L1, L1.1, L1.2)?
+
+Because PHY and link-level power dominates idle PCIe energy on laptops. Same ladder logic as CPU C-states (Day 13): each lower state saves more, costs more wake latency. **L1.2** is the deepest — PHY off, refclk gated, ~10 μs wake. PkgC6 / S0ix on the host *requires* every PCIe link to be in L1.2 (Day 13 dependency). One device that won't enter L1.2 (bad ASPM firmware) blocks platform deep idle — visible as missing PkgC10 residency.
+
+### One-liner
+
+*"PCIe is a packet-switched layered serial network that fits in a chassis. PHY/DLL/TLP layering enables generation-over-generation rate doubling without breaking drivers. LTSSM exists because Gbps serial links must train, not just turn on. Credit-based flow control wins on a lossless link because it eliminates idle gaps. Power states mirror CPU C-states — deeper saves more, costs more wake — and the deepest state is gated on every link in the system."*
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe `CSTS.RDY` / `DSTRD`):** the canonical bring-up bug on top of PCIe.

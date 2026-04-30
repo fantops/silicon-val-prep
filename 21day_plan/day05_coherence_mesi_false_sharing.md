@@ -279,6 +279,34 @@ def hasCycle(head):
 
 ---
 
+## System Thinking — Why coherence is the *price* of multicore
+
+**Frame:** a single core programmer expects one memory: write here, read it back, get the value. Add a second core with its own L1, and that illusion breaks instantly. Coherence is the silicon-and-protocol cost of *preserving the illusion* despite N private caches. Every coherence "bug" is the protocol becoming visible — false sharing, lock contention, atomic-op latency are all the protocol charging you for the abstraction.
+
+### Q: Why do we have a coherence protocol at all? Why not just share L1?
+
+Because an L1 shared across N cores would be slow (more ports, longer wires) and contended (every core competes for it). Per-core private L1s are required for performance. But then the same line can exist in two L1s with different values → broken. Coherence is the answer: a state machine (MESI / MOESI / MESIF) on every cache line that tracks who has it and in what state, and a protocol that broadcasts (snoop) or directs (directory) state changes.
+
+**Tradeoff:** snoop is cheap at low core count (broadcast on a shared bus), expensive at high count (bandwidth scales with N²). Directory is the inverse — adds latency for the lookup but scales to many cores. That's why low-core-count CPUs are snoop and big servers/SoCs use directory-based (or hybrid).
+
+### Q: What is false sharing, *really*?
+
+A fourth class of cache miss (after compulsory, capacity, conflict): a **coherence miss**. Two cores write to *different* variables that happen to share a cache line. The protocol can't see that the writes don't overlap — it tracks lines, not bytes. So the line bounces M→I→M between cores on every write. The data is independent, but the line is shared. Cost: hundreds of cycles per write, instead of single cycles.
+
+**The fix is structural, not algorithmic:** pad the data so each producer's hot field lives on its own cache line. `alignas(64)` per-thread struct, or a 64-byte padding member. *This is why every lock-free queue you'll ever see has cache-line padding between `head` and `tail` — Day 17.*
+
+### Q: Why are atomic operations so expensive?
+
+Because an atomic RMW (`fetch_add`, `compare_exchange`) has to acquire the line in **M** state exclusively, do the operation, and (on weakly-ordered systems) emit a barrier. If another core has the line in S, you must invalidate it first → coherence transaction. Every contended atomic is a cache-line bounce. *That's why uncontended atomics are ~10 cycles and contended atomics are ~100-1000 cycles.*
+
+The lesson: **don't measure atomic cost in isolation.** Measure it under the contention you actually expect. A counter incremented by all 16 cores will absolutely dominate the workload.
+
+### One-liner
+
+*"Coherence is the silicon tax for keeping the illusion of one memory across N private caches. Every line has a state (MESI), every state change is a protocol transaction, and every protocol transaction shows up as latency. False sharing, atomic contention, and lock costs are all the same phenomenon — the protocol charging you because data sharing was implicit in the layout. The fix is structural: pad to a cache line and own the line."*
+
+---
+
 ## Bug Anchor
 
 - **Day 8:** descriptor-then-doorbell ordering — same MESI picture, device as the second agent.

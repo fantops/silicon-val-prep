@@ -356,6 +356,50 @@ Score yourself 1-5 on each. Anything ≤ 3 → re-read the day file before the l
 
 ---
 
+## System Thinking — Why the same skill sounds different per company
+
+**Frame:** every silicon validation interview tests the same underlying skills (understand the layer, attribute symptoms to mechanisms, design a measurement, tell a clean bug story), but each company filters those skills through *their stack and their bugs*. The mistake is to memorize per-company facts. The right move is to **carry one toolkit and translate it into the company's vocabulary**. Days 1-20 are the toolkit; this day is the translator.
+
+### Q: Why does each company emphasize a different layer?
+
+Because that's where their bugs live and where their margin is.
+
+| Company | Layer they live at | What they grill on |
+|---|---|---|
+| **Intel / AMD** | x86 cores, mesh fabric, server uncore | C-states, MESI variants, ADR, microcode, perf counters, Spectre-class side channels |
+| **Qualcomm** | ARM SoC, modem, NPU, RPMh | Snapdragon boot chain, RPMh voting, Hexagon HTP, FastRPC, S2idle |
+| **NVIDIA** | GPU SM + memory, NVLink, IOMMU | CUDA stream ordering, GPU page faults, NVLink bring-up, MIG |
+| **Apple** | Custom ARM cores, AMX/ANE, unified memory | Cache hierarchy on UMA, Secure Enclave boot, ANE EP correctness |
+| **AWS / Hyperscaler** | Nitro, custom NICs, Graviton fleets | Live migration, hot-plug, fleet-wide perf counters, blast-radius reasoning |
+| **Storage (Pure / NetApp)** | NVMe-oF, RDMA, persistent memory | NVMe queue depth scaling, ADR, end-to-end CRC, dual-controller HA |
+
+**You don't need to know all of them deeply.** You need to know your toolkit (Days 1-20) deeply, and then in interview prep map it onto the company's stack.
+
+### Q: How do I translate "I worked on QNN" into Intel-speak?
+
+By abstracting the *role*, not the *product*:
+- "I validated the runtime path between CPU and an accelerator with a non-coherent fabric, focusing on memory consistency and IOMMU correctness."
+- That's true at Qualcomm (CPU↔HTP), at Intel (CPU↔NPU/iGPU), at NVIDIA (CPU↔GPU), at Apple (CPU↔ANE).
+- Then drop into specifics: "On QNN we hit X bug; in your stack the analog would be Y."
+
+**This is what "system-level thinking" buys you in interviews:** the *pattern* (heterogeneous compute + memory contract + fault attribution) is universal; the *names* are local.
+
+### Q: What's the universal interview structure for any silicon validation role?
+
+Four predictable moves; rehearse all four:
+1. **"Tell me about a hard bug."** → Day 20 polished story (symptom → hypothesis → bound → fix → regression hook).
+2. **"How does X work?"** (X = cache, MESI, PCIe, DVFS, boot, etc.) → Days 1-19 reasoning packs (frame the tradeoff first, then mechanism).
+3. **"How would you debug Y?"** (Y = a hypothetical failure) → method (bisection, counter selection, isolation), not guessed root-cause.
+4. **"How would you design a test for Z?"** → measurement design (what counter, what stress, what oracle, what coverage closure).
+
+Every question in every silicon interview maps to one of these four. Practice them as four-question categories, not as 100 separate facts.
+
+### One-liner
+
+*"Every company tests the same four skills: explain a layer with a tradeoff, attribute a symptom to a mechanism, design a measurement, tell a clean bug story. Each company filters those skills through their own product stack — you carry the toolkit, you translate the names. Days 1-20 are the toolkit; this day is the dictionary."*
+
+---
+
 ## Bug Anchor
 
 - All 21 days. This is the rehearsal day; every story and every concept comes from a prior day.

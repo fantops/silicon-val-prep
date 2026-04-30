@@ -338,6 +338,36 @@ def reverseList(head):
 
 ---
 
+## System Thinking — Why memory has a *layout*
+
+**Frame:** memory looks flat from the programmer's view (one big array of bytes), but hardware sees regions with very different rules. The layout exists because each region answers a different lifetime + protection + access-pattern question.
+
+### Q: Why three regions (stack, heap, BSS/data) instead of one?
+
+Each solves a different lifetime problem:
+- **Stack:** LIFO, automatic, free on return. Cost: must know size at call time. Tradeoff: no fragmentation, no heap calls, but bounded depth → recursion limits, stack-overflow bugs.
+- **Heap:** arbitrary lifetime, sized at runtime. Cost: O(log n) allocator work, fragmentation, must `free`. Tradeoff: flexibility for cost.
+- **BSS / data:** lifetime = whole program, zero-initialized at load. Cost: image size for `.data`, zero-fill cost for `.bss`. Tradeoff: predictable address (good for symbols) but no per-thread isolation.
+
+A single region cannot serve all three patterns; allocators that try (`alloca`, arena allocators) reinvent one of the three under different names.
+
+### Q: Why does alignment matter? Hardware doesn't care about a few bytes, right?
+
+It does, for three independent reasons:
+1. **Atomicity.** A naturally-aligned load/store is a single bus transaction. A misaligned 8-byte load that straddles a cache line is *two* transactions — and the two halves can interleave with another core's store. Atomic ops on misaligned addresses are undefined.
+2. **Speed.** Misaligned access either traps to a slow handler (older ARM, MIPS) or splits into two bus cycles (x86). Either way, ~2-10× slower.
+3. **DMA.** Devices fetch in cache-line or page chunks. A descriptor that straddles a cache line forces the device to issue two reads, and partial-line writes back from the CPU force the device to invalidate twice. **This is the canonical "works at low rate, fails at line rate" bug.**
+
+### Q: Why does the compiler insert padding?
+
+Because it must respect each member's natural alignment. `struct { char c; int i; }` has 3 bytes of padding so `i` lands on a 4-byte boundary — the alternative is making every load slow or trapping. The fix is to *order members from largest to smallest* (`int` then `char`), which packs naturally. `__attribute__((packed))` removes padding but trades it for misaligned access on every member — useful for wire formats, dangerous for hot paths.
+
+### One-liner
+
+*"Memory has a layout because lifetime, protection, and access pattern are three different questions and one region can't answer all of them. Alignment matters because hardware loads in chunks — misaligned data costs atomicity, speed, and DMA correctness. Compiler padding is the visible cost of natural alignment; packed structs trade space for per-access penalty."*
+
+---
+
 ## Bug Anchor
 
 - **Day 4 link:** DMA buffer crossing a cache line — alignment is the fix.

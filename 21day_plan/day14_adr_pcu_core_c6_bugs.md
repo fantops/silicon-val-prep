@@ -351,6 +351,42 @@ def numIslands(grid):
 
 ---
 
+## System Thinking — Why platform power is *firmware*, not just hardware
+
+**Frame:** by the time you're managing C-states, ADR, and core C6 across a multi-core multi-IP SoC, the coordination problem has more state than any hardware FSM can encode. The **PCU (Power Control Unit)** — a small embedded processor inside the SoC running its own firmware — exists because the policy is too complex and too release-cycle-sensitive to bake into RTL. ADR exists because power *can fail*, and software writes that the application thought were committed must survive. Core C6 bugs are silent because the state save/restore surface is huge and a single missed bit is invisible until the wake-up returns.
+
+### Q: Why is the PCU a microcontroller running firmware, not just RTL?
+
+Three reasons:
+1. **Policy complexity.** Deciding when to enter PkgC6, what voltage to drop to, how to coordinate with the PCH, when to reject a deep state because PCIe isn't in L1.2 — this is dozens of conditions and timeouts. Encoding it in RTL is possible but un-patchable. A buggy policy needs a silicon respin.
+2. **Per-SKU tuning.** Same silicon ships as 4 SKUs with different TDPs, Turbo limits, voltage tables. PCU firmware is per-SKU; RTL is one design.
+3. **Field updates.** New workloads (AI inference, games) reveal new patterns. PCU firmware can be updated via microcode/BIOS; RTL cannot.
+
+**The cost:** PCU firmware bugs look like silicon bugs to the user ("my CPU randomly hangs in idle"), but they're software bugs that ship as microcode patches. Most of the "errata fixed in microcode" entries in CPU release notes are PCU/PCODE fixes.
+
+### Q: Why ADR (Asynchronous DRAM Refresh)? RAM is volatile anyway.
+
+Because **persistent memory** (NVDIMM-N, CXL persistent memory, battery-backed DRAM regions) commits writes only when they reach the storage media. In flight, those writes sit in the CPU's **WPQ (Write Pending Queue)** inside the memory controller. On a sudden power loss:
+- Without ADR: WPQ contents lost → application thinks the write committed (it returned from `pmem_persist`), but it didn't → silent data loss / torn structures on reboot.
+- With ADR: PMIC asserts `ADR_TRIGGER` → PCU drains WPQ to DRAM → puts DRAM into self-refresh → backup capacitor or battery sustains DRAM long enough to flush. On reboot, persistent regions are recovered.
+
+**ADR is a real-time correctness property — the WPQ drain must complete in the time the hold-up cap can sustain power.** ADR opcode-ordering bugs (sending the drain command before the persistent commit, or vice versa) cause silent corruption that surfaces only after a power-fail event — days or weeks later. *Hardest class of validation bug.*
+
+### Q: Why are Core C6 bugs so hard to catch?
+
+Because C6 saves the entire architectural state of the core (registers, MSRs, PMU counters, debug state, performance event configs) to an SRAM region, then power-gates the core. On wake, every bit must be restored exactly. Bugs:
+- A new MSR added in a step but missed in the C6 save list → reads as 0 after first C6 wake → application breaks subtly.
+- Save/restore order wrong (restore X2APIC before LAPIC enable bit) → lost interrupts after wake.
+- C6 entry races with an interrupt arrival → interrupt lost or duplicated.
+
+These pass functional tests (the CPU works fine *between* C6 cycles). They surface as **flakiness under stress** — a perf counter drifts, a TSC skews, an interrupt occasionally arrives twice. *Coverage of C6 entry-exit at every interrupt boundary is the validation methodology.*
+
+### One-liner
+
+*"PCU firmware exists because power policy is too complex, too SKU-specific, and too release-sensitive for RTL. ADR exists because persistent memory commits are in-flight in the WPQ on power loss — the PCU has microseconds to drain it. Core C6 bugs are silent because the save/restore surface is wide and the bug only shows after a wake under specific timing — this is what pre-silicon validators chase with C6-stress + perf-counter delta tests."*
+
+---
+
 ## Bug Anchor
 
 - **Primary:** PCU/ADR opcode ordering (Bug 1 above).

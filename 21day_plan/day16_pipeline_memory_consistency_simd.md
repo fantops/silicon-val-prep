@@ -344,6 +344,44 @@ def countBits(n):
 
 ---
 
+## System Thinking — Why CPUs cheat (and tell you they did)
+
+**Frame:** the programmer's mental model is "instructions execute in order, one at a time, and memory updates happen when stores execute." None of that is true on a modern CPU. Instructions execute out-of-order in parallel; stores buffer for hundreds of cycles; loads speculate past branches. The CPU pretends this is invisible *single-threaded* (it's not invisible across cores or to devices). Every "weird" concurrency or DMA bug is a place where the cheat became visible.
+
+### Q: Why out-of-order execution? What problem is it solving?
+
+A single instruction stream has hidden parallelism — independent loads can execute concurrently with arithmetic, two adds with no dependency can run in parallel, a long latency op (DRAM load) shouldn't stall everything behind it. **OoO extracts this ILP** by issuing instructions to execution units in *dependency order*, not program order, then committing them in program order so the architectural state looks sequential. 
+
+**Cost:** huge ROB (reorder buffer ~200 entries), register renaming, scheduler, retirement logic. **Benefit:** 2-4× IPC over in-order. The cost is paid in area and power; the benefit is paid in single-thread performance, which still matters for the long tail of unparallelizable code.
+
+### Q: Why memory consistency models (SC vs TSO vs weak) instead of "just do what I wrote"?
+
+Because enforcing strict program-order on memory across cores is *expensive*. Sequential Consistency (every core sees all stores in the same global order) requires every store to wait for global visibility before the next instruction. That kills the store buffer optimization (~30% perf loss).
+
+- **TSO (x86):** stores can buffer past younger loads, but stores remain ordered with each other. Easier to reason about, easier to port.
+- **Weak (ARM, Power, RISC-V):** almost any reorder allowed unless you insert a barrier. Maximum HW freedom, maximum SW responsibility.
+
+**Tradeoff:** stronger models = easier programming + slower hardware. Weaker models = faster hardware + need explicit `dmb`/`fence`/`acquire`/`release` everywhere. The C++/Rust memory model exists to abstract over both — you write `memory_order_acquire`, the compiler emits `dmb ish` on ARM and nothing on x86. *Most concurrency bugs are missing barriers on weak architectures, hidden because TSO testing passed.*
+
+### Q: SIMD vs scalar — why doesn't OoO already give us this?
+
+OoO extracts **instruction-level** parallelism (independent ops in the stream). SIMD extracts **data-level** parallelism (same op on N elements). They're orthogonal:
+- 4-wide OoO running scalar add: 4 adds per cycle, 4 instructions retired.
+- Scalar pipeline running AVX2 add: 1 instruction, 8 adds per cycle.
+- 4-wide OoO running AVX2: up to 32 adds per cycle.
+
+SIMD wins because **decode bandwidth, ROB pressure, and register file ports** are all per-*instruction*, not per-*operation*. Vectorize a loop and you free all those resources for other work. **Cost:** alignment matters more (Day 2), control flow becomes mask-based, tail handling is annoying. *That's why auto-vectorization is conservative — the compiler must prove no aliasing (`restrict`!), no exceptions, alignment OK.*
+
+### Q: Why does Spectre/Meltdown matter to a validator?
+
+Because speculation — a performance optimization — left **microarchitectural side channels** (cache state changes from speculative loads that were rolled back architecturally but not microarchitecturally). The fix isn't "stop speculating" (kills perf); it's barriers (`lfence`), partitioning (eIBRS), and OS mitigations (KPTI). *Validation now has to test that mitigations don't break correctness AND that they actually mitigate — a new axis added to every CPU release.*
+
+### One-liner
+
+*"OoO and speculation extract ILP from a serial stream; SIMD extracts data parallelism orthogonally. Memory consistency models are a tradeoff between HW freedom and SW programmability — weaker models go faster but need explicit barriers. Every concurrency bug is the CPU's reordering becoming visible across cores or to devices. Speculation side channels (Spectre) are the same optimization leaking through a side channel — validation now tests both correctness and mitigation effectiveness."*
+
+---
+
 ## Bug Anchor
 
 - **Day 5 (false sharing):** the same coherence story drives many concurrency bugs.

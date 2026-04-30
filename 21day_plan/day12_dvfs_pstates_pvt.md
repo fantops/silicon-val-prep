@@ -272,6 +272,37 @@ def maxProfit(prices):
 
 ---
 
+## System Thinking — Why frequency and voltage are linked
+
+**Frame:** if you could change frequency without changing voltage, DVFS would be trivial — just slow down to save power. You can't. Voltage and frequency are *coupled by physics*: every transistor needs a minimum $V_{dd}$ to switch within a clock period. Drop $V$ too low at the same $F$ and the next pipeline stage doesn't latch in time → silent corruption. P-states exist as a curated list of *safe* (V, F) pairs that the silicon was characterized to run at. PVT sensors close the loop because that characterization drifts with process variation, voltage droop, and temperature.
+
+### Q: Why does dropping V save so much more power than dropping F?
+
+Because $P_{dyn} = \alpha C V^2 F$. Drop F by 2×, save 2× dynamic power. Drop V by 2×, save 4×. *But you usually drop them together*, because lower F lets you run at lower V (more timing slack), so the *effective* savings is closer to $V^3$. **That's why DVFS works — the cubic-ish savings dominate the linear loss in throughput, *if your workload is latency-tolerant*.**
+
+If the workload is latency-bound (interactive, real-time), slowing down hurts user experience more than it saves energy. That's why a *governor* exists — software has to decide what kind of workload is running and pick the operating point.
+
+### Q: Why do governors exist? Can't hardware just pick the right P-state?
+
+Hardware can react to load (utilization, IPC) but it cannot know **intent**. A 50% utilization could be:
+- A streaming workload that wants throughput at minimum energy → lower P-state.
+- A latency-sensitive workload that's idle waiting for input → stay at high P-state to respond fast.
+- A throttled workload that *would* use 100% if allowed → raise P-state.
+
+The OS knows (or guesses): scheduler hints, EAS (Energy-Aware Scheduling), per-task energy models. Modern systems use a hybrid — **HWP (Intel) / RPMh (Qualcomm)** lets HW make fast decisions in microseconds while SW provides hints (window of acceptable P-states, perf bias). This is the modern compromise: HW for speed, SW for intent.
+
+### Q: Why PVT (Process / Voltage / Temperature) sensors?
+
+Because silicon isn't uniform. Two dies from the same wafer can have a 100 mV $V_{min}$ difference at the same frequency — *process variation*. The voltage rail droops under sudden load changes — *voltage transient*. Leakage and timing both vary with temperature. If you set $V_{dd}$ at "worst-case process + worst-case temp + worst-case droop," you waste energy on every nominal die.
+
+PVT sensors let the firmware (PCU on Intel, RPMh on QC, MCC on others) **adapt voltage in real time**: read the temperature sensor every few ms, read voltage droop counters, read process-variation fuses programmed at test — then tune the voltage just-above $V_{min}$ for *this die, this rail, this moment*. **AVS (Adaptive Voltage Scaling) commonly saves 10-20% over static V/F tables.**
+
+### One-liner
+
+*"DVFS works because $P_{dyn} = CV^2F$ and V and F are coupled — lower F enables lower V, giving near-cubic energy savings. P-states are a curated list of safe (V, F) pairs the silicon was characterized at. Governors exist because hardware sees load but not intent. PVT sensors close the loop in real time because every die is different and worst-case static voltage wastes energy on the typical die."*
+
+---
+
 ## Bug Anchor
 
 - **Day 13 (C-states, S0ix):** the idle-power side of this story.

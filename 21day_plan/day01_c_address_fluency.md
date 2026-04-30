@@ -285,6 +285,35 @@ def twoSum(nums, target):
 
 ---
 
+## System Thinking — Why C looks like this
+
+**Frame:** C is the only mainstream language that lets you see the machine. Every other language hides addresses; C makes you say them out loud. That's not a flaw — it's the whole point. Validation, drivers, and firmware *need* the address to be a first-class value, because the bug is usually "the wrong address was loaded."
+
+### Q: Why does C expose addresses at all?
+
+Because hardware is an address space. A peripheral register lives at `0xFE00_2400`. A DMA descriptor lives at a physical address the device's bus master reads. A page table entry lives at PA `(CR3 + index * 8)`. If the language won't let you write "go read this address," you cannot talk to hardware. Every higher-level language gets this capability *by being implemented in C*.
+
+**Tradeoff:** safety vs reach. Java/Rust/Go give you safety by hiding addresses; you can never accidentally cast an int to a pointer. C gives you reach by exposing them; you *can* accidentally cast an int to a pointer. The validator's world lives on the reach side because the bugs live on the reach side.
+
+### Q: Why is pointer arithmetic *type-aware* (`p+1` advances by `sizeof(*p)`)?
+
+Because the compiler knows the element width but the programmer would forget. `int *p; p+1` is `p + 4`, not `p + 1`. This makes array traversal correct by construction (`for (p = arr; p < arr+N; p++)`), but it's *also* why `void *` cannot be dereferenced or incremented — the type system has no width to multiply by. Casting to `uint8_t *` first is the idiom for byte-level walks (e.g., "copy 17 bytes").
+
+### Q: Why does C bother with `const`, `volatile`, `restrict` instead of just types?
+
+These are **promises to the compiler about the world outside the program** — not about the value itself.
+- `const`: "I won't write through this pointer" → compiler can hoist loads.
+- `volatile`: "the value can change without my writing it" → compiler must not cache it (Day 3, MMIO).
+- `restrict`: "no other pointer aliases this region" → compiler can vectorize.
+
+Get these wrong and the compiler optimizes correctly *for the wrong world*. Most "works in debug, breaks in -O2" bugs are missing-volatile or missing-restrict.
+
+### One-liner
+
+*"C exposes addresses because hardware is an address space. Pointer arithmetic is type-aware so array walks are correct by construction. `volatile`, `const`, and `restrict` are not type decorations — they're contracts about the world outside the program, and the compiler optimizes against those contracts. Get them wrong and -O2 breaks code that -O0 ran fine."*
+
+---
+
 ## Bug Anchor
 
 - Foundational; every later bug uses these accessors.

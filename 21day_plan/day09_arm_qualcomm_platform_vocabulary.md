@@ -329,6 +329,111 @@ def isValid(s):
 
 ---
 
+---
+
+## Interview Reasoning Pack — System Boot Flow (HW + SW)
+
+This is the question you must be able to walk for **90 seconds without notes**. Two parallel narratives — hardware sequencing and software stages — happening on the same wall clock.
+
+### The vendor-agnostic mental model (memorize this first)
+
+Every modern computer — Intel laptop, ARM phone, RISC-V microcontroller — boots in the **same five conceptual phases**. Only the names differ. Lock these phases in your head and you can answer the question for *any* platform.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Phase 0: POWER         PMIC ramps rails in order, releases reset    │
+│ Phase 1: ROM           Tiny immutable code in mask ROM picks medium │
+│                        loads next stage to on-die SRAM, verifies it │
+│ Phase 2: PLATFORM INIT Train DRAM, init clocks, set up MMU/caches   │
+│                        (now we have GBs of memory to work with)     │
+│ Phase 3: BOOTLOADER    Find OS image on storage, verify it, load it │
+│                        into DRAM, hand off                          │
+│ Phase 4: OS + INIT     Kernel takes over, brings up other cores,    │
+│                        mounts rootfs, starts userspace              │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**The invariant across vendors:** each phase loads + *signature-verifies* the next phase before jumping. That signature chain, rooted in a key hash burned into one-time fuses, is **secure boot / chain of trust**. Same idea on Intel BootGuard, AMD PSP, ARM TrustZone, Apple Secure Enclave, NXP HABv4 — different names, same pattern.
+
+### Hardware perspective: from "button press" to "ROM running"
+
+The CPU cannot fetch its first instruction until many things have happened in a strict order. **Power and clocks before logic; logic before memory; memory before software.**
+
+1. **Button / wake event** → asserts `PWR_ON` to the **PMIC** (Power Management IC, a separate chip on the board, e.g. Qualcomm PM8550). The SoC core rails are still off.
+2. **PMIC rail sequencing.** PMIC brings up rails in a programmed order: always-on (`VDD_AON`) first → I/O (`VDDIO_1V8`) → core (`VDD_CX`) → memory (`VDD_MX`) → DDR PHY (`VDDQ`). Each rail has a **ramp time** and a **good** signal; the next rail can't start until the previous is in regulation. **Wrong sequencing = latch-up or stuck reset.** This is why PMIC firmware is part of the validation matrix.
+3. **Reference clock.** A 38.4 MHz crystal (XO) starts oscillating; a small **always-on PLL** locks. The main PLLs are still in bypass.
+4. **Reset deassert.** Once rails are good and XO is stable, the PMIC releases the SoC's `PORESETn`. The reset deassertion is **synchronous** to the reference clock (async assert, sync deassert — see Day 9 "Resets") so all flops come out of reset cleanly.
+5. **Boot core selection.** A small piece of always-on logic decides which core boots first (typically a single A55/A78 in big.LITTLE, or a dedicated security core). On Snapdragon this is often a small **Cortex-M-class boot core** that runs PBL.
+6. **Fuse read.** The boot core reads **eFuses / OTP** (one-time programmable bits): chip ID, root-of-trust public key hash, anti-rollback counters, debug-disable bits, SKU/binning. Fuses gate everything that follows — a "secure boot" fuse forces signature verification; an "anti-rollback" fuse rejects older firmware versions.
+7. **Boot ROM execution.** PC jumps to a **mask ROM** (hardwired at fab — cannot be patched). ROM is small (tens of KB), runs from on-die SRAM, and does the minimum: configure boot pins, find the next stage on the boot medium (eMMC / UFS / SPI-NOR — selected by strap pins), DMA it into SRAM, **verify its signature against the fuse-locked root key**, and jump.
+8. **DRAM is still off.** Everything so far runs from on-die SRAM. DRAM training has not happened yet — that's the next stage's job.
+
+### Software perspective: the boot chain (generic, then per vendor)
+
+The **generic** chain — what every system does, with role descriptions instead of vendor names:
+
+| # | Generic role | Runs from | What it actually does |
+|---|---|---|---|
+| 1 | **Boot ROM** | Mask ROM → on-die SRAM | Tiny (~tens of KB), immutable. Picks boot medium from strap pins, reads first sector, signature-verifies it against fuse-locked root key, jumps. |
+| 2 | **First-stage bootloader (FSBL)** | SRAM | Has just enough to bring DRAM up: configures PLLs, sequences remaining PMIC rails, **trains DDR**, initializes the memory controller. Then loads the next stage *into DRAM*. |
+| 3 | **Second-stage / platform firmware** | DRAM | Sets up platform services: ACPI/Device Tree describing the hardware to the OS, secure-world runtime, power-management firmware (handles future C-state / DVFS requests from the OS). |
+| 4 | **OS bootloader** | DRAM | Reads the boot partition off storage (eMMC/NVMe/SATA), verifies the OS image, decompresses the kernel, builds the boot args, jumps to kernel entry. |
+| 5 | **OS kernel** | DRAM | Discovers hardware (via DT/ACPI), brings up secondary cores, initializes drivers, mounts root filesystem, hands off to **init / systemd / launchd** which starts userspace. |
+
+**The chain of trust:** stage *N* signature-verifies stage *N+1* against a public key whose hash is locked in eFuses. Break any link — unsigned stage, skipped check — and secure boot collapses. Every vendor implements the same idea (Intel BootGuard, AMD PSP, Apple Secure Boot, ARM TF-A trusted boot, NXP HAB) under different brand names.
+
+#### Vendor mapping (so you can speak any of them)
+
+| Generic role | **x86 PC (Intel/AMD)** | **ARM server / TF-A** | **Snapdragon (QC)** | **Apple Silicon** |
+|---|---|---|---|---|
+| Boot ROM | Microcode + Intel ME / AMD PSP ROM | BL1 | PBL | iBoot stage 0 (SecureROM) |
+| FSBL (DDR train + early init) | FSP (Firmware Support Package) inside UEFI PEI phase | BL2 | SBL / XBL | LLB (Low-Level Bootloader) |
+| Platform firmware / secure monitor | UEFI DXE + SMM handlers | BL31 (runtime) + BL32 (TEE) | TZ / QHEE + QSEE | iBoot main + SEPOS |
+| OS bootloader | UEFI BDS → GRUB / Windows Boot Manager | U-Boot / GRUB / UEFI | ABL (LK-based) or UEFI | iBoot loads kernelcache directly |
+| Kernel + init | Linux + systemd / NT kernel + smss | Linux + systemd | Linux + Android init | XNU + launchd |
+
+**Privilege levels** (where each stage runs):
+- **x86:** SMM (most privileged) → Ring 0 (kernel) → Ring 3 (user). Microcode and ME run *below* Ring 0 in their own enclave.
+- **ARM:** EL3 (secure monitor / BL31) → EL2 (hypervisor) → EL1 (kernel) → EL0 (user). Secure world (S-EL1, S-EL3) is parallel.
+
+**Why x86 and ARM look so different at first glance:** x86 inherited a 40-year UEFI/BIOS legacy with phase names (SEC → PEI → DXE → BDS) that hide the same five generic roles. ARM started fresh with TF-A and named the stages literally (BL1, BL2, BL31, BL33). They're doing the same things; only the spelling changes.
+
+### The two narratives meeting at DDR training
+
+The pivotal moment in boot is **DDR training**, which happens inside the FSBL (BL2 / FSP / LLB / SBL):
+
+1. PHY calibration (ZQ calibration of on-die termination).
+2. CA (command/address) training.
+3. Read DQS gate training (find when the DRAM's DQS strobe arrives).
+4. Read/write level training (per-byte-lane delay).
+5. VREF training (data-eye voltage center).
+
+Until this completes, the SoC has **no general-purpose memory** — it lives in tens of KB of SRAM. After it completes, all subsequent stages (BL31, BL33, kernel) run from DRAM. **A bad LPDDR training tuning is a "boot hangs in SBL" symptom** — exactly the kind of bug a pre-silicon CPU/platform validator chases.
+
+### How to deliver this in an interview (90 seconds)
+
+> "Boot is two parallel stories happening on the same wall clock. **Hardware:** when power comes in, a separate **PMIC chip** ramps the rails in a programmed sequence — always-on, then I/O, then core, then DRAM PHY — each waiting for the previous to be in regulation. Once a reference crystal is stable, the PMIC releases the SoC's power-on reset. The boot core wakes up running from a tiny **mask ROM** — immutable code burned at the foundry — which reads **eFuses** for the root-of-trust key hash, anti-rollback counters, and SKU bits. DRAM is still dark; everything so far runs from tens of KB of on-die SRAM.
+>
+> **Software:** the ROM loads the **first-stage bootloader** into SRAM, signature-verifies it against the fuse-locked key, and jumps. The first-stage's main job is **DDR training** — five PHY calibration phases that find the right delays and voltages so the memory controller can talk to the DRAM. Once DRAM is alive, it loads the **platform firmware** — secure monitor, power-management firmware — into a protected DRAM region, then loads the **OS bootloader** into normal-world DRAM. Each stage verifies the next; that's the chain of trust.
+>
+> The OS bootloader finds the kernel image on storage, verifies it, decompresses it, and jumps to kernel entry. The kernel discovers hardware via **device tree or ACPI**, brings up the rest of the cores via firmware calls (PSCI on ARM, INIT-SIPI on x86), initializes drivers, mounts the root filesystem, and hands off to **init** which starts userspace.
+>
+> The names change per vendor — Intel calls the first stages FSP and UEFI PEI; ARM TF-A calls them BL1, BL2, BL31; Qualcomm calls them PBL, SBL, TZ — but the five roles are identical: **ROM → DDR-training stage → platform firmware → OS loader → kernel + init**, with a signature check at every hop and fuses pinning the root."
+
+### Validation hooks at every stage
+
+This is what makes the answer feel like a *validator's* answer, not a Wikipedia answer:
+
+- **PMIC sequencing:** scope the rails, verify ramp times and order match the PMIC firmware spec. Bug shape: "board boots cold but not warm" → reset of one rail not honored.
+- **Reset:** check `PORESETn` is sync-deasserted; async deassert causes random flop init → "boots 9/10 times."
+- **Fuses:** boundary scan / JTAG to read fuse shadow; mismatch with expected SKU = wrong binary loaded.
+- **ROM → SBL handoff:** UART log from PBL ("PBL: signature OK, jumping to SBL @ 0x...").
+- **DDR training:** training logs from SBL, eye margins per byte lane, retry counts. **Tail-bit failures here are silent corruption later.**
+- **BL31 PSCI:** test `CPU_ON` / `CPU_OFF` / `SYSTEM_SUSPEND` from kernel — these are the same SMC paths used by Day 13 C-states.
+- **AVB / dm-verity:** flip a bit in `boot.img`, confirm BL33 refuses to boot.
+
+---
+
 ## Bug Anchor
 
 - **Day 8 (DMA/doorbells):** the `DMB ST` story lives here.

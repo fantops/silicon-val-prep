@@ -317,6 +317,46 @@ def hammingWeight(n):
 
 ---
 
+## System Thinking — Why hardware access is *not* normal C
+
+**Frame:** writing `*reg = 1` looks like writing memory, but it isn't. The compiler, the cache, and the CPU's reordering machinery were all built on the assumption that loads/stores are *idempotent* and *side-effect-free*. Hardware registers violate every one of those assumptions. Every keyword on this day exists to tell one of those layers "this address is different."
+
+### Q: Why is `volatile` needed? Doesn't the compiler just do what I write?
+
+No — the compiler is *built* to not do what you write, when it knows better. If you write:
+
+```c
+while (*status_reg & BUSY) ;
+```
+
+the compiler sees a load with no side effects in a loop and hoists it out: "the value can't change, so check it once." Result: infinite loop. `volatile` tells the compiler **"this address has side effects you cannot see — issue exactly the loads/stores I wrote, in order, and don't cache the value in a register."** Without `volatile`, every poll loop and every MMIO write is potentially miscompiled at -O2.
+
+**`volatile` does NOT give you:** atomicity, ordering between *different* volatile addresses, or memory barriers. For those you need explicit barriers (Day 8).
+
+### Q: Why are MMIO regions mapped uncached / device-type?
+
+Because the cache breaks device semantics in three ways:
+1. **Write coalescing:** the cache might combine 4 byte-writes into one 4-byte write — but the device may interpret each byte-write as a separate command (e.g., a UART TX-data write per byte).
+2. **Write reordering:** the cache may delay a write indefinitely (write-back). The device sees stale state.
+3. **Read squashing:** a read from a status register the cache thinks it already has may return the old cached value forever.
+
+Mapping the region as Device or Strongly-Ordered (ARM) / UC or WC (x86) tells the MMU to skip the cache entirely — every load/store goes straight to the bus. This costs latency but *that's the entire point*: you needed to talk to the device, not to a stale snapshot of it.
+
+### Q: Polling vs interrupts — when do I use which?
+
+A pure tradeoff between **latency, CPU cost, and event rate**:
+- **Polling wins** when the event is *expected soon* (microseconds) or *frequent* (every few μs). Interrupt entry/exit costs ~hundreds of cycles plus cache pollution; if events arrive faster than that, IRQs collapse.
+- **Interrupts win** when the event is *rare* or *latency-tolerant*. CPU sleeps; one wake handles the work.
+- **Hybrid (NAPI / interrupt-coalescing / poll-after-IRQ):** trigger via IRQ for the first event, then poll while events keep coming. Used by every modern NIC and NVMe driver.
+
+The NVMe completion queue with phase bit (Day 11) is *poll-style* even though MSI-X is set up — because at high IOPS, polling beats IRQs.
+
+### One-liner
+
+*"Writing a hardware register isn't writing memory. `volatile` stops the compiler from caching loads in registers. Uncached/device mappings stop the CPU cache from coalescing or reordering writes. Barriers (Day 8) stop the CPU's reorder buffer. And polling beats interrupts when events arrive faster than the IRQ entry/exit cost. Each keyword exists to opt one layer of optimization back out — because hardware doesn't follow C's rules."*
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe):** `wait_csts_rdy` and AQA field-width bug.

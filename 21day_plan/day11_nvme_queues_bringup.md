@@ -352,6 +352,48 @@ def groupAnagrams(strs):
 
 ---
 
+## System Thinking — Why NVMe killed AHCI
+
+**Frame:** AHCI was designed for spinning disks. One queue (32 deep), one IRQ, locking around the queue head. That worked for 100 IOPS HDDs. SSDs do *millions* of IOPS — the queue depth, lock contention, and IRQ overhead became the bottleneck *before* the SSD did. NVMe redesigned the entire host↔device contract for parallel hardware. Every NVMe design choice is the inverse of an AHCI bottleneck.
+
+### Q: Why per-core SQ/CQ pairs instead of one shared queue?
+
+Because one shared queue serializes everything. Two cores submitting I/O contend on the queue lock; at line rate the lock dominates. NVMe's answer: **one Submission Queue + one Completion Queue per CPU core**, each in DRAM, each with its own MMIO doorbell. Core 0 submits to SQ0, gets completions on CQ0, no other core touches that queue. Lock-free by *partitioning*, not by clever atomics.
+
+**Side effect:** queue depth becomes per-queue, not per-device. 64 queues × 64K entries = 4M outstanding I/Os. The SSD's parallelism (channels, dies, planes) finally has enough work in flight to stay busy.
+
+### Q: Why MSI-X with one vector per CQ instead of a shared IRQ?
+
+Because a shared IRQ means **all cores wake on every completion** to figure out whose I/O it was. MSI-X gives each CQ its own vector, routed to a specific CPU. Completion on CQ0 → IRQ on CPU 0 only. No steering software, no cache pollution on other cores. *Combined with per-core queues, the entire I/O path becomes fully parallel — each core is its own pipeline.*
+
+At very high IOPS even MSI-X is too expensive (each IRQ entry/exit is ~hundreds of cycles). Then drivers switch to **polled mode**: the completion has a `phase bit` that flips per CQ wraparound, and the driver spins reading the CQ entry. No interrupt at all. The phase bit is the trick that lets polling work without explicit "valid" updates from the device.
+
+### Q: Why the MMIO-doorbell-after-DRAM-descriptor pattern?
+
+It's the same Day 8 pattern, just at the storage layer:
+1. Driver writes the SQE (Submission Queue Entry, 64 bytes) into the SQ in **DRAM**.
+2. **Memory barrier** — ensures SQE is globally visible.
+3. Driver writes the SQ tail doorbell at the device's **MMIO** BAR.
+4. Device fetches the SQE via DMA, executes, writes completion to CQ in DRAM, raises MSI-X.
+
+*This is the canonical descriptor-doorbell pattern of every modern device:* NICs, GPUs, NPUs, NVMe — same shape. Differences are in the descriptor format and the queue layout. Master this picture and you can bring up any DMA engine.
+
+### Q: Why is bring-up so error-prone (CSTS.RDY, AQA, DSTRD bugs)?
+
+Because the *control* path runs *before* any of the data-path queues exist. You're poking MMIO registers with the device half-initialized:
+- Wrong field width (writing 32 bits to a 64-bit register) → silently sets only the low half.
+- Wrong stride (DSTRD) → doorbell writes go to the wrong queue.
+- Polling `CSTS.RDY` without `volatile` or without a barrier → stuck loop.
+- Forgetting that admin queue is queue 0 (special) and IO queues are 1..N.
+
+The NVMe spec is precise but unforgiving. Bring-up bugs look like "device doesn't enumerate" — they're 90% of pre-silicon storage validation work.
+
+### One-liner
+
+*"NVMe is AHCI's bottleneck list, inverted. Per-core SQ/CQ pairs kill the queue lock. MSI-X per CQ kills the cross-core IRQ wake. Polling with phase bits kills the IRQ entirely at high IOPS. The descriptor-doorbell pattern is unchanged from any modern DMA device. The hard part isn't the data path — it's the bring-up sequence, where MMIO field widths and barriers cause the canonical 'doesn't enumerate' bugs."*
+
+---
+
 ## Bug Anchor
 
 - **Day 8 (DMA / doorbells):** the descriptor + doorbell pattern, with phase bit on the CQ.

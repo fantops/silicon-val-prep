@@ -230,6 +230,42 @@ def mergeTwoLists(a, b):
 
 ---
 
+## System Thinking — Why CPU↔device handoff has its own physics
+
+**Frame:** when CPU writes to RAM, the cache and the coherence protocol guarantee a consistent view across cores (Day 5). When a *device* reads RAM via DMA, **none of those guarantees apply by default**. The device is on a different bus, with its own ordering rules, looking at memory the CPU may not have flushed yet. Every barrier, every cache-clean operation, every doorbell pattern in this day exists to bridge two worlds that don't share a clock or a coherence protocol.
+
+### Q: Why the descriptor-then-doorbell pattern, *always in that order*?
+
+Because the device reads the descriptor on receiving the doorbell. If the doorbell write reaches the device *before* the descriptor write reaches RAM (or before it's visible to the device's coherent path), the device reads garbage. Three things must happen in order:
+1. CPU writes descriptor fields → flushed/visible to device.
+2. **Memory barrier** (`DMB ST` on ARM, `sfence` on x86) — guarantees descriptor write completes before any later store.
+3. CPU writes doorbell (MMIO write to a device register).
+
+The barrier is the *whole job* of `wmb()` / `dma_wmb()` in Linux drivers. Skip it and you get "works at low rate, fails at line rate" — at slow rates the writes naturally retire in order; at high rates the CPU's store buffer reorders them.
+
+### Q: Why does DMA need cache management when the cache is supposed to be transparent?
+
+Because the cache is *transparent to CPU memory accesses*, not to device memory accesses. Two failure modes:
+- **Stale device read:** CPU writes a buffer, lines sit dirty in L1. Device DMAs from RAM and reads old data. **Fix:** `clean` the cache (write dirty lines back to RAM) before triggering DMA.
+- **Stale CPU read:** Device DMAs new data into RAM. CPU still has the old value cached. **Fix:** `invalidate` the cache (drop cached lines) before CPU reads.
+
+On IO-coherent systems (modern x86, ARM with `ACE`/`CCI`), the device participates in the coherence protocol and these are handled in hardware. On non-coherent paths (most embedded, many DSPs/NPUs — Day 19), the driver must do explicit `clean`/`invalidate` ops. **Getting this wrong is the canonical NPU/HTP DMA bug: half-coherent fabric, software assumes full coherence, occasional stale reads under load.**
+
+### Q: Why barriers? Doesn't `volatile` already enforce order?
+
+No. `volatile` keeps the compiler from reordering loads/stores to *that one address* (Day 3). Barriers keep the **CPU itself** from reordering loads/stores across the barrier. Modern OoO cores have store buffers, load queues, and out-of-order retirement — they can hold a store for hundreds of cycles before it's visible to other agents. A barrier is the only way to force "all stores before this point are globally visible before any store after." Different barriers for different scopes:
+- **Inner shareable** (`DMB ISH`): coherent within the multicore cluster.
+- **Outer shareable** (`DMB OSH`): includes IO-coherent devices.
+- **System** (`DMB SY`): everything, including non-coherent agents.
+
+Using the wrong scope = subtle correctness bug that passes most tests.
+
+### One-liner
+
+*"CPU↔device handoff is the meeting of two ordering worlds. The descriptor-then-barrier-then-doorbell pattern is the contract: descriptor visible to the device, barrier ensures global ordering, doorbell triggers the device read. Cache management bridges the cache, which is transparent to CPUs but not to non-coherent DMA. Get the order, the barrier scope, or the cache op wrong and you get the classic 'works at low rate, fails at line rate' bug."*
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe `CSTS.RDY` / AQA / DSTRD):** the canonical bring-up bug for this picture.

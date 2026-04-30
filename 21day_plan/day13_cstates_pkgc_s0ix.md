@@ -296,6 +296,176 @@ def climbStairs(n):
 
 ---
 
+---
+
+## Interview Reasoning Pack (system-level thinking)
+
+### Q: Static vs dynamic power — what's the difference, and why do I care?
+
+**Two independent loss mechanisms that the same transistor pays simultaneously.**
+
+- **Dynamic power** is the cost of *switching* a node. Every time a flip-flop or wire toggles `0→1`, it charges the load capacitance to $V_{dd}$, then dumps the charge to ground on `1→0`. Energy per toggle = $\frac{1}{2} C V^2$. Power = energy × switching rate:
+
+$$P_{dyn} = \alpha \cdot C \cdot V^2 \cdot F$$
+
+  where $\alpha$ is activity factor (fraction of clock edges that actually toggle the node).
+
+- **Static (leakage) power** is the cost of *just being on*. Even a "stopped" transistor leaks: subthreshold current through the channel, gate-oxide tunneling, junction leakage. Roughly:
+
+$$P_{leak} \approx V_{dd} \cdot I_{leak}(V, T)$$
+
+  $I_{leak}$ rises **exponentially with temperature** and roughly linearly with $V_{dd}$. *This is the runaway thermal feedback loop: hot → leaky → hotter.*
+
+**Why this distinction drives every architectural choice:**
+
+| Lever | Hits dynamic? | Hits leakage? |
+|---|---|---|
+| Lower $V_{dd}$ | $V^2$ — huge | Linear-ish — modest |
+| Lower $F$ | Linear | None directly |
+| **Clock-gate** | Kills it (no toggles) | Untouched |
+| **Power-gate** (rail off) | Kills it | **Kills it** |
+| Cool the die | None | Big (exponential) |
+
+**One-liner:** *"Dynamic is $CV^2F$ — the cost of toggling. Leakage is $V \cdot I_{leak}(T)$ — the cost of being powered, exponential in temperature. Clock gating kills dynamic only; power gating kills both. Every C-state and DVFS decision is choosing which lever to pull and paying the wake-up cost."*
+
+### Q: Why is clock gating needed? Fine-grain vs coarse-grain? What's an ICG cell?
+
+**The problem clock gating solves:** a clock tree is the largest single contributor to dynamic power on a modern SoC — often **30-40%** of total dynamic power. Every flip-flop sees the clock toggle every cycle even when its data doesn't change, charging/discharging the clock-pin capacitance for nothing.
+
+**Clock gating = "if this block has no work, don't toggle its clock."** Insert an AND-style gate so the clock only propagates when an `enable` signal is high.
+
+### Q: Walk me through *how* clock gating is actually built — RTL to silicon.
+
+**Five layers, each answering a different "how" question.**
+
+**Layer 1 — RTL: where the intent is expressed.**
+The designer writes a flop with an enable condition:
+
+```verilog
+always_ff @(posedge clk) begin
+  if (en) data_q <= data_d;   // hold value when en=0
+end
+```
+
+A naive synthesis would build this as a flop with a feedback mux: when `en=0`, mux selects the old value back into the D input. The flop *still toggles its clock pin every cycle* — burning dynamic power for nothing.
+
+**Layer 2 — Synthesis: the tool replaces the mux with an ICG cell.**
+With clock-gating enabled (e.g. Synopsys DC `set_clock_gating_style`, or `insert_clock_gating`), the synthesis tool sees the enable pattern and rewrites it as:
+
+```
+       data_d ─────────────► D ┐
+                                │ flop
+       clk_gated ──────────► CK ┘   (no feedback mux)
+                  ▲
+                  │
+       clk ──┐    │
+             ▼    │
+         [ ICG cell ]
+             ▲
+             │
+       en ───┘
+```
+
+The flop's clock pin now only toggles when `en=1`. The mux is gone; the gating moved upstream to the clock.
+
+**Layer 3 — The ICG cell internals (the cell that actually does the gating).**
+A plain `clk & en` AND gate **glitches**: if `en` rises while `clk` is high, you get a runt pulse that the downstream flop sees as a clock edge → metastability or wrong data. The ICG fixes this with a **level-sensitive latch** on the enable, transparent only when clock is low:
+
+```
+              ┌─────────────────────┐
+              │  Latch (D-latch)    │
+   en  ──────►│ D                Q ├──────┐
+              │                     │      │
+   clk ──┬───►│ G (gate, active-low)│      ▼
+         │    └─────────────────────┘   ┌─────┐
+         │                              │ AND │── clk_gated
+         └─────────────────────────────►│     │
+                                        └─────┘
+```
+
+Behaviour:
+- While `clk = 0`, the latch is **transparent** — it samples `en`.
+- When `clk` rises, the latch **freezes** the sampled value; the AND outputs `clk_gated = clk & en_latched`.
+- If `en` changes mid-cycle (while `clk = 1`), the latch ignores it. **No glitch.**
+
+This cell is in every standard-cell library (Synopsys: `CKLNQD*`, ARM Artisan: `CKGATEH`, TSMC: `CKLHQ*`). Designers don't instantiate it by hand; the tool inserts it.
+
+**Layer 4 — Hierarchical gating: where in the clock tree the ICG sits.**
+
+```
+        PLL
+         │
+         ▼
+   ┌─────────┐    Root / global gate (block-level enable)
+   │   ICG   │◄── from CPM / power-mgmt FSM
+   └────┬────┘
+        │
+   ┌────┴────┬────────┬─────────┐
+   ▼         ▼        ▼         ▼
+  ICG       ICG      ICG       ICG    Regional gates (per FU: FPU, decode, LSU)
+   │         │        │         │
+  flop      flop     flop      flop   Leaf gates (per flop bank, ~8-32 flops)
+  bank      bank     bank      bank
+```
+
+Three tiers, three sources of the enable:
+- **Leaf (fine-grain):** enable comes from local logic — "this lane's instruction is valid this cycle." Inserted by the tool. Saves **~10-20%** dynamic power, ~free in design effort.
+- **Regional (coarse-grain):** enable comes from a unit-idle detector — "FPU has had no μop for 8 cycles." Hand-architected. Saves another **~10-15%**, requires a wake latency of 1-few cycles when work returns.
+- **Root (block-level):** enable comes from the **clock/power management FSM** — driven by software entering C1 (MWAIT) or by the PCU. Saves the rest, but wake costs nanoseconds-to-microseconds because the whole clock tree has to refill and the receiving flops need a clean first edge.
+
+**Layer 5 — Verification (what makes this *hard*).**
+
+This is where pre-silicon validation lives — the layer that pays your salary:
+
+1. **Logical equivalence (LEC):** prove the gated netlist is functionally identical to the un-gated RTL — that the enable was correctly derived and no flop "lost" a write. Synopsys Formality / Cadence Conformal.
+2. **Glitch checks:** confirm every `clk_gated` net is sourced by an ICG, never a raw AND. Lint rules in SpyGlass-CDC.
+3. **X-propagation:** at reset, the latch's `Q` is X. If the AND lets X propagate as the clock, you wedge the chip. ICG cells include reset/test logic to force `clk_gated = 0` during reset and `clk_gated = clk` during scan test (controlled by a `test_en` pin tied to DFT).
+4. **Coverage:** RTL assertions like *"if `en = 0` for 3 cycles, no flop in this bank changed"* — confirms the gating actually fires. PPA reports show **observed gating efficiency** (% of cycles each ICG was off) — typical target 40-70% on idle workloads.
+5. **Power-aware sim (UPF):** with the power-intent file, RTL sim models clock gating + power gating together. Catches the bug where you gate the clock but a downstream domain is in retention and isn't ready — read returns X.
+
+**Granularity tradeoff — the design knob:**
+
+| Style | Granularity | Power saved | Implementation cost | Wake latency |
+|---|---|---|---|---|
+| **Fine-grain (leaf)** | Per flop bank (8-32 flops) | ~10-20% dyn | Tool-inserted, automatic; ICG area ~3-5% | 0 cycles (next edge) |
+| **Coarse-grain (regional)** | Per functional unit | ~10-15% dyn | Hand-architected enable; idle detector | 1-few cycles |
+| **Block / root** | Whole IP / clock domain | The rest | Coordinated with reset, CDC, software FSM | 10s of ns – μs |
+
+Modern SoCs do **all three layers simultaneously** — leaf for everything the tool can find, regional for big units (FPU, SIMD, decode lanes), root for whole IPs entering deep idle.
+
+**Clock gating vs power gating in one sentence:** *Clock gating freezes the clock — kills dynamic, leakage stays. Power gating drops the rail — kills both, but you lose state and pay a wake-up of microseconds.*
+
+**One-liner for the interview:** *"Clock gating is RTL `if (en)` patterns being rewritten by synthesis into ICG cells — a latch-plus-AND that gates the clock pin without glitching. Three tiers: leaf gates the tool inserts automatically, regional gates the architect hand-codes per unit, and root gates the power FSM drives for whole IPs. Together they kill the 30-40% of dynamic power that the clock tree would otherwise burn on idle flops. Validation is LEC, glitch checks, X-prop at reset, and gating-efficiency coverage."*
+
+### Q: Why multiple C-states instead of one idle state?
+
+**Frame it as "every wake-up has a cost; pick the deepest state whose savings out-earn the cost."**
+
+The fundamental tradeoff per state:
+
+$$\text{Net energy saved} = (P_{active} - P_{state}) \cdot t_{residency} \;-\; E_{entry+exit}$$
+
+For each state there's a **break-even residency** $t_{BE} = E_{entry+exit} / (P_{active} - P_{state})$. Below $t_{BE}$, you *lose* energy by entering. Above it, you win.
+
+**Why a single deep state is wrong:**
+- If the only option is "all the way off" (e.g., cores power-gated, caches flushed, PLLs shut), entry/exit cost might be **100 μs** of wasted energy. For a 50 μs idle window, you're worse off than just spinning.
+- If the only option is "shallow" (clock-gated only), you leave huge leakage savings on the table during long idles.
+
+**The ladder gives the OS a menu, indexed by predicted idle time:**
+
+| State | Mechanism | Entry/exit | Saves | Use when idle ≈ |
+|---|---|---|---|---|
+| **C1** | Clock-gate core pipeline | ns | Dynamic | μs |
+| **C1E** | C1 + voltage drop | ns-μs | Dynamic + some leakage | tens of μs |
+| **C6** | Power-gate core, save state to SRAM | μs-tens | Dynamic + leakage on core | ms |
+| **PkgC6/S0ix** | Power-gate uncore + LLC flush + DRAM self-refresh + PCIe L1.2 | tens-hundreds μs | Almost everything | tens of ms+ |
+
+**The menuconfig governor** in Linux (and equivalent in Windows ppm) **predicts** the next idle duration from history and timer expiries, looks up the deepest state with $t_{BE} <$ prediction, and enters it. This is why **PkgC6 residency** is a real KPI — it measures whether the prediction model and dependency chain (PCIe in L1.2, DRAM in self-refresh, fabric quiesced) is actually letting you reach the deep state.
+
+**One-liner:** *"You need a ladder because every idle state pays an entry/exit energy cost, and only deeper states save more leakage. A single state is wrong for short idles (you waste more entering than you save) and wrong for long idles (you leak more than you need to). The OS picks the deepest state whose break-even residency fits the predicted idle window. Multiple C-states = multiple price points on the energy/latency curve."*
+
+---
+
 ## Bug Anchor
 
 - **Day 10 (PCIe LTSSM L1.2):** the dependency that makes or breaks PkgC6.

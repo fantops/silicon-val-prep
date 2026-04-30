@@ -258,6 +258,40 @@ def firstBadVersion(n):
 
 ---
 
+## System Thinking — Why translation needs its *own* cache, and why devices need it too
+
+**Frame:** virtual memory (Day 6) gave us the page table. But every load now needs to walk it — 4 levels deep on x86-64, 100+ cycles to DRAM if cold. That cost would erase the entire VM benefit. The TLB exists for the same reason L1 cache exists: the *translation* itself has locality. Huge pages and IOMMUs are the natural extensions: huge pages stretch TLB reach, IOMMU gives devices the same protection model as processes.
+
+### Q: Why is the TLB so critical that it's a separate structure from L1?
+
+Because it's on the *translation* path, not the data path. Every load needs `VA→PA` *before* it can even index L1 (PIPT) or for the tag compare (VIPT). A TLB miss stalls the load until the page walk completes — 4 memory accesses worst case. With a TLB hit rate of 99%, the AMAT for translation alone could exceed the AMAT for data. So the TLB is small (~64 entries L1, ~1500 L2), fully or highly associative, and parallel to L1 indexing. **A TLB miss is often the most expensive event a hot loop hits.**
+
+### Q: Huge pages — pure win or tradeoff?
+
+**Tradeoff.** Huge pages (2 MB, 1 GB on x86; 16 KB, 64 KB, 2 MB on ARM) increase TLB **reach** — coverage = entries × page size. With 64 entries and 4 KB pages, reach = 256 KB. Same TLB with 2 MB pages, reach = 128 MB. *That's the whole point: applications with multi-MB working sets stop missing in the TLB.*
+
+But you pay:
+- **Internal fragmentation:** allocate a 2 MB page for a 5 KB allocation → 1.99 MB wasted.
+- **Allocator pressure:** the kernel must find 512 contiguous 4 KB frames to back a 2 MB page. Under fragmentation pressure (long-running system) this fails or needs compaction.
+- **Coarser permissions / TLB shootdowns:** an mprotect on 1 byte of a huge page changes permission for 2 MB.
+
+Answer: huge pages for **databases, JVM heaps, ML model weights, hugetlbfs DMA buffers** — anything with large, hot, contiguous working sets. **Not** for general-purpose userspace.
+
+### Q: Why IOMMU/SMMU? Devices already work without it on small embedded systems.
+
+Because as soon as a device can DMA, it can DMA *anywhere* — including kernel memory or another VM's memory. Three problems IOMMU solves:
+1. **Isolation.** Each device gets its own translation context (Stream ID on ARM SMMU, BDF/RID on x86 IOMMU). A bad/malicious device firmware cannot reach memory not mapped to it. *This is what enables PCIe device passthrough to VMs.*
+2. **Scatter-gather.** A buffer that's contiguous in VA can be physically scattered (it's heap memory). The IOMMU translates a contiguous device VA (IOVA) to scattered physical pages → drivers stop needing physically-contiguous DMA buffers (which were a major Linux pain pre-IOMMU).
+3. **32-bit device on a 64-bit system.** A legacy device with 32-bit DMA reach can be given an IOVA in its 4 GB window that maps to physical RAM above 4 GB.
+
+**Same idea as the MMU, applied to devices.** The validation surface (Stream ID assignment, ATC invalidation, SMMU fault queue) is large and underexplored — bugs here are interview gold (Day 19 QNN/HTP angle).
+
+### One-liner
+
+*"The TLB exists because translation itself has locality and a cold page walk would erase the VM benefit. Huge pages are a tradeoff — bigger TLB reach for fragmentation and coarser permissions, worth it for large hot working sets. IOMMU is the MMU re-applied to devices: per-device isolation, scatter-gather, and 32-bit-device support. Same pattern at a different layer."*
+
+---
+
 ## Bug Anchor
 
 - **Day 8 (DMA/doorbells):** the doorbell example is where TLB + IOMMU + cache + barrier all converge.
