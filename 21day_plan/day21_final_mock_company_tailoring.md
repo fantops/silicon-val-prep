@@ -400,6 +400,18 @@ Every question in every silicon interview maps to one of these four. Practice th
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **lens detection** — *what:* identify role flavor (pre-Si vs post-Si vs system vs NPU) / *why:* same skill, different framing per audience / *how:* JD keywords + interviewer team + first 2 questions / *connects:* Section 0A of revision guide, headline framing
+- **headline framing** — *what:* one bug story with tradeoff lens / *why:* first 30s sets the room / *how:* problem → method → bug → impact, ≤ 90s / *connects:* CFC, QNN cache, NVMe CSTS.RDY — pick by lens
+- **cheat-line per company** — *what:* one reflex line per culture / *why:* show alignment fast / *how:* mirror their vocabulary (PnP, post-Si, pre-Si, NPU) / *connects:* Intel = PnP/PVT, QC = power+perf, MS = SW/HW seam
+- **what NOT to volunteer** — *what:* weak-area topics / *why:* don't open doors you can't walk through / *how:* redirect to adjacent strength / *connects:* behavioral judo, time-budget management
+- **the four universal skills** — *what:* explain-with-tradeoff / attribute-symptom-to-mechanism / design-a-measurement / tell-a-clean-bug-story / *why:* every company filters these through its product stack / *how:* Days 1–20 are the toolkit, Day 21 is the translator / *connects:* why the same prep works across all targets
+
+---
+
 ## Bug Anchor
 
 - All 21 days. This is the rehearsal day; every story and every concept comes from a prior day.

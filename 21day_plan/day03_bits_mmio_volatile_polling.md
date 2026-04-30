@@ -357,6 +357,18 @@ The NVMe completion queue with phase bit (Day 11) is *poll-style* even though MS
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **volatile** — *what:* compiler must emit every load/store / *why:* HW value changes outside the program / *how:* disables register caching + reorder across the access / *connects:* MMIO, ISR-shared vars; **NOT** atomicity, **NOT** a memory barrier
+- **MMIO vs DRAM** — *what:* device regs in CPU address space / *why:* uniform load/store ISA / *how:* UC/WC mapping, no cache fill / *connects:* posted writes, BAR setup, write combining
+- **RMW on bit fields** — *what:* read | mask | write / *why:* preserve other bits / *how:* `*reg = (*reg & ~MASK) | val` / *connects:* race if HW also writes the reg, W1C semantics
+- **polling vs interrupt** — *what:* CPU spin vs HW notify / *why:* latency vs CPU-cycle tradeoff / *how:* poll for sub-µs events, IRQ for long waits / *connects:* NVMe SQ doorbell + CQ phase bit, NAPI hybrid
+- **W1C / W1S registers** — *what:* write-1-to-clear / write-1-to-set / *why:* avoid RMW races on status bits / *how:* HW clears bit on write of 1 / *connects:* IRQ status regs, why `reg |= bit` is wrong on W1C
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe):** `wait_csts_rdy` and AQA field-width bug.

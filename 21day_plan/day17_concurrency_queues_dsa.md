@@ -358,6 +358,18 @@ Day 5 false sharing. Producer writes `head` constantly; consumer writes `tail` c
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **queues as fabric** — *what:* producer/consumer decouple / *why:* absorb rate mismatch, cross-domain handoff / *how:* ring buffer with head/tail / *connects:* NVMe SQ, NIC rings, work-stealing schedulers
+- **lock vs lock-free** — *what:* mutex blocks vs CAS retries / *why:* contention vs progress guarantee / *how:* lock = futex, lock-free = atomic ops + ABA defense / *connects:* RCU, hazard pointers, where you can't take a lock (ISR, device)
+- **atomics** — *what:* indivisible RMW / *why:* no torn reads under concurrency / *how:* LL/SC (ARM) or `LOCK` prefix (x86) / *connects:* must be aligned, takes line into M (Day 5)
+- **ring buffer (SPSC)** — *what:* fixed-size circular, single producer + single consumer / *why:* O(1) enq/deq, no allocator on hot path / *how:* power-of-2 mask, no CAS needed / *connects:* false sharing if head and tail share a line
+- **ABA** — *what:* value matches but the world changed under you / *why:* naive CAS sees same pointer, different object / *how:* tagged pointers (counter in low bits) or hazard pointers / *connects:* lock-free stack/queue correctness
+
+---
+
 ## Bug Anchor
 
 - **Day 5 (MESI / false sharing):** ring `head`/`tail` cache-line padding lives there.

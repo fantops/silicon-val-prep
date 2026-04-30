@@ -368,6 +368,18 @@ Because it must respect each member's natural alignment. `struct { char c; int i
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **segments** — *what:* text/rodata/data/bss/heap/stack / *why:* protection + init policy differ / *how:* linker script + ELF program headers / *connects:* why globals start at 0 (bss zero-fill), why .text is RX
+- **alignment** — *what:* `addr % align == 0` / *why:* HW load width + atomicity guarantees / *how:* compiler inserts pad, alignof per type / *connects:* DMA buffer alignment, cache-line alignment, atomic store width
+- **struct padding** — *what:* gaps for natural alignment / *why:* fastest field access / *how:* align to largest member, tail-pad to struct align / *connects:* reorder fields large→small to shrink, `__attribute__((packed))` cost
+- **endianness** — *what:* byte order in a word / *why:* HW convention varies / *how:* LE = x86/ARM default, BE = network / *connects:* `htonl`, MMIO register byte ordering, file format portability
+- **stack vs heap** — *what:* LIFO frame vs explicit alloc / *why:* lifetime model differs / *how:* SP-relative vs malloc / *connects:* stack overflow on recursion, heap fragmentation, escape analysis
+
+---
+
 ## Bug Anchor
 
 - **Day 4 link:** DMA buffer crossing a cache line — alignment is the fix.

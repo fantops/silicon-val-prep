@@ -407,6 +407,18 @@ Given a load to virtual address `VA`:
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **SRAM vs DRAM** — *what:* 6T flip-flop vs 1T1C capacitor / *why:* speed vs density tradeoff / *how:* SRAM = on-die fast, DRAM = off-die dense + refresh / *connects:* why caches are small, why DRAM has refresh overhead
+- **why a hierarchy** — *what:* L1/L2/L3/DRAM / *why:* no single tech is fast + big + cheap / *how:* each level larger and slower / *connects:* AMAT, inclusion vs exclusion, victim cache
+- **AMAT** — *what:* hit_time + miss_rate × miss_penalty / *why:* the design knob / *how:* shrink miss rate (bigger), shrink penalty (lower-level), shrink hit time (smaller L1) / *connects:* why L1 stays 32–64 KB despite cheap SRAM
+- **locality** — *what:* temporal + spatial / *why:* the reason caches work at all / *how:* recently used + neighbors / *connects:* loop tiling, struct-of-arrays vs array-of-structs
+- **cache line** — *what:* 64B transfer + coherence unit / *why:* amortize tag/snoop overhead / *how:* fill whole line on miss / *connects:* false sharing (Day 5), DMA coherence (Day 8)
+
+---
+
 ## Bug Anchor
 
 - **Day 5:** false sharing is a coherence-miss class.

@@ -266,6 +266,18 @@ Using the wrong scope = subtle correctness bug that passes most tests.
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **DMA** — *what:* device reads/writes RAM directly / *why:* offload CPU copy / *how:* descriptors + bus master / *connects:* coherence (snoop bus or sw flush), IOMMU
+- **doorbell** — *what:* MMIO write tells device "go" / *why:* cheap notify across the boundary / *how:* write to a device reg / *connects:* NVMe SQ tail update, ring producer pointer
+- **descriptor → barrier → doorbell** — *what:* mandatory ordering / *why:* descriptor must be globally visible before device fetches / *how:* `dma_wmb()` or arch fence between writes / *connects:* missing barrier = device reads stale descriptor at line rate only
+- **barriers** — *what:* fence the reorder buffer / *why:* ISA can reorder loads/stores / *how:* DMB / MFENCE / `smp_*` per scope / *connects:* lock-free queues, MMIO sequence correctness
+- **coherent vs streaming DMA** — *what:* CPU sees device updates auto vs after invalidate / *why:* tradeoff snoop traffic vs flush cost / *how:* `dma_alloc_coherent` vs `dma_map_*` / *connects:* ARM non-coherent IPs, ARM-vs-x86 driver differences
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe `CSTS.RDY` / AQA / DSTRD):** the canonical bring-up bug for this picture.

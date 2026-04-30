@@ -276,6 +276,18 @@ A flat table for a 48-bit address space at 4 KB pages would be `2^36` entries ×
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **why VM exists** — *what:* per-process VA space / *why:* isolation + > physical RAM + relocation in one mechanism / *how:* MMU walks page tables / *connects:* swap, mmap, COW, ASLR
+- **page table** — *what:* VA → PA map, per-process / *why:* granular protection + sharing / *how:* multi-level radix tree (4-5 levels) / *connects:* TLB caches PTEs, hugepages reduce levels, walk cost
+- **page fault types** — *what:* minor (alloc) / major (swap-in) / invalid (segfault) / *why:* lazy demand paging / *how:* MMU traps to kernel handler / *connects:* swap latency, mlock, COW after fork
+- **protection bits** — *what:* R/W/X/U per PTE / *why:* isolation + W^X + user/kernel split / *how:* MMU enforces on every access / *connects:* NX bit, SMEP/SMAP, KPTI
+- **COW** — *what:* shared RO until first write / *why:* fork without copying / *how:* mark RO, fault on write, allocate copy / *connects:* fork latency, why fork+exec is fast
+
+---
+
 ## Bug Anchor
 
 - **Day 19 (QNN/ORT page-fault):** the canonical bug for this layer.

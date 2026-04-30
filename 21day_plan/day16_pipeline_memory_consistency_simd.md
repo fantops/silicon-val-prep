@@ -382,6 +382,18 @@ Because speculation — a performance optimization — left **microarchitectural
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **OoO execution** — *what:* issue out of program order, retire in order / *why:* hide memory + functional-unit latency / *how:* ROB + reservation stations + register rename / *connects:* speculation, why barriers are needed at all
+- **memory consistency** — *what:* HW visible order vs program order / *why:* perf via reorder / *how:* x86 = TSO (loads can pass earlier loads only via store buffer), ARM = weak / *connects:* why ARM needs more explicit fences, lock impl differences
+- **speculation** — *what:* execute past unresolved branches / *why:* hide branch latency / *how:* BPU prediction + checkpoint + flush on misp / *connects:* Spectre/Meltdown side channels, mispredict cost
+- **SIMD** — *what:* one instruction, N elements / *why:* DLP cheaper than ILP / *how:* wide vector regs (128/256/512b) / *connects:* SSE/AVX/NEON/SVE, alignment, masked ops
+- **barriers** — *what:* fence reordering / *why:* HW reorders both compiler and CPU layers / *how:* DMB / MFENCE / `smp_*` per arch + scope / *connects:* lock-free correctness, MMIO ordering (Day 8)
+
+---
+
 ## Bug Anchor
 
 - **Day 5 (false sharing):** the same coherence story drives many concurrency bugs.

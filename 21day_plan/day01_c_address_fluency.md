@@ -314,6 +314,18 @@ Get these wrong and the compiler optimizes correctly *for the wrong world*. Most
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **array→ptr decay** — *what:* arr name = `&arr[0]` in expressions / *why:* C has no value semantics for arrays / *how:* `T[]` decays to `T*` except in `sizeof`, `&`, string literal init / *connects:* `sizeof(arr)` in a function arg = pointer size, not array size
+- **sizeof** — *what:* compile-time byte count / *why:* portable layout queries / *how:* not evaluated, type-driven / *connects:* struct padding, `alignof`, VLA exception
+- **pointer arithmetic** — *what:* `p+1` advances by `sizeof(*p)` / *why:* typed addressing / *how:* compiler scales index by element size / *connects:* `a[i] == *(a+i)` identity, void* arithmetic UB
+- **strings** — *what:* `char*` terminated by `\0` / *why:* no length field / *how:* terminator-driven scan / *connects:* `strlen` is O(n), classic overflow source
+- **const / restrict / volatile** — *what:* contracts to the optimizer / *why:* tell compiler what it may assume / *how:* const = caller promise, restrict = no aliasing, volatile = re-read every time / *connects:* `-O2` breaks wrong code that `-O0` hid
+
+---
+
 ## Bug Anchor
 
 - Foundational; every later bug uses these accessors.

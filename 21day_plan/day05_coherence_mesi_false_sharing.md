@@ -307,6 +307,18 @@ The lesson: **don't measure atomic cost in isolation.** Measure it under the con
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **the coherence problem** — *what:* N caches, same line, different values / *why:* multicore needs single-value illusion / *how:* protocol invalidates or updates / *connects:* atomicity primitives, memory ordering
+- **MESI states** — *what:* Modified / Exclusive / Shared / Invalid per line / *why:* track ownership for write permission / *how:* state transitions on snoop / *connects:* RFO (read-for-ownership), MOESI/MESIF variants, dirty writeback
+- **false sharing** — *what:* two cores write different bytes of same line / *why:* coherence unit is the line, not the byte / *how:* detect via perf counters (HITM) / *connects:* pad to 64B, `alignas`, per-CPU vars
+- **snoop / directory** — *what:* broadcast vs targeted coherence / *why:* keep all copies consistent / *how:* bus snoop (small N) or directory (large N) / *connects:* NUMA scaling ceiling, why coherence costs more on big sockets
+- **atomic = locked line** — *what:* atomic op needs M state / *why:* indivisible RMW requires exclusive / *how:* takes line into M, others go to I / *connects:* lock contention = ping-ponging line ownership
+
+---
+
 ## Bug Anchor
 
 - **Day 8:** descriptor-then-doorbell ordering — same MESI picture, device as the second agent.

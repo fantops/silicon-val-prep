@@ -292,6 +292,18 @@ Because as soon as a device can DMA, it can DMA *anywhere* — including kernel 
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **TLB** — *what:* on-die cache of PTEs / *why:* a walk is 4–5 memory accesses / *how:* tagged by ASID/PCID, split iTLB/dTLB, multi-level / *connects:* TLB shootdown IPI cost, miss penalty
+- **hugepages** — *what:* 2 MB / 1 GB pages / *why:* fewer TLB entries cover more RAM / *how:* reserved at boot or THP / *connects:* DB / NIC ring / GPU buffer wins, fragmentation cost
+- **IOMMU / SMMU** — *what:* MMU for devices / *why:* DMA isolation + 32-bit-device support + virt passthrough / *how:* per-device page tables / *connects:* VFIO, SR-IOV, why bad IOMMU = security hole
+- **ASID / PCID** — *what:* per-process tag in TLB / *why:* avoid full flush on context switch / *how:* tag entries with PCID / *connects:* Meltdown KPTI cost without PCID
+- **page walk** — *what:* HW walks tables on TLB miss / *why:* avoid trap to OS for every miss / *how:* dedicated page-walk caches + L2 TLB / *connects:* nested paging = 2D walk for VMs
+
+---
+
 ## Bug Anchor
 
 - **Day 8 (DMA/doorbells):** the doorbell example is where TLB + IOMMU + cache + barrier all converge.

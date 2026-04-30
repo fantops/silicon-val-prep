@@ -412,6 +412,18 @@ Because the NPU is a separate process domain (PD) on a separate processor (Hexag
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **context cache** — *what:* per-model NPU state retained on device / *why:* avoid re-init cost on every invoke / *how:* driver caches weights + intermediate buffers across runs / *connects:* invalidation bug = stale activations across model swaps
+- **silent fallback** — *what:* op runs on CPU when NPU can't / *why:* graph completeness / *how:* EP returns "unsupported", ORT routes to CPU / *connects:* perf cliff, must log partition + op-placement
+- **NPU memory** — *what:* dedicated SRAM + system DRAM via IOMMU / *why:* bandwidth wall on tensors / *how:* tiling, double-buffering, DMA engines / *connects:* NPU OOM ≠ host OOM, allocator bugs
+- **first-token latency** — *what:* prefill cost dominated by setup / *why:* cold cache + graph compile / *how:* warm-up runs amortize / *connects:* P50 vs P99, perceived UX, why steady-state ≠ first-call
+- **boundary contract** — *what:* CPU↔NPU = VA↔IOVA, coherent↔non-coherent / *why:* each domain correct in isolation, contract fragile / *how:* IOMMU map, cache flush, handle marshalling / *connects:* most NPU bugs live here, not in the kernel
+
+---
+
 ## Bug Anchor
 
 - **Day 6 (virtual memory):** the page-fault counter that Bug 1 hangs on.

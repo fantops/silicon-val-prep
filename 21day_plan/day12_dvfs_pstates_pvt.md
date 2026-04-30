@@ -303,6 +303,18 @@ PVT sensors let the firmware (PCU on Intel, RPMh on QC, MCC on others) **adapt v
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **why DVFS** — *what:* dynamic voltage + frequency scaling / *why:* $P_{dyn}=αCV^2F$, V dominates / *how:* OS requests P-state, PCU/PMIC enforces / *connects:* race-to-idle vs steady-low strategy
+- **V-F curve** — *what:* min V required for given F / *why:* setup timing closes only above Vmin(F) / *how:* characterized per die, per corner / *connects:* Vmin guardband, AVS shrinks it
+- **P-states** — *what:* OS-visible (V, F) pairs / *why:* abstraction over silicon-specific points / *how:* PCU + PMIC implement, ACPI _PSS lists them / *connects:* turbo, EPP/HWP hint, why governor matters
+- **PVT** — *what:* Process / Voltage / Temperature variation / *why:* every die is different / *how:* speed binning at fab, AVS sensors at runtime / *connects:* why margins exist, why hot chip slows even before thermal trip
+- **race-to-idle vs crawl** — *what:* finish fast then sleep deep vs run slow steady / *why:* depends on idle leakage cost / *how:* governor decides via load history / *connects:* why race-to-idle wins on low-leakage workloads
+
+---
+
 ## Bug Anchor
 
 - **Day 13 (C-states, S0ix):** the idle-power side of this story.

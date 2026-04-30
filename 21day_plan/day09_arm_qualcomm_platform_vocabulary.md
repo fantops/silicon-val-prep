@@ -434,6 +434,18 @@ This is what makes the answer feel like a *validator's* answer, not a Wikipedia 
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **5-phase boot** — *what:* POWER → ROM → PLATFORM_INIT → BOOTLOADER → OS+INIT / *why:* trust chain + bring up resources progressively / *how:* each stage authenticates and loads the next / *connects:* x86/UEFI vs ARM TF-A vs Snapdragon SBL — same model, different names
+- **power-on reset** — *what:* PMIC sequences rails / *why:* HW must be stable before logic toggles / *how:* PMIC FSM + reset-pin deassert / *connects:* PVT corners, PLL lock time, brown-out detect
+- **boot ROM** — *what:* masked, on-die, immutable / *why:* root of trust / *how:* authenticates next stage with key in fuses / *connects:* secure boot, eFuse OTP, why ROM bugs are silicon respins
+- **bootloader** — *what:* DRAM init, load kernel / *why:* ROM is too small for full bring-up / *how:* trains DDR, sets up MMU, parses DT/ACPI / *connects:* device tree (ARM) vs ACPI (x86), PSCI handoff
+- **secure boot chain** — *what:* each stage verifies signature of next / *why:* prevent persistent rootkits / *how:* public key in fuses, hash chain / *connects:* TPM, measured boot, TF-A BL1→BL2→BL31→BL33
+
+---
+
 ## Bug Anchor
 
 - **Day 8 (DMA/doorbells):** the `DMB ST` story lives here.

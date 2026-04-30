@@ -324,6 +324,18 @@ When the system has hidden state. Occam says: prefer the simpler explanation. Bu
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **debug as method** — *what:* hypothesis → test → narrow / *why:* intuition has bias, method has guaranteed convergence / *how:* eliminate half the search space per step / *connects:* scientific method, why interviewers hire method not trivia
+- **bisection** — *what:* `git bisect`, A/B configs, halving the search / *why:* O(log n) to find the bad change / *how:* known-good vs known-bad endpoints / *connects:* finding the introducing commit, finding the breaking config bit
+- **layered isolation** — *what:* HW vs FW vs driver vs OS vs app / *why:* the stack is tall and each layer can lie / *how:* swap one layer at a time / *connects:* cross-team handoff, who-owns-the-bug politics
+- **capture-and-replay** — *what:* trace + reproduce / *why:* flaky bugs need determinism / *how:* perf, ETW, ftrace, rr / *connects:* heisenbug, racy unit tests, recording the once-in-a-million
+- **bug-story shape** — *what:* symptom → hypothesis → bounding experiment → fix → regression test / *why:* shows method through a concrete artifact / *how:* always 5 beats, ≤ 90s spoken / *connects:* CFC, QNN cache, NVMe RDY — same shape, different domain
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe):** Story 2 (CSTS.RDY) lives here.

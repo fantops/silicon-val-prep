@@ -394,6 +394,18 @@ The NVMe spec is precise but unforgiving. Bring-up bugs look like "device doesn'
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **NVMe vs AHCI** — *what:* 64K queues × 64K depth vs 1 × 32 / *why:* saturate SSD parallelism / *how:* per-core SQ/CQ pairs, lockless I/O / *connects:* why AHCI was the bottleneck, not the SSD
+- **SQ/CQ flow** — *what:* host writes SQ → doorbell → device DMAs cmd → completion in CQ → IRQ or poll / *why:* async pipeline / *how:* tail/head pointers in MMIO + ring memory / *connects:* phase bit lets you poll CQ without IRQ
+- **bring-up sequence** — *what:* set CC.EN, wait CSTS.RDY, identify, create admin then I/O queues / *why:* HW state machine is strictly ordered / *how:* NVMe spec mandates / *connects:* CSTS.RDY hang = wrong init order or stale MMIO field width
+- **admin vs I/O queues** — *what:* Q0 = mgmt only, others data / *why:* control plane separated from data plane / *how:* admin queue created first via CC.AQA / *connects:* why all bring-up traffic flows through admin
+- **MSI-X per CQ** — *what:* per-CQ vector to per-core handler / *why:* avoid cross-core IRQ wake / *how:* MSI-X table indexed by CQ ID / *connects:* per-core IRQ affinity, polling kills IRQ entirely at high IOPS
+
+---
+
 ## Bug Anchor
 
 - **Day 8 (DMA / doorbells):** the descriptor + doorbell pattern, with phase bit on the CQ.

@@ -359,6 +359,18 @@ Without intervention, this is a runaway. The control loop must (a) detect $T_j$ 
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **thermal as control loop** — *what:* sense → decide → actuate → repeat / *why:* workload power is unpredictable, worst-case cooling too costly / *how:* DTS sensors → PCU → DVFS throttle / *connects:* throttle is success not failure; oscillation = bad gains
+- **RAPL** — *what:* Running Average Power Limit / *why:* enforce TDP without instantaneous-power HW / *how:* MSR counters + sliding window cap / *connects:* turbo budget, PL1 (sustained) / PL2 (burst)
+- **perf counters (PMU)** — *what:* HW event counters / *why:* see what CPU actually did, not what you assumed / *how:* PMU MSRs, perf / VTune / pmu-tools / *connects:* cache-misses, branch-mispred, IPC attribution
+- **Tj / TjMax** — *what:* junction temperature, max safe junction / *why:* reliability spec / *how:* on-die DTS reports / *connects:* throttle threshold, why Pmax shifts down with rising T
+- **leakage-temperature runaway** — *what:* hotter → more leakage → hotter / *why:* $I_{leak}$ exponential in T / *how:* throttle breaks the loop / *connects:* why deep C-states matter, why cooling matters even at idle
+
+---
+
 ## Bug Anchor
 
 - **Day 12 (DVFS):** Turbo / V-droop / license-level interactions live there.

@@ -377,6 +377,18 @@ Because PHY and link-level power dominates idle PCIe energy on laptops. Same lad
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **PCIe layering** — *what:* PHY / DLL / TL / *why:* network-style serial replaces parallel bus / *how:* lanes + 8b10b (Gen1-2) / 128b130b (Gen3+) / *connects:* why Gen5 = 32 GT/s/lane, why driver above TL is gen-agnostic
+- **LTSSM** — *what:* link training FSM / *why:* Gbps SerDes must train, not just turn on / *how:* Detect → Polling → Config → Recovery → L0 → L0s/L1/L2 / *connects:* bring-up debug, why links drop to lower gen under SI issues
+- **TLP / DLLP** — *what:* transaction-layer pkt vs link-layer pkt / *why:* layered like a network stack / *how:* headers + LCRC + sequence numbers / *connects:* credit-based flow control via UpdateFC DLLPs
+- **credits** — *what:* rx buffer space advertised by receiver / *why:* lossless = no drops, deterministic latency / *how:* InitFC at link-up, UpdateFC during run / *connects:* credit starvation = link hangs, not packet loss
+- **enumeration** — *what:* BIOS walks bus, assigns BARs / *why:* devices need address-space windows / *how:* config-space type 0/1 reads, BDF / *connects:* ACS, hot-plug, SR-IOV VFs
+
+---
+
 ## Bug Anchor
 
 - **Day 11 (NVMe `CSTS.RDY` / `DSTRD`):** the canonical bring-up bug on top of PCIe.

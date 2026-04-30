@@ -387,6 +387,18 @@ These pass functional tests (the CPU works fine *between* C6 cycles). They surfa
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **PCU** — *what:* on-die power microcontroller / *why:* realtime power decisions faster than OS / *how:* firmware in ROM/patchable, talks PMIC and clock tree / *connects:* P-state arbiter, why power bugs are firmware bugs
+- **Core C6** — *what:* flush state, power-gate the core / *why:* deepest core idle, kills both dynamic and leakage / *how:* save arch state to SRAM, drop Vdd to 0 / *connects:* wake = restore from SRAM, retention flop bugs, save/restore surface
+- **ADR** — *what:* async DRAM refresh on power loss / *why:* persistent memory durability, drain WPQ / *how:* PSU hold-up + battery-backed CKE / *connects:* CXL.mem, NVDIMM, why store ordering matters near power events
+- **CFC FIFO bug pattern** — *what:* wake event lost in cross-clock FIFO / *why:* CDC + power gating overlap / *how:* FIFO reset before wake propagated through synchronizers / *connects:* every async power bug looks like this; pre-Si test = wake-under-stress + counter delta
+- **why power = firmware** — *what:* policy lives in PCU firmware not RTL / *why:* SKU-specific, release-sensitive, too complex for hard logic / *how:* firmware patched per stepping / *connects:* why a power bug becomes a CR not a respin
+
+---
+
 ## Bug Anchor
 
 - **Primary:** PCU/ADR opcode ordering (Bug 1 above).

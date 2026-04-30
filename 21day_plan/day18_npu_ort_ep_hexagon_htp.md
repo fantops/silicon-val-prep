@@ -361,6 +361,18 @@ This isolation is *what makes it efficient* (no coherence overhead, no shared L1
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **why NPUs exist** — *what:* dedicated DL accelerator / *why:* CPU/GPU power-inefficient for MAC-heavy graphs / *how:* systolic arrays + on-die SRAM + low-precision math / *connects:* TOPS/W metric, quantization, why a separate domain
+- **EP (Execution Provider)** — *what:* ORT plugin per backend / *why:* abstract the model over many HWs / *how:* partition graph by op support, fall back unsupported ops / *connects:* silent CPU fallback bug, why partition logs matter
+- **Hexagon HTP** — *what:* Qualcomm NPU subsystem / *why:* shared DSP heritage + tensor engine / *how:* HVX vector + HMX matrix units / *connects:* context cache, QNN driver, FastRPC marshalling
+- **quantization** — *what:* FP32 → INT8 / INT4 / *why:* 4–8× bandwidth + power / *how:* per-tensor or per-channel scale + zero-point / *connects:* accuracy loss, calibration set, PTQ vs QAT
+- **graph partition** — *what:* split model across EPs by op support / *why:* maximize NPU coverage / *how:* EP returns supported-op list, ORT splits / *connects:* CPU↔NPU transitions are the perf cliffs
+
+---
+
 ## Bug Anchor
 
 - **Day 6 (virtual memory):** page-fault counters that explode in the QNN regression on Day 19.

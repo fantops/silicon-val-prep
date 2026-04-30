@@ -466,6 +466,18 @@ For each state there's a **break-even residency** $t_{BE} = E_{entry+exit} / (P_
 
 ---
 
+## Depth Drill — Pointer Triggers
+
+*Recall only. If a trigger goes blank, that's the layer to re-read.*
+
+- **C-state ladder** — *what:* C0 active, C1–C10 progressively deeper idle / *why:* break-even residency = entry/exit cost ÷ leakage saved per cycle / *how:* OS picks deepest state whose predicted idle exceeds break-even / *connects:* wake latency vs power saved, idle governor (menu, teo)
+- **clock gating** — *what:* stop the clock to idle flops / *why:* kills $αCV^2F$ when $α$ = 0 / *how:* ICG cell = latch + AND, glitch-free / *connects:* leaf (auto) / regional (architect) / root (FSM) tiers; LEC + glitch + X-prop verification
+- **power gating** — *what:* cut Vdd to a block / *why:* kills leakage too, not just dynamic / *how:* header/footer FETs, retention flops save state / *connects:* state save/restore latency, in-rush current at wake
+- **static vs dynamic power** — *what:* $V·I_{leak}(T)$ vs $αCV^2F$ / *why:* different levers, exponential vs cubic / *how:* CG kills dynamic only, PG kills both / *connects:* hot chip → exponential leakage growth, why thermal couples to leakage
+- **S0ix / Pkg C-states** — *what:* platform-wide low-power with OS still running / *why:* modern standby, instant resume / *how:* all uncore quiesced, devices in D3, displays off / *connects:* PMC firmware orchestrates, broken D3 on any device blocks S0ix
+
+---
+
 ## Bug Anchor
 
 - **Day 10 (PCIe LTSSM L1.2):** the dependency that makes or breaks PkgC6.
