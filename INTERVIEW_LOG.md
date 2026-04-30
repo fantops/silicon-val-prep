@@ -144,18 +144,38 @@
 | **Format** | Deep fundamentals + behavioural |
 | **Role** | CPU Core Validation |
 
+**Interviewer pattern (read in hindsight):**
+The interviewer was running a **"probe-then-push"** style — pick a term I introduced, then keep drilling deeper to see whether I owned it or just knew the keyword. She was not testing breadth; she was testing **whether I could keep generating the next layer of *why* under sustained pressure**. The drill chain ran like this:
+
+1. Started with **C fundamentals** as a warm-up / floor-check
+2. I mentioned **C-states** → push: *"why do we need multiple C-states?"* (not "list them" — *justify the ladder*)
+3. I used the term **clock gating** → push: *"how is it done?"* (not "what is it" — implementation depth)
+4. Even after the clock-gating answer, she pivoted: *"and leakage?"* — testing whether I could connect the dots between gating, dynamic power, and leakage as **separate loss mechanisms**
+5. Finally asked for a **bug story** → I explained the **CFC FIFO / Core C6 wake-loss bug clearly and confidently**
+
+The pattern is unmistakable: she was probing **thinking capability under depth pressure**, not knowledge breadth. Every push was *"go one layer deeper than your last answer."*
+
 **What went well:**
-- ✅ Current work explained in depth, with strong concrete bug stories
+- ✅ **Bug story landed cleanly** — CFC FIFO / Core C6 wake-loss explained end-to-end (setup → repro → root cause → fix → coverage). This is what I own most confidently and it showed.
+- ✅ Current work explained in depth
 - ✅ Cross-vendor NPU framing landed
 
-**What didn't land:**
-- ❌ **Cache hierarchy + internals** — knew the layers, couldn't explain *why* multi-level / *how* lookup happens / SRAM vs DRAM tradeoff
-- ❌ **Power concepts** — dynamic vs leakage formulas, clock gating mechanism
-- ❌ **C-states reasoning** — could list states, couldn't justify *why a ladder* (break-even logic)
-- ❌ **Boot flow** — unclear, mixed Snapdragon-specifics with generic flow
+**What didn't land — and why (in hindsight):**
+- ❌ **C-states "why a ladder"** — I had the *what* (list of states) but not the *why* (break-even residency vs entry/exit cost). The push exposed that I'd memorised the ladder, not derived it.
+- ❌ **Clock gating "how"** — I knew it gates the clock; I couldn't go down to ICG cells, glitch-prevention, or fine-vs-coarse-grain insertion. One layer shallow.
+- ❌ **Leakage** (the follow-up to clock gating) — couldn't connect that clock gating kills *dynamic* but leakage is a separate mechanism with its own formula and temperature dependence.
+- ❌ **Cache hierarchy + internals** — knew the layers, couldn't justify *why multi-level* or walk *how lookup happens*.
+- ❌ **Boot flow** — mixed Snapdragon specifics with generic flow.
 
-**Outcome:** 🔴 Likely reject or downlevel.
-**Signal:** Deep fundamentals gap exposed. Knew the names; didn't own the *tradeoffs that justify them*.
+**The real diagnosis:**
+This wasn't "I don't know the material" — it was **"I haven't trained the muscle of generating the next *why* on demand."** The fundamentals were there at first-layer depth; under push for second/third-layer reasoning, I ran out of pre-built framing. **The interviewer's instinct was right** — she was probing thinking capability, and the cracks that showed are the exact gap a non-CPU-core background creates: I have the validator's lens, not the architect's lens.
+
+**Outcome:** 🔴 Likely reject for CPU core specifically.
+**Signal:** Two distinct skills exposed:
+1. **Knowledge depth** — gap, but closeable (the gap-fills below now exist).
+2. **Thinking capability under sustained depth-push** — the meta-skill she was actually testing. This needs *practice rehearsing the chain*, not just reading the answers.
+
+**Silver lining:** the bug story landed cleanly under the same pressure. That tells me **I *can* think on my feet when I own the material end-to-end** — the failure mode is shallow ownership, not pressure handling. The fix is making the rest of the syllabus as deeply owned as the CFC bug already is.
 
 **Action items closed since (gap-fill done in repo):**
 - ✅ [Day 04](21day_plan/day04_cache_lines_locality_amat.md) — cache hierarchy "why", lookup walk, SRAM/DRAM as a story not a fact
@@ -251,6 +271,19 @@
 - **Bug-story discipline under rapid-fire** — answers tangle when interviewer pace is fast
 - **EE fundamentals** — transistor-level, CDC, signal integrity (relevant for pre-Si rounds)
 - **Leadership framing** — "tell me about a time" answers occasionally lose framework
+
+### The meta-skill being tested (recognised after 30 Apr Qualcomm R2)
+
+**"Probe-then-push" interview style:** senior interviewers — particularly at vendor pre-Si CPU teams — pick a term *I* introduce and keep drilling one layer deeper until either I run out of *why* or they're satisfied. The chain is always:
+
+> *what* → *why* → *how* → *and the related concept I haven't named yet?*
+
+**My pattern of failure under this:** first-layer answers fluent; second-layer thin; third-layer empty. I have the validator's lens (find the bug, characterise the silicon), not yet the architect's lens (derive *why the design is shaped this way*). The bug story always lands because there I own the chain end-to-end; the textbook concepts don't because I learned them as facts, not as derivations.
+
+**The fix is structural, not study-more:**
+- Every concept in the [21-day plan System Thinking sections](21day_plan/) now leads with the *tradeoff* (the *why*), not the fact (the *what*) — but **reading them is not the same as rehearsing the chain out loud**.
+- Practice drill: pick a concept, force myself to answer *what / why / how / what-it-connects-to* in 4 sentences without notes. If any sentence stalls, that's the layer to revise.
+- The CFC bug worked under the same push because I've told it 30+ times. Every fundamentals topic needs that same repetition to reach reflex depth.
 
 ### What's improving (visible across the cycle)
 - Role-fit filtering: 13 Apr → forced misfit; 15/20 Apr → recognised early; 28 Apr → only pursuing aligned roles
