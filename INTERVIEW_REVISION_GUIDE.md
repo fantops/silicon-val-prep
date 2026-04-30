@@ -1,130 +1,202 @@
-# Senior Validation Engineer - Interview Revision Guide
+# Senior Silicon Validation Engineer — Interview Revision Guide
 
-> **TODAY (Apr 30, 2026): Qualcomm Round 2 — Pre-Silicon CPU Core Validation. Mixed tech + behavioral.**
-> Read [SECTION 0A](#section-0a---today-qualcomm-round-2-pre-si-cpu-core-mixed-techbehaviour) first; the rest of this doc is your reference library.
+> **Generic reference for any silicon validation interview** — pre-Si CPU core, post-Si bring-up, NPU/AI accelerator, system/SoC integration, platform validation. Tune the lens (Section 2A) to the role.
 >
-> Targets across the doc:
-> - **Today's round (Qualcomm, pre-Si CPU core, mixed)** — Section 0A
-> - **Adaptive answers (pre-Si / post-Si / system-level) + new-problem / coverage / workload frameworks** — Section 2A
-> - **Bug story bank** (5 stories, tagged by lens) — Section 4A
+> **Day-of interview prep** → [Section 0A](#section-0a---day-of-interview-prep). **Reflex cheat sheet** → [Section 0](#section-0---last-10-min-cheat-sheet). **20-day system-thinking one-liners** → [Section 4B](#section-4b---20-day-system-thinking-one-liner-reference).
+>
+> Doc map:
+> - **Day-of prep** (5-min checklist + cultural notes per company type) — Section 0A
+> - **Reflex cheat sheet** (single-line answers to recurring probes) — Section 0
+> - **Career narrative** + 3 reusable current-work framings — Section 1
 > - **Behavioral / leadership** — Section 2
-> - **Career narrative + 3 reusable current-work framings** — Section 1
-> - **Pre-Si CPU core validation** (today's tech focus) — Section 6A
-> - **Backup tech** (thermal, DVFS, C-states, NPU) — Sections 3-6
-> - **Quick reflexes + checklist** — Sections 9, 10
+> - **Adaptive answering** (pre-Si / post-Si / system-level) + universal frameworks (new-problem, coverage, workload distribution) — Section 2A
+> - **Backup tech depth** — Sections 3 (thermal/power), 4 (DVFS), 5 (C-states)
+> - **Bug story bank** (5 stories, tagged by lens) — Section 4A
+> - **20-day system-thinking one-liner reference** — **Section 4B** *(distilled from the technical day notes — every concept boiled to a tradeoff one-liner)*
+> - **Pre-Si CPU core depth** — Section 6A
+> - **Post-Si NPU depth** — Section 6
+> - **Puzzles + quick reflexes + final checklist** — Sections 7, 9, 10
 >
-> Strategy for a senior IC + lite-managerial role: be **clear, specific, calm**. One concrete example beats three textbook bullets. If you don't know - say so cleanly and pivot to closest thing you do know.
+> **Strategy at the senior IC + lite-managerial bar:** be **clear, specific, calm**. One concrete example beats three textbook bullets. Always frame the *tradeoff* before the *fact*. If you don't know — say so cleanly and pivot to the closest thing you do know.
 
 ---
 
-## SECTION 0A - TODAY: Qualcomm Round 2, Pre-Si CPU Core, Mixed tech/behaviour
+## SECTION 0A - Day-of interview prep
 
-> **Format expectation (round 2, mixed):** likely a hiring manager + senior IC. ~50% behavioural / motivation / "how do you work" + ~50% targeted tech on **pre-Si CPU core validation**. Less coding than round 1; more "walk me through how you'd…" and "tell me about a time…". Expect 1-2 deep tech drilldowns, not breadth quiz.
+> **Use this 30 minutes before any silicon-validation interview.** First detect the role lens (pre-Si / post-Si / system) and the company culture, then run the universal checklist.
 
-### The 3 framings to lead with (memorise — these are the spine of the round)
+### Step 1 — Detect the role lens (60 sec from the JD)
 
-1. **Pre-Si CPU core is exactly where I started growing as a validator.** Cambria Xeon at Intel India: Zebu emulation owner for Core C6 / ADR / PCIe Gen6 transactor. I lived in pre-Si infra (Perspec, Zebu, UVM-adjacent C++ test content, signal-level debug) for 3+ years. The Microsoft NPU work after that is breadth; pre-Si CPU core is depth I already have.
-2. **I want to come back to pre-Si because that's where bugs are cheapest and judgement matters most.** Post-Si I qualify what's already cast. Pre-Si I shape what gets cast. Career-wise, I want the seam between architecture and validation.
-3. **Qualcomm specifically — Oryon / next-gen CPU core is a generational programme.** Being on the validation team for a clean-sheet Arm v9 core, where the design is still being refined, is the most leveraged silicon-validation work happening anywhere right now.
-
-### Cheat lines (use verbatim if asked the obvious questions)
-
-| Q | One-liner |
+| Cues in JD / recruiter brief | Lens to lead with |
 |---|---|
-| Why pre-Si after 3 yrs of post-Si NPU? | "Post-Si proved I can debug across the stack. Pre-Si is where I want to apply that — find the bug before it costs a respin. I've done it before on Cambria; I want to do it on a clean-sheet Arm core." |
-| Why Qualcomm specifically? | "Oryon is the most interesting CPU core programme outside of Apple right now — clean-sheet Arm v9, owns its own pipeline, in a SoC I already validate from the platform side. I know what comes back from OEMs; I want to feed that upstream into the next core." |
-| Why this role vs your current? | "Microsoft is a great post-Si charter, but I'm one layer away from the silicon. I want to own a CPU subsystem inside a core team, not qualify someone else's silicon." |
-| What can you bring on day 1? | "Zebu / emulation flows, UVM-style coverage thinking, C/C++ test content, debug discipline. And I already know the Snapdragon platform from the OEM side — I can connect a pre-Si finding to what an OEM will see in the field." |
-| Where are you weakest? | "Arm-native architectural vocabulary at the micro-arch level. I map fluently from x86 (PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID), but I haven't written Arm assembly daily. I close that fast — I did the same with QNN and Hexagon HTP at Microsoft in ~2 months." |
+| "RTL", "DV", "UVM", "emulation", "Zebu/Palladium", "coverage plan", "pre-tape-out", "formal" | **Pre-Si** → Section 6A is your spine |
+| "Bring-up", "first silicon", "EVT/DVT/PV", "JTAG", "lab", "OEM qualification", "field issue", "stepping" | **Post-Si** → Section 6 is your spine |
+| "Platform", "SoC integration", "end-to-end", "cross-IP", "performance characterisation", "stack" | **System-level** → Section 2A Lens 3 is your spine |
+| "NPU", "AI accelerator", "ORT", "EP", "inference", "Hexagon HTP", "OpenVINO" | **NPU/AI** → Section 6 + Day 18-19 one-liners |
 
-### The pre-Si CPU core tech spine (must speak fluently — see Section 6A for depth)
+If the JD mixes lenses → Section 2A "How to detect which lens to use" + the question *"Are you thinking pre-Si in emulation, post-Si on a board, or end-to-end on a platform?"* — that single question buys credibility.
 
-Five domains, in priority order. If they drill, drill into one not all.
+### Step 2 — Match the company culture (60 sec)
 
-1. **Validation infra & methodology** — Zebu / Palladium / Veloce emulation, RTL sim (VCS/Xcelium), UVM, formal (JasperGold). Coverage-driven verification: functional coverage, code coverage, assertion coverage. Constrained-random vs directed.
-2. **CPU pipeline & micro-arch** — fetch, decode, rename, dispatch, issue, execute, retire. OoO ROB, scheduler, LSU, branch predictor (TAGE/perceptron), BTB, RAS. Hazards: structural, data (RAW/WAR/WAW), control. Forwarding, stall, flush.
-3. **Memory subsystem** — L1/L2/L3 hierarchy, MESI/MOESI coherence, snoop filters, store buffer, MSHR, prefetcher. Memory consistency: TSO (x86) vs Arm weak ordering, DMB/DSB/ISB, acquire/release semantics.
-4. **CPU power/clock domains** — voltage rails, clock gating, power gating, retention, WFI/WFE, PSCI CPU_OFF/CPU_SUSPEND, RPMh votes, CPRh closed-loop AVS. Cluster vs core domain split.
-5. **Debug discipline** — waveform debug (Verdi/Simvision), tracking down a failing assertion to RTL bug vs testbench bug vs spec ambiguity. Isolating a sporadic emulation fail.
+| Company type | Tone | Common round 2 shape | Watch out for |
+|---|---|---|---|
+| **Big-die CPU vendor** (Intel, AMD, Apple silicon) | Methodical, framework-friendly, deep tech drilldowns | DV/coverage Q + a hazard/MESI/pipeline drilldown + behavioral | They will know more than you on their domain — humility wins |
+| **ARM SoC vendor** (Qualcomm, MediaTek, NXP) | Direct, concise, data-led | Pre-Si CPU/cluster Q + ARM vocab probe + bug story | Don't fake ARM-native depth; *map cleanly from x86* instead |
+| **GPU / Accelerator** (NVIDIA, AMD GPU, Cerebras, Tenstorrent) | Architecture-forward, perf-obsessed | Workload+memory-system Q + scheduling/concurrency + system bug story | Lead with workload-thinking, not just unit tests |
+| **Hyperscaler silicon** (AWS Annapurna, Google TPU, Meta MTIA) | Product-impact framing, fleet-scale reasoning | Live-migration / blast-radius / counter-driven debug | Show you reason about *fleet* failure modes, not single dies |
+| **Storage / Networking** (Marvell, Broadcom, Pure, NetApp) | Protocol-deep, spec-literate | NVMe/PCIe/RDMA bring-up + protocol corner | Lead with spec literacy + reproducer discipline |
+| **Microsoft / Apple / Google platform** | OEM/system framing | Cross-stack regression + tooling + leadership | Lead with cross-vendor breadth + tooling impact |
 
-### Behavioural questions most likely TODAY (round 2 mixed)
+### Step 3 — Pick your headline framings (memorise the spine)
 
-Rehearse these in order. Each is 60-90 sec, STAR if applicable.
+Pick the 3 that land hardest for **this** company/lens:
 
-1. **"Walk me through your career — why pre-Si → post-Si → and now back?"** → 60-sec narrative, lead with arc not chronology. *"I started pre-Si at Intel because I wanted RTL-level depth. Moved to NPU post-Si at Microsoft to learn the OEM/customer-facing end. Now I want to bring both halves into one role — pre-Si CPU core where I can find bugs early *and* know what the post-Si team will hit."*
-2. **"Tell me about the hardest pre-Si bug you've owned."** → Cambria Core C6 CFC FIFO / wake-loss bug. Own it: setup, hypothesis, repro on Zebu, root cause, fix, what would have happened post-Si. (Section 4 has the full story.)
-3. **"Tell me about a time you disagreed with a design decision."** → pick one: pushed back on a coverage gap that arch closed as "not interesting", later turned out to be the bug class; OR pushed back on a test scope that was too narrow.
-4. **"Tell me about a time you mentored a junior engineer."** → at Microsoft, onboarded a colleague onto EdgeOptimizer / ETW. Or at Intel, KT'd Zebu flows to a new hire. Frame: KT doc → pair-debug → solo with safety net → independent.
-5. **"How do you handle ambiguous specs?"** → spec-first read, write down my interpretation, file a clarification with arch + IP owner together (don't ping-pong), document the resolution, add a coverage point or assertion that pins it. *"Spec ambiguity is a bug — either in the spec or in your test. Either way it has to land in writing."*
-6. **"Tell me about a time you missed something."** → honest, short, not catastrophic. The lesson > the miss. Don't over-flagellate.
-7. **"What does a good day look like for you?"** → "A coverage hole closed, a sporadic fail isolated to a deterministic repro, and a 1:1 where I unblocked someone else. Three of those a week and it's a great quarter."
-8. **"Why should we hire *you* for this team?"** → 30-sec close: pre-Si experience + cross-stack platform context + tool-builder mindset + low-ego learner.
+1. **The role-fit one-liner.** "[My pre-Si experience / my post-Si bring-up experience / my platform-NPU experience] is exactly the [pre-Si / post-Si / system] depth this role wants — and the second half of my CV adds the [breadth / debugging / tooling] that closes the loop."
+2. **The why-now one-liner.** Either *"I want to bring [the lens I have less of] back into my work"* or *"I want to deepen the lens I already have on [a more leveraged silicon programme]."*
+3. **The why-this-company one-liner.** Two specific sentences about their product / team / programme. Generic "great company" framing kills the round.
 
-### Tech questions most likely TODAY (round 2 mixed)
+### Step 4 — The universal cheat-line table (use verbatim if asked)
 
-Pick the one that comes up — go deep, don't sprint across all. Rehearse 1, 2, 4 cold.
+| Common Q | Universal one-liner |
+|---|---|
+| Why pre-Si after post-Si? | "Post-Si proved I debug across the stack. Pre-Si is where I want to apply that — find the bug before it costs a respin." |
+| Why post-Si after pre-Si? | "Pre-Si gave me RTL discipline; post-Si is where I want to see what escapes look like in real silicon and feed that back upstream." |
+| Why system-level / platform after IP-level? | "Owning one IP teaches you depth. Owning the platform teaches you which seams hide bugs no IP-level test will ever find." |
+| What can you bring on day 1? | "[Tool / methodology / vocabulary] from my [previous lens] + low-ego learner on the parts I don't know yet." |
+| Where are you weakest? | Name a *specific* gap (e.g. "ARM-native micro-arch vocab", "GPU-shader-level perf"), state the bridge ("I map fluently from X"), state the closing plan ("I closed a similar gap on Y in 2 months"). |
+| Why are you leaving your current role? | Frame *toward* the new thing, never *away from* the old. "Going toward [X]; current role gave me [Y] which is the foundation." |
 
-1. **"How would you write a coverage plan for a new CPU feature, say a branch predictor or LSU enhancement?"** → spec-read → identify state space → bin into functional cover groups → directed cover-points + crosses + corner cases → constrained-random to fill the bulk → assertion coverage to catch protocol violations → review with arch + design.
-2. **"How do you debug a sporadic emulation failure?"** → reproduce first (seed lock, save replay), then narrow (binary search the testbench knobs), bisect the RTL/firmware revision, isolate to the smallest test, pull a waveform window around the divergence, compare against a known-good run, hypothesise → instrument → confirm. *"My golden rule: don't touch the design until the failure is deterministic and minimal."*
-3. **"Pipeline hazard / forwarding question — write or describe."** → know RAW/WAR/WAW, the 5-stage classic, and where forwarding kills the bubble. Be ready to discuss OoO equivalents (rename eliminates WAR/WAW; ROB handles precise exceptions).
-4. **"Memory ordering — what does Arm's weak model let you do that x86 TSO doesn't?"** → x86 TSO: only store→later-load can reorder. Arm: any pair can reorder unless a barrier (DMB ISH / DMB ISHST) or acquire/release annotation forbids it. Producer needs `dmb st` (or `stlr`) between data write and flag write; consumer needs `ldar` (or `dmb ld`) between flag read and data read. Lockless code needs both.
-5. **"Coherence — walk me through a snoop on a shared LLC."** → MESI states, who tracks dirty (M/O states), how a remote read-for-ownership invalidates other sharers, snoop filter to avoid broadcast. False sharing as the classic bug.
-6. **"What's the difference between code coverage and functional coverage? Which matters more?"** → code coverage = "did the test exercise this line / branch / FSM state" (necessary, not sufficient). Functional coverage = "did the test hit this *intended scenario*" (defined by the verification engineer from the spec). Functional matters more — 100% line coverage with 0 functional intent finds nothing.
-7. **"You see a failing assertion — how do you decide if it's a test bug, RTL bug, or spec bug?"** → reproduce, then triage: re-read the assertion vs spec wording (spec ambiguity?), check if the test setup violates a precondition (test bug), check if RTL is genuinely doing the wrong thing under a legal stimulus (RTL bug). Loop in arch when spec is ambiguous; never silently disable an assertion.
-8. **"How would you bring up a new CPU core in emulation, day 1?"** → reset / clock / power-on smoke → boot ROM → trivial loop → exception path → MMU on → cache on → multi-core → coherence → interrupts → SMMU/IO → full Linux/Android boot. Each step is its own milestone with its own coverage.
+### Step 5 — Day-of behavioural rehearsal (most likely Qs in any round 2)
 
-### What to NOT volunteer
+Each is 60–90 sec, STAR if applicable. Rehearse 5 of these out loud once before the call:
 
-- Don't lead with NPU. They know you do NPU. Lead with **pre-Si CPU core (Cambria)**. Mention NPU as the recent layer that gave you platform context.
-- Don't oversell Arm depth. Be honest you're mapping from x86 fluency. *Showing* you map cleanly is stronger than *claiming* native Arm depth.
-- Don't anchor on Snapdragon X Elite OEM-side stories unless asked. Today's round wants the **upstream, design-side** version of you.
-- Don't mention Intel Ireland or any other parallel process. If asked about other interviews: *"I'm interviewing in the same band — silicon-side validation roles. Qualcomm CPU core is the one I'm most excited about because it combines pre-Si depth with a platform I already know."*
+1. **"Walk me through your career arc."** Lead with the *arc*, not chronology. Why each move, what each layer taught you, what you want next.
+2. **"Tell me about the hardest bug you've owned."** → Section 4A; pick the bug that matches the lens (table at end of 4A).
+3. **"Tell me about a time you disagreed with a designer / architect."** → Section 2 template. Disagree-and-commit, data-led, no blame.
+4. **"Tell me about a time you mentored a junior engineer."** → KT doc → pair-debug → solo with safety net → independent. Real example, not template.
+5. **"How do you handle ambiguous specs?"** → "Spec ambiguity is a bug. Read, write down my interpretation, file a clarification with arch + IP owner together, document, add a coverpoint or assertion that pins the resolution."
+6. **"Tell me about a time you missed something."** → Honest, short, not catastrophic. The lesson > the miss.
+7. **"What does a good day look like for you?"** → "A coverage hole closed, a sporadic fail isolated to a deterministic repro, and a 1:1 where I unblocked someone else."
+8. **"Why should we hire *you* for this team?"** → 30-sec close: lens-relevant experience + cross-stack context + tool-builder mindset + low-ego learner. Specific to *their* team.
 
-### Qualcomm-specific cultural notes
+### Step 6 — Tech questions you should be ready for in any silicon validation round
 
-- **Tone:** direct, technical, no nonsense. Silicon Valley + India dual-site culture; lean toward concise, data-led, low-ceremony.
-- **Hierarchy:** flat in conversation; deeply technical interviewers — they will know more than you on their domain. **Best move when caught: "I don't know, here's how I'd find out."** Never bluff Arm-specific micro-arch detail.
-- **Pace:** they move fast. Don't pad. 60-90 sec answers; let them drill if they want depth.
-- **Behavioural style:** less framework-heavy than Microsoft / Intel. They want concrete *did-this-with-this-outcome* stories. Skip the meta-commentary, give the example.
-- **Compensation / location:** if it comes up, defer to recruiter. *"Open to discussing location and package as part of the offer conversation."*
+Pick the one that comes up — go deep, don't sprint. Cold rehearse 1, 2, 5.
 
-### Final 5-minute pre-call checklist (run this 5 min before the call)
+1. **"How would you write a coverage plan for a new feature?"** → Section 2A "Planning coverage" 10-step recipe.
+2. **"How do you debug a sporadic emulation / silicon failure?"** → "Lock seed → minimise repro → bisect (RTL/FW/test/seed) → waveform window around divergence → don't touch design until failure is deterministic and minimal."
+3. **"Pipeline hazard / forwarding."** → Day 16 one-liner; RAW/WAR/WAW; rename eliminates WAR/WAW; ROB for precise exceptions; mispredict cost ≈ pipeline depth × IPC.
+4. **"Memory ordering — strong vs weak."** → Day 16 one-liner; x86 TSO vs ARM weak; barriers; acquire/release.
+5. **"Coherence — walk me through MESI."** → Day 5 one-liner; M/E/S/I; snoop vs directory; false sharing as 4th miss class.
+6. **"Functional vs code coverage."** → "Code = did the line execute (necessary, not sufficient). Functional = did the *intended scenario* fire (the real metric)."
+7. **"Failing assertion — test bug, RTL bug, or spec bug?"** → Reproduce → re-read assertion vs spec → check test preconditions → check RTL under legal stimulus → loop in arch when ambiguous; never silently disable.
+8. **"How would you bring up a new CPU core in emulation, day 1?"** → Section 6A canonical walkthrough.
+9. **"Walk me through system boot."** → Day 9 generic 5-phase boot (POWER → ROM → PLATFORM INIT → BOOTLOADER → OS+INIT) + chain of trust.
+10. **"Why multi-level cache / SRAM vs DRAM / virtual memory / clock gating / multiple C-states / ..."** → Section 4B for the framing on each.
 
-- [ ] Water in arm's reach.
+### Step 7 — What to NOT volunteer
+
+- Don't lead with the role lens you have *less* of. If applying for pre-Si, lead with pre-Si — even if your most recent work is post-Si.
+- Don't oversell vocabulary you don't have natively. *Showing* you map cleanly is stronger than *claiming* native depth.
+- Don't anchor on stories that don't match the lens. (See Section 4A "How to pick which story" table.)
+- Don't mention parallel processes / other interviews unless asked. If asked: *"I'm interviewing in the same band — silicon-side validation roles. This one is the most interesting because [specific reason about their product]."*
+
+### Step 8 — Final 5-minute pre-call checklist (run literally 5 min before)
+
+- [ ] Water in arm's reach. Phone on DND. Notebook + pen.
 - [ ] 30-sec narrative said out loud once.
-- [ ] Cambria Core C6 bug story rehearsed once (this is the one for today).
+- [ ] One bug story rehearsed once (the one that matches the lens — see Section 4A table).
 - [ ] One coverage-plan answer rehearsed (the "how would you cover X" question).
-- [ ] One Arm vs x86 mapping ready (PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID, TSO vs weak).
+- [ ] One ARM↔x86 mapping ready if it's an ARM shop (PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID, TSO vs weak).
 - [ ] 3 questions for them written on a sticky:
-   1. "What's the split between pre-Si infra work, test content, and debug on this team in a typical sprint?"
-   2. "Where is the Oryon / next-gen core in its programme cycle — early RTL, late RTL, pre-tape-out?"
-   3. "How does the pre-Si team interact with the post-Si bring-up team when first silicon comes back?"
-- [ ] Phone on DND. Notebook + pen. Camera on. Smile on first line.
+   1. Sprint-level: *"What's the split between infra work, test content, and debug on this team in a typical sprint?"*
+   2. Programme-level: *"Where is this product/IP in its programme cycle?"*
+   3. Org-level: *"How does this team interact with [the adjacent team — pre-Si↔post-Si, vendor↔OEM, IP↔SoC] when issues cross the boundary?"*
+- [ ] Camera on. Smile on first line.
 
 ---
 
 ## SECTION 0 - Last-10-min cheat sheet
 
+> **Generic reflexes for any silicon-validation round.** Scan once before the call. Each row is a single line you can deliver verbatim under pressure.
+
+### Spine reflexes (career + role-fit)
+
 | Theme | One-liner reflex |
 |---|---|
-| **Why Qualcomm pre-Si CPU core (TODAY)** | **Cambria pre-Si depth + Microsoft post-Si platform context, brought back to pre-Si on a clean-sheet Arm core where bugs are cheapest to catch** |
-| **Why pre-Si after post-Si stint** | **Post-Si proved I debug across the stack; pre-Si is where I want to apply that judgement and shape silicon before it's cast** |
-| **Pre-Si CPU bug headline** | **Cambria Core C6 wake-loss — 1-deep CFC FIFO race between core PMA and PCU, only repro'd on Zebu under overlapping snoop+IRQ; would have been a P0 silicon escape** |
-| **Sporadic emulation fail debug** | **Lock seed → minimise test → bisect RTL/FW → waveform window around divergence → don't touch design until failure is deterministic** |
-| **Coverage plan recipe** | **Spec → state space → functional cover groups + crosses → directed corners → constrained-random fill → assertions for protocols → review with arch + design** |
-| **Functional vs code coverage** | **Code = "did the line execute"; functional = "did the *intended scenario* fire". Functional matters more — 100% line + 0 functional intent finds nothing** |
-| **Arm weak vs x86 TSO** | **TSO: only store→later-load reorders. Arm: any pair reorders unless DMB / acquire-release. Producer needs `dmb st` + `stlr`; consumer needs `ldar`** |
-| **x86 → Arm vocab map** | **PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID, MWAIT↔WFI/WFE, MSR↔system-reg, P-state↔OPP, FIVR↔PMIC-over-SPMI** |
-| Lead-team-of-15 | I'd run as a tech lead, not pure manager. Daily standups, weekly 1:1s, clear ownership matrix, escalate blockers fast. Most senior IC + small-team lead is my comfort zone |
-| Underperforming teammate | First conversation: understand if it's **can't** (skill/blocker) or **won't** (motivation). Different responses for each |
-| Thermal goes up, don't want perf drop | Headroom buying: better cooling, lower V at same F (binning), spread load across cores, schedule heavy work to cool periods, use bigger/LITTLE cluster |
-| C-state entry | flush dirty $, save arch state, gate clocks, gate power, drop voltage |
-| C-state exit | wake event > restore voltage > ungate power > ungate clocks > restore arch state > resume |
-| DVFS one-line | (V, F) operating point chosen by PCU/RPMh based on load + thermal + power budget |
-| NPU silent fallback | unsupported op > drops to CPU EP > perf collapses without functional fail. Detect via per-op EP-assignment log |
-| 2-egg puzzle | optimal first drop = floor 14 (sqrt(2N) approx, formula k(k+1)/2 >= N) |
-| Sum 1-15 odd = 30 | impossible (odd count of odd nums = odd sum); trick puzzle |
-| x^y > y^x | true when x < y for x,y >= 3; flips for small values (2^4 = 4^2) |
+| **Why pre-Si after post-Si stint** | Post-Si proved I debug across the stack; pre-Si is where I want to apply that judgement and shape silicon before it's cast |
+| **Why post-Si after pre-Si** | Pre-Si gave me RTL discipline; post-Si is where I see what escapes look like in real silicon and feed it back upstream |
+| **Why system / platform** | Owning one IP teaches depth; owning the platform teaches which seams hide bugs no IP-level test will ever find |
+| **What I bring on day 1** | Lens-relevant experience + cross-stack debug + tool-builder mindset + low-ego learner on what I don't know yet |
+
+### Methodology reflexes (every silicon-validation interview hits these)
+
+| Theme | One-liner reflex |
+|---|---|
+| **Sporadic emulation/silicon fail debug** | Lock seed → minimise repro → bisect (RTL/FW/test) → waveform window around divergence → don't touch design until failure is deterministic and minimal |
+| **Coverage plan recipe** | Spec → state space → functional cover groups + crosses → directed corners → constrained-random fill → assertions for protocols → review with arch + design → exit criteria up front |
+| **Functional vs code coverage** | Code = "did the line execute"; functional = "did the *intended scenario* fire". Functional matters more — 100% line + 0 functional intent finds nothing |
+| **Failing assertion triage** | Reproduce → re-read assertion vs spec (spec ambiguity?) → check test preconditions → check RTL under legal stimulus → loop in arch when ambiguous; never silently disable |
+| **Approaching a new problem** | Restate in one sentence → define done → inventory known-vs-assumed → find cheapest disambiguating signal → minimum reproducer → write down plan → timebox |
+
+### Tech-spine reflexes (concept-per-row, distilled — full one-liners in [Section 4B](#section-4b---20-day-system-thinking-one-liner-reference))
+
+| Theme | One-liner reflex |
+|---|---|
+| **Why multi-level cache** | Single cache cannot be 1-cycle fast AND 32 MB AND shared — physics, area, contention forbid it. Hierarchy is the resolution |
+| **SRAM vs DRAM** | 6T latch (fast, sparse) vs 1T1C cap (dense, leaks, needs refresh). Use SRAM where latency dominates, DRAM where capacity does |
+| **Cache coherence (MESI)** | Silicon tax for keeping the illusion of one memory across N private caches. False sharing = 4th miss class (coherence) |
+| **Virtual memory** | One indirection that solves isolation + sharing + oversubscription. Page fault is the kernel's "do work lazily" signal |
+| **TLB / huge pages** | Translation has its own locality, needs its own cache. Huge pages stretch TLB reach — tradeoff is fragmentation + coarser perms |
+| **DMA / barriers** | Descriptor → barrier → doorbell. Two ordering universes meeting; cache management bridges non-coherent fabrics |
+| **PCIe** | Packet-switched layered serial network. LTSSM trains because Gbps links can't just turn on. Credits eliminate idle on lossless link |
+| **NVMe vs AHCI** | Per-core SQ/CQ kills the queue lock; MSI-X per CQ kills cross-core wakes; phase-bit polling kills IRQ at high IOPS |
+| **DVFS / P-states** | $P_{dyn} = CV^2F$, V & F coupled by physics → near-cubic energy savings. Governor exists because HW sees load but not intent |
+| **Static vs dynamic power** | Dynamic = $CV^2F$ (cost of toggling). Leakage = $V \cdot I_{leak}(T)$ (cost of being on, exponential in T) |
+| **Clock gating** | RTL `if(en)` rewritten by synthesis into ICG cells (latch+AND, no glitch). Three tiers: leaf / regional / root |
+| **Why C-state ladder** | Each state has a break-even residency — too short and entry/exit cost > savings. Single state is wrong for both short and long idles |
+| **System boot** | 5 phases everywhere: POWER → ROM → PLATFORM INIT (DDR train) → BOOTLOADER → OS+INIT. Chain of trust at every hop, fuses pin the root |
+| **OoO / consistency model** | OoO extracts ILP from a serial stream; consistency model trades HW freedom for SW programmability (TSO = strong, ARM = weak) |
+| **Lock-free queues** | Universal primitive for decoupling; SPSC fastest, MPMC slowest; ABA needs tagged ptrs; head/tail must be on separate cache lines |
+| **NPU vs CPU SIMD** | Dedicated matmul silicon is 100–1000× more energy-efficient than CPU SIMD; cost is separate ISA, memory, address space, power domain |
+| **Where NPU bugs live** | At the boundary — CPU↔NPU memory, VA↔IOVA, coherent↔non-coherent, runtime↔driver. Each domain correct in isolation, contract is fragile |
+| **Debugging method** | Method beats intuition. Bisection + symptom-vs-cause + hypothesis-and-bound. Story polish: precise symptom → first hypothesis → bound → fix → regression hook |
+
+### ARM ↔ x86 mapping (memorise if interviewing at an ARM shop)
+
+| ARM | x86 |
+|---|---|
+| RPMh | PCU |
+| SMMU | IOMMU |
+| ASID | PCID |
+| WFI/WFE | MWAIT |
+| System register (MSR-equiv) | MSR |
+| OPP (Operating Performance Point) | P-state |
+| PMIC over SPMI | FIVR |
+| LMh (Limits Mgmt) | PL1/PL2 |
+| EL0/1/2/3 + Secure | Ring 3/0 + SMM |
+| PSCI SMC | INIT-SIPI / ACPI |
+| LDAR / STLR / DMB ISH | implicit (TSO) |
+
+### Behavioural / leadership reflexes
+
+| Scenario | Reflex |
+|---|---|
+| Lead a team of 15 | Tech-lead + sub-leads, daily standups, weekly 1:1s, ownership matrix, escalate fast. Most senior IC + small-team lead is comfort zone |
+| Underperforming teammate | First conversation: **can't** (skill/blocker — pair/scope/escalate) vs **won't** (motivation — direct conversation, written expectations, perf process if needed) |
+| Disagree with designer | Disagree-and-commit, data-led, escalate via 1:1 first never email-war, document outcome |
+| Strength | Cross-stack debug + tool-builder mindset |
+| Weakness | Specific gap + bridge from adjacent fluency + closing plan with timeframe |
+| Conflict resolution | Get the data → 1:1 first → propose solution not just problem → document the decision |
+
+### Puzzle reflexes
+
+| Puzzle | Reflex |
+|---|---|
+| 2-egg / N-floor | $X(X+1)/2 \geq N$ → first drop = 14 for N=100, worst case 14 drops |
+| Sum of 5 odd nums = 30 | Impossible by parity (5 odd → sum is odd) |
+| $x^y$ vs $y^x$ | Compare $\ln(x)/x$ vs $\ln(y)/y$; peaks at $e$; both $\geq 3$ → smaller base wins. Famous tie: $2^4 = 4^2$ |
+| Burning rope | Light both ends of one + one end of other → 45 min from two 1-hr ropes |
 
 ---
 
@@ -149,12 +221,13 @@ Use the framing that matches who's asking. **All three describe the same job; th
 3. **Tooling / leadership framing (use for staff / lead / EM rounds):**
  > "I lead the platform NPU validation charter at Microsoft for Copilot+ PCs. Beyond the regression and bring-up work, I built the internal tooling — EdgeOptimizer, ETW pipelines, per-inference attribution — that the wider team and our OEM partners now use. Most of my recent leverage has been in turning one-off debug into reusable infra so the team scales without linear headcount."
 
-*Rule of thumb: lead with framing #1 today (pre-Si CPU audience). Hold #2 and #3 for follow-ups.*
+*Rule of thumb: pick the framing that matches the role lens (see Section 0A step 1). Hold the other two for follow-ups.*
 
-### Why this role / why now
-- "I've done pre-Si and post-Si on three different vendors' silicon. NPU post-Si specifically is the layer I've been pushing hardest in - EdgeOptimizer was my way of building tooling that scaled across vendors. I want to do that work where the silicon is being designed, not just consumed."
-- *(Pre-Si CPU pivot:)* "Post-Si NPU work taught me what escapes look like in the field. Pre-Si CPU core is where I want to apply that — close those classes upstream before they ship."
-- *(System-level pivot:)* "I want a role where the same person who finds a bug also shapes the coverage plan that catches its siblings — pre-Si or system-level both let me do that. Post-Si alone doesn't."
+### Why this role / why now (pick the variant matching the lens)
+- *(Default / vendor-side pivot)*: "I've done pre-Si and post-Si on three different vendors' silicon. NPU post-Si specifically is the layer I've been pushing hardest in — EdgeOptimizer was my way of building tooling that scaled across vendors. I want to do that work where the silicon is being designed, not just consumed."
+- *(Pre-Si CPU pivot)*: "Post-Si NPU work taught me what escapes look like in the field. Pre-Si CPU core is where I want to apply that — close those classes upstream before they ship."
+- *(System-level pivot)*: "I want a role where the same person who finds a bug also shapes the coverage plan that catches its siblings — pre-Si or system-level both let me do that. Post-Si alone doesn't."
+- *(Deeper post-Si / NPU pivot)*: "Microsoft gave me cross-vendor NPU breadth; I want to take that into a single-vendor team where I own the silicon end-to-end from EVT through PV."
 
 ### Strengths to lead with
 - **Cross-stack debug:** comfortable from RTL/emulation traces up through firmware, kernel drivers, ETW, OS scheduler.
@@ -221,12 +294,13 @@ STAR format: Situation, Task, Action, Result. Quantify where possible.
 - **Weakness:** "I can over-invest in tooling before validating the manual approach has the right shape. Mitigation: I now do a manual run first to confirm the workflow, then automate."
 - *(Avoid: "I work too hard" / "perfectionist" - boring, hiring managers tune out.)*
 
-### Q: "Why leaving Microsoft?"
+### Q: "Why leaving your current role?"
 
-**Frame positively (pre-Si pivot, today's audience):**
-> "Microsoft has been excellent for breadth — three vendors' NPUs and a tooling charter. The next thing I want is depth at the silicon side: working pre-Si on a CPU core where I can shape what gets cast, not just qualify what comes back. Post-Si taught me what escapes look like; I want to bring that lens upstream."
+**Frame positively, toward the new thing — pick the variant matching the lens:**
 
-*(System / SoC audience variant: "… the next thing I want is to own a subsystem end-to-end inside a silicon team, rather than be the platform-side consumer of three vendors' silicon.")*
+- *(Pre-Si CPU pivot)*: "Microsoft has been excellent for breadth — three vendors' NPUs and a tooling charter. The next thing I want is depth at the silicon side: working pre-Si on a CPU core where I can shape what gets cast, not just qualify what comes back. Post-Si taught me what escapes look like; I want to bring that lens upstream."
+- *(System / SoC pivot)*: "The next thing I want is to own a subsystem end-to-end inside a silicon team, rather than be the platform-side consumer of three vendors' silicon."
+- *(Deeper post-Si / NPU pivot)*: "Microsoft gave me cross-vendor breadth; I want to take that into a single-vendor team where I own the silicon end-to-end and the feedback loop with design is shorter."
 
 ### Q: "Where do you see yourself in 5 years?"
 
@@ -489,6 +563,79 @@ P_leak ~ exp(T) approximately
 
 ---
 
+## SECTION 4B - 20-day system-thinking one-liner reference
+
+> **The point of this section:** every interview "explain X" question maps to one of these tradeoffs. Lead with the *tradeoff*, then the mechanism. The interviewer is testing whether you reason like a systems engineer or recite facts.
+>
+> Each row: **the question** → **the one-liner** → **the day file with full reasoning**.
+
+### Foundations (C, memory, hardware access)
+
+| Concept | One-liner answer | Source |
+|---|---|---|
+| **Why C exposes addresses** | C is the only mainstream language that lets you see the machine; hardware is an address space and the language must let you say it. Pointer math is type-aware so array walks are correct by construction. `volatile` / `const` / `restrict` are not type decorations — they're contracts about the world *outside* the program, and the compiler optimises against those contracts. | [Day 01](21day_plan/day01_c_address_fluency.md) |
+| **Why memory has a layout** | Lifetime, protection, and access pattern are three different questions; one region (stack/heap/BSS) cannot answer all three. Alignment matters because hardware loads in chunks — misaligned data costs atomicity, speed, and DMA correctness. Compiler padding is the visible cost of natural alignment. | [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) |
+| **Why MMIO ≠ memory access** | Writing a hardware register is not writing memory. `volatile` stops the compiler caching loads in registers. Uncached/Device mappings stop the cache coalescing or reordering writes. Barriers stop the CPU's reorder buffer. Polling beats IRQs when events arrive faster than the IRQ entry/exit cost. Each keyword opts one optimisation layer back out — because hardware doesn't follow C's rules. | [Day 03](21day_plan/day03_bits_mmio_volatile_polling.md) |
+
+### Cache, coherence, virtual memory
+
+| Concept | One-liner answer | Source |
+|---|---|---|
+| **Why multi-level cache (not one big cache)** | You cannot build one cache that is simultaneously 1-cycle fast, 32 MB large, and shared across N cores — physics, area, and contention forbid it. The hierarchy is the resolution: each level trades one constraint for another. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
+| **How CPU "decides" what to cache** | The CPU doesn't decide — it reacts. Demand fetch on miss, predict next line via prefetchers, evict via PLRU. The "decision" is locality: what you touched, you'll touch again; what's adjacent, you'll touch soon. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
+| **Cache lookup walk** | TLB translates VA→PA in parallel with L1 indexing; PA splits into tag/set/offset; set read parallel-fetches all ways; tag compare picks the match (or miss); on hit mux out + update PLRU; on miss allocate victim, fill from L2 critical-word-first. Coherence wrinkle: write hit must be in M/E or send invalidate first. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
+| **SRAM vs DRAM** | SRAM = 6T cross-coupled latch — fast, sparse, volatile only on power loss. DRAM = 1T1C capacitor — dense, cheap, leaks in milliseconds and needs refresh. SRAM where latency dominates, DRAM where capacity dominates. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
+| **Why coherence (MESI)** | Coherence is the silicon tax for keeping the illusion of one memory across N private caches. Every line has a state, every state change is a protocol transaction, every transaction shows up as latency. False sharing, atomic contention, and lock costs are all the protocol charging you because data sharing was implicit in the layout. | [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) |
+| **Why virtual memory** | An indirection that solves isolation, sharing, and oversubscription in one mechanism. Page fault is the kernel's signal to do allocation, swap-in, copy-on-write, or file-mapping lazily. Cost is a TLB lookup on every load + page walk on every TLB miss; we pay it because no simpler mechanism gives all three properties. | [Day 06](21day_plan/day06_virtual_memory_page_faults.md) |
+| **Why TLB / huge pages / IOMMU** | TLB exists because translation has its own locality and a cold page walk would erase the VM benefit. Huge pages stretch TLB reach — tradeoff is fragmentation + coarser perms. IOMMU is the MMU re-applied to devices: per-device isolation, scatter-gather, 32-bit-device support. Same pattern at a different layer. | [Day 07](21day_plan/day07_tlb_huge_pages_iommu_smmu.md) |
+
+### Device, interconnect, storage
+
+| Concept | One-liner answer | Source |
+|---|---|---|
+| **CPU↔device DMA / barriers** | Two ordering universes meeting. The descriptor → barrier → doorbell pattern is the contract: descriptor visible to device, barrier ensures global ordering, doorbell triggers the device read. Cache management bridges the cache, which is transparent to CPUs but not to non-coherent DMA. Get any of these wrong and you get the classic "works at low rate, fails at line rate" bug. | [Day 08](21day_plan/day08_dma_doorbells_ordering_barriers.md) |
+| **System boot flow (vendor-agnostic)** | Five phases everywhere: **POWER** (PMIC ramps rails, releases reset) → **ROM** (mask ROM verifies next stage from fuse-locked key) → **PLATFORM INIT** (DDR training in FSBL) → **BOOTLOADER** (loads OS kernel) → **OS+INIT** (kernel discovers HW, brings up cores, mounts rootfs). Chain of trust at every hop, fuses pin the root. Names change per vendor (UEFI/PEI/DXE on x86, BL1/BL2/BL31 on ARM TF-A, PBL/SBL/TZ on Snapdragon) — roles identical. | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) |
+| **PCIe** | A packet-switched, layered serial network that fits in a chassis. PHY/DLL/TLP layering enables generation-over-generation rate doubling without breaking drivers. LTSSM trains because Gbps serial links must train, not just turn on. Credit-based flow control wins on a lossless link by eliminating idle gaps. Power states (L0s/L1/L1.1/L1.2) mirror CPU C-states — deeper saves more, costs more wake. | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md) |
+| **NVMe** | AHCI's bottleneck list, inverted. Per-core SQ/CQ pairs kill the queue lock. MSI-X per CQ kills the cross-core IRQ wake. Polling with phase bits kills the IRQ entirely at high IOPS. The descriptor-doorbell pattern is unchanged from any modern DMA device. The hard part isn't the data path — it's the bring-up sequence (CSTS.RDY, AQA, DSTRD), where MMIO field widths and barriers cause "doesn't enumerate" bugs. | [Day 11](21day_plan/day11_nvme_queues_bringup.md) |
+
+### Power, thermal, idle states
+
+| Concept | One-liner answer | Source |
+|---|---|---|
+| **Why DVFS (V & F coupled)** | $P_{dyn} = \alpha C V^2 F$, and V & F are coupled by physics — lower F enables lower V, giving near-cubic energy savings. P-states are a curated list of safe (V, F) pairs the silicon was characterised at. Governors exist because hardware sees load but not intent. PVT sensors close the loop in real time because every die is different and worst-case static voltage wastes energy on the typical die. | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) |
+| **Static vs dynamic power** | Dynamic = $\alpha C V^2 F$ — cost of toggling. Leakage = $V \cdot I_{leak}(T)$ — cost of being powered, exponential in temperature. Clock gating kills dynamic only. Power gating kills both, but you lose state and pay μs of wake-up. Every C-state and DVFS decision is choosing which lever to pull. | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
+| **Why clock gating + ICG cells** | RTL `if(en)` patterns rewritten by synthesis into ICG cells — a latch+AND that gates the clock pin without glitching. Three tiers: leaf gates the tool inserts automatically, regional gates the architect hand-codes per unit, root gates the power FSM drives for whole IPs. Together they kill the 30-40% of dynamic power the clock tree would otherwise burn on idle flops. Validation: LEC, glitch checks, X-prop at reset, gating-efficiency coverage. | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
+| **Why a C-state ladder** | Every idle state pays an entry/exit energy cost; only deeper states save more leakage. A single state is wrong for short idles (you waste more entering than you save) and wrong for long idles (you leak more than you need to). The OS picks the deepest state whose break-even residency fits the predicted idle window. Multiple C-states = multiple price points on the energy/latency curve. | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
+| **PCU firmware / ADR / Core C6** | PCU is firmware (a microcontroller) because power policy is too complex, too SKU-specific, and too release-sensitive for RTL. ADR exists because persistent memory commits are in-flight in the WPQ on power loss — PCU has μs to drain it. Core C6 bugs are silent because the save/restore surface is wide and the bug only shows after a wake under specific timing. | [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md) |
+| **Thermal management = control loop** | Workload power isn't predictable and worst-case cooling is too expensive. Throttling is the negative feedback that breaks the leakage-temperature runaway. Perf counters are sampled because programmable beats fixed and statistical sampling is enough for most analysis. First diagnostic question for any "why is my CPU slow?" is: which throttle reason fired? | [Day 15](21day_plan/day15_thermal_power_perf_counters.md) |
+
+### Pipeline, concurrency, accelerators
+
+| Concept | One-liner answer | Source |
+|---|---|---|
+| **OoO + memory consistency + SIMD** | OoO and speculation extract ILP from a serial stream; SIMD extracts data parallelism orthogonally. Memory consistency models are a tradeoff between HW freedom and SW programmability — weaker (ARM) goes faster but needs explicit barriers; stronger (x86 TSO) is easier to program. Every concurrency bug is the CPU's reordering becoming visible across cores or to devices. Spectre-class side channels are the same optimisation leaking through a side channel — validation now tests both correctness and mitigation effectiveness. | [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) |
+| **Lock-free queues** | Queues are the universal primitive for decoupling producers and consumers across cores, IPs, and CPU↔device boundaries. Lock-free is required where locks can't reach (devices, real-time, hot paths). Pick the most-restrictive flavor that fits — SPSC is dramatically faster than MPMC. ABA is the value-matched-but-world-changed bug that makes naive CAS wrong; tagged pointers or hazard pointers fix it. Cache-line padding between head and tail is the difference between toy code and shipped code. | [Day 17](21day_plan/day17_concurrency_queues_dsa.md) |
+| **Why NPUs exist** | Dedicated matmul silicon is 100–1000× more energy-efficient than CPU SIMD — the cost is a separate ISA, memory, address space, and power domain. The Execution Provider (EP) abstraction lets one model target many backends; each EP is a partitioner + a kernel library. The accelerator is a separate compute domain with its own everything; that isolation is its efficiency advantage and its debug pain. | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md) |
+| **Where NPU bugs live** | At the boundary — CPU↔NPU memory, VA↔IOVA, coherent↔non-coherent, runtime↔driver — because each domain is correct in isolation but the contract is fragile. First diagnostic: attribute slowdowns to a specific miss class (page fault, TLB, IOMMU, coherence), not to the model. FastRPC / EP runtimes are the marshalling layer where most leak/handle bugs hide. | [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) |
+
+### Method (the meta-skill)
+
+| Concept | One-liner answer | Source |
+|---|---|---|
+| **Debugging is method, not intuition** | Bisection + symptom-vs-cause + hypothesis-and-bound — because intuition has bias and method has guaranteed convergence. A polished bug story is method demonstrated through a concrete artifact: precise symptom, first hypothesis, bounding experiment, fix, and the test that prevents regression. The interviewer is hiring the method, not the trivia. | [Day 20](21day_plan/day20_debug_method_bug_polish.md) |
+
+### How to use this section in an interview
+
+When asked "explain X" or "why does Y exist":
+1. **Lead with the tradeoff** (the *italic* part of the one-liner). 10 seconds.
+2. **Name the mechanism** that resolves it. 20 seconds.
+3. **Drop one validation hook** — what counter you'd watch, what bug class this enables, what test you'd add. 30 seconds.
+4. **Stop.** Let them drill if they want depth.
+
+Total: ~60-second answer that shows tradeoff thinking, mechanism literacy, and validation discipline. That's the senior bar.
+
+---
+
 ## SECTION 5 - C-states (backup)
 
 **Ladder:** C0 active → C1 clock-gate (~1us) → C1E +lowV → C3 flush L1/L2, PLL off (~50us) → **C6 arch-state to SRAM, core power-gated (~100us)** → C7-C10 LLC flush, package-level. Arm: WFI/WFE + PSCI `CPU_OFF`/`CPU_SUSPEND`, RPMh arbitrates.
@@ -501,9 +648,9 @@ P_leak ~ exp(T) approximately
 
 ---
 
-## SECTION 6A - Pre-Silicon CPU Core Validation (TODAY'S TECH FOCUS)
+## SECTION 6A - Pre-Silicon CPU Core Validation (depth reference)
 
-> Deep reference for the Qualcomm round 2 tech drilldowns. Read once before the call; don't try to memorise — internalise the *shapes*.
+> Deep reference for any pre-Si CPU/SoC tech drilldown. Read once before the call; don't try to memorise — internalise the *shapes*.
 
 ### What "pre-Si CPU core validation" actually means day-to-day
 
@@ -680,33 +827,79 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 
 ## SECTION 10 - Final 10-min checklist
 
-**For TODAY (Qualcomm pre-Si CPU core, mixed):** prioritise the ⭐ items.
+> **Generic for any silicon-validation round.** Star (⭐) the items that match your role lens; skip the rest.
 
-- [ ] ⭐ Career narrative (60 sec) — lead with **pre-Si Cambria → post-Si NPU → back to pre-Si CPU core**
-- [ ] ⭐ Current-work framing #1 (silicon-side lens, Section 1) rehearsed — NOT the OEM-side default
-- [ ] ⭐ "Why pre-Si after post-Si?" answer ready (Section 0A)
-- [ ] ⭐ Cambria Core C6 wake-loss bug — full STAR story (Bug 1 in Section 4A)
-- [ ] ⭐ One backup bug ready (CXL = Bug 5, or QNN = Bug 2 if they pivot to current work)
-- [ ] ⭐ Adaptive answer cue: if asked "how would you approach…", clarify pre-Si vs post-Si vs system first (Section 2A)
-- [ ] ⭐ Coverage plan recipe (10 steps, Section 2A)
-- [ ] ⭐ New-problem framework (7 steps, Section 2A) — for open-ended "never seen this before" questions
-- [ ] ⭐ Workload-distribution framework (10 steps, Section 2A) — for tech-lead / N-engineers questions
-- [ ] ⭐ Sporadic emulation debug recipe (deterministic → minimal → bisect, Section 6A)
-- [ ] ⭐ Arm-vs-x86 mapping ready (PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID, TSO vs weak)
-- [ ] ⭐ Pipeline hazards + OoO bug shapes (Section 6A table)
-- [ ] ⭐ "Bring up a new CPU core in emulation" canonical walkthrough
+### Universal (every round, every lens)
+
+- [ ] ⭐ Career narrative (60 sec) — lead with the lens that matches the role
+- [ ] ⭐ Current-work framing (Section 1, pick #1 / #2 / #3 to match the audience)
+- [ ] ⭐ "Why this role" answer ready — frame *toward* the new thing, not *away from* the old
+- [ ] ⭐ One bug story rehearsed (Section 4A; pick by lens — table at end of 4A)
+- [ ] ⭐ One backup bug ready (different lens, in case they pivot)
+- [ ] ⭐ Adaptive-answer cue: clarify pre-Si vs post-Si vs system first if the question is ambiguous (Section 2A)
+- [ ] ⭐ Universal frameworks rehearsed: new-problem (7 steps), coverage plan (10 steps), workload distribution (10 steps) — Section 2A
+- [ ] ⭐ Sporadic-failure debug recipe (deterministic → minimal → bisect)
 - [ ] ⭐ Functional vs code coverage one-liner
-- [ ] ⭐ 3 questions for them (programme stage, sprint mix, pre-Si↔post-Si handoff)
-- [ ] Thermal-headroom answer (7 levers) — backup if asked
-- [ ] DVFS in 60 sec (V^2*F, P-states, PCU/RPMh) — backup
-- [ ] C-state entry+exit flows (8 steps each) — backup
-- [ ] NPU stack + silent EP fallback — only if they pivot to your current work
-- [ ] Underperforming-teammate framework (can't vs won't) — likely behavioural
-- [ ] Honest framing: pre-Si depth + post-Si breadth, low-ego learner on Arm-native detail
-- [ ] Breathe. Calm. Specific. Concrete. Let them drill if they want depth.
+- [ ] ⭐ 3 questions for them written on a sticky (Section 0A step 8)
+
+### If the role is **pre-Si CPU / SoC**
+
+- [ ] ⭐ Pipeline hazards + OoO bug shapes (Section 6A table)
+- [ ] ⭐ Memory consistency (Day 16 one-liner) + ARM↔x86 mapping (if ARM shop)
+- [ ] ⭐ Coherence (Day 5 one-liner) — MESI walk + false sharing
+- [ ] ⭐ "Bring up a new CPU core in emulation" canonical walkthrough (Section 6A)
+- [ ] ⭐ Failing-assertion triage (test bug / RTL bug / spec bug)
+- [ ] ⭐ Tools name-drop comfort: VCS/Xcelium, Zebu/Palladium, Verdi, JasperGold, UVM, SVA, Perspec
+
+### If the role is **post-Si bring-up / platform**
+
+- [ ] ⭐ Bring-up canonical sequence (power → IO → boot → functional → perf → stress → corners)
+- [ ] ⭐ Throttle reason debug (which limit fired — PROCHOT, Tjmax, PL1/PL2)
+- [ ] ⭐ Cross-stack triage: app → ORT → EP → driver → FW → silicon, with bisection at each layer
+- [ ] ⭐ Reproducer discipline ("must run on golden HW without my platform")
+- [ ] ⭐ Tools name-drop comfort: JTAG, Lecroy, scope, RAPL, ETW/WPA, perf, ftrace
+- [ ] ⭐ Cold-path bugs (Day 19/20: bugs that hide in paths CI doesn't cover)
+
+### If the role is **NPU / AI accelerator**
+
+- [ ] ⭐ NPU stack walk (Day 18 one-liner): app → ORT → EP → vendor runtime → silicon
+- [ ] ⭐ Silent EP fallback (the canonical NPU bug — Bug 3)
+- [ ] ⭐ Where NPU bugs live (Day 19 one-liner): boundary attribution
+- [ ] ⭐ Energy-per-inference vs raw TOPS framing
+- [ ] ⭐ Per-inference attribution methodology
+
+### If the role is **system / SoC integration**
+
+- [ ] ⭐ Layer-boundary bug framing ("each IP passes its tests, system still wrong")
+- [ ] ⭐ DMA / barrier / doorbell pattern (Day 8 one-liner)
+- [ ] ⭐ PCIe + NVMe stack story (Days 10-11)
+- [ ] ⭐ Counter-driven debug — instrument every IP on the path, hand off to whoever's diverged
+
+### Backup tech (asked occasionally)
+
+- [ ] Thermal-headroom answer (7 levers) — Section 3
+- [ ] DVFS in 60 sec ($V^2F$, P-states, governor) — Section 4 + Day 12 one-liner
+- [ ] C-state entry+exit flows — Section 5 + Day 13 one-liner
+- [ ] Boot flow (5 generic phases, vendor mapping) — Day 9 one-liner
+- [ ] SRAM vs DRAM (6T vs 1T1C, refresh) — Day 4 one-liner
+- [ ] Static vs dynamic power (CV²F vs leakage) — Day 13 one-liner
+- [ ] Clock gating (RTL→synth→ICG→tiers) — Day 13 one-liner
+
+### Behavioural backups
+
+- [ ] Underperforming-teammate framework (can't vs won't)
+- [ ] Disagree-with-designer (data-led, disagree-and-commit)
+- [ ] "Time you missed something" (lesson > miss)
+- [ ] "What does a good day look like" (one-line ready)
+
+### Final breath
+
+- [ ] Honest framing: lens-relevant depth + adjacent breadth + low-ego learner
+- [ ] Breathe. Calm. Specific. Concrete. Lead with tradeoff, then mechanism, then validation hook.
+- [ ] Let them drill if they want depth.
 
 ---
 
-> **Senior-bar reminder:** at this level they're checking judgment more than knowledge. Tech question → **structured answer + trade-off + what you'd actually do.** Behavioural → **framework + real example + lesson.** Puzzle → **think aloud.**
+> **Senior-bar reminder:** at this level they're checking judgment more than knowledge. Tech question → **structured answer + tradeoff + what you'd actually do.** Behavioural → **framework + real example + lesson.** Puzzle → **think aloud.** Always lead with the *tradeoff* — that's what separates a senior validator from someone who memorised the spec.
 
 
