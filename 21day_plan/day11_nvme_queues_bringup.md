@@ -32,6 +32,33 @@ In the Layer map this is **Layer 4 (Storage on PCIe)**.
 
 NVMe was designed PCIe-native: per-CPU queues, per-queue MSI-X, simple 64 B commands, posted MMIO doorbell.
 
+### 1b. EEPROM vs NOR vs NAND Flash (what's actually inside the SSD, and why it matters)
+
+NVMe is the **protocol**. The media beneath it is **NAND flash** — and NAND has its own constraints that bleed up into validation. Quick taxonomy of non-volatile memory you'll meet on a platform:
+
+| Tech | Cell | Read | Write | Erase granularity | Endurance | Where you see it |
+|---|---|---|---|---|---|---|
+| **EEPROM** | floating-gate, byte-addressable | fast | slow (ms/byte) | **per byte** | ~1M cycles | tiny config stores: SPD on DIMMs, board ID EEPROMs, MAC-address store on NICs |
+| **NOR flash** | floating-gate, parallel array | **fast random read, XIP-capable** | slow | per sector (KB) | ~100K cycles | BIOS/UEFI SPI flash, boot ROM, FPGA bitstreams |
+| **SLC NAND** | 1 bit/cell | medium | medium | **per block (MB)** | ~100K | enterprise SLC SSDs, SLC cache layer in consumer SSDs |
+| **MLC/TLC/QLC NAND** | 2/3/4 bits/cell | medium | slower | per block | 10K / 3K / 1K | consumer/enterprise SSDs, UFS, eMMC |
+| **3D NAND** | TLC/QLC stacked vertically | similar | similar | per block | similar | every modern SSD |
+
+**The three rules of NAND that matter to a validator:**
+1. **You cannot overwrite. You can only erase-then-write.** Erase is **per block** (MB-scale), program is per page (KB). This asymmetry is why FTL exists.
+2. **Limited endurance.** Each cell tolerates a finite number of P/E (program-erase) cycles. TLC: ~3K, QLC: ~1K. Wear-leveling spreads writes; bad-block management retires worn cells.
+3. **Read disturb + retention loss.** Repeated reads of one page subtly stress neighbours; cells lose charge over months. Controller scrubs and re-reads at lower thresholds.
+
+**FTL (Flash Translation Layer)** — firmware inside the SSD controller that hides all of this. Maps logical LBAs → physical NAND pages, runs garbage collection, wear-leveling, bad-block management. The FTL is why a 4 KB write at LBA 0 may actually cause a 16 MB block read-modify-erase-write internally (**write amplification**).
+
+**Where these gotchas leak into NVMe validation:**
+- **Latency outlier under sustained writes** — looks like NVMe queue starvation; root cause is FTL garbage collection kicking in. Classic post-Si finding (Day 11 bug list).
+- **Power-loss recovery** — SSD must replay its FTL journal after surprise power-off. `Power Cycle` count + unsafe-shutdown count in SMART/Get-Log-Page tells you. (This is what your L&T NVMe power-scenario harness was exercising.)
+- **Slower writes after cache fill** — SLC cache exhausted on a TLC/QLC SSD → native TLC speed → looks like a perf cliff at a specific write volume.
+- **EEPROM/NOR vs NAND on the platform** — boot SPI flash is **NOR** (XIP, fast random read for boot code); the SSD is **NAND**; the DIMM SPD is **EEPROM**. Three different non-volatile techs on one board, each with different validation hooks.
+
+**One-liner for the interview:** *"NVMe is the host protocol; underneath is NAND flash with erase-per-block, P/E endurance limits, and an FTL hiding all of that — most NVMe perf and reliability bugs root-cause into the FTL, not the host stack."*
+
 ### 2. The queue-pair architecture
 
 ```

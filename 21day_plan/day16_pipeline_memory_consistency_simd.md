@@ -158,6 +158,48 @@ Vector widths:
 
 A few AVX-512 instructions in mostly-scalar code drag the whole core to license 2 for microseconds → scalar code surrounding them runs slower → net throughput **lower** than just using AVX2. Compiler flag `-mprefer-vector-width=256` exists for this reason.
 
+### 6b. Floating-point arithmetic — IEEE 754 and what goes wrong
+
+FP isn't "real numbers in a computer." It's a **finite, log-spaced grid of representable values** with hard rules about rounding and exceptions. Most "weird FP results" are not bugs in the FPU — they're the spec working as designed and software not respecting it.
+
+**IEEE 754 layout (the only formats you need cold):**
+
+| Format | Bits | Sign | Exponent | Mantissa | Approx range | Approx precision |
+|---|---|---|---|---|---|---|
+| **FP32** (single) | 32 | 1 | 8 (bias 127) | 23 + 1 implicit | ±10^±38 | ~7 decimal digits |
+| **FP64** (double) | 64 | 1 | 11 (bias 1023) | 52 + 1 implicit | ±10^±308 | ~15-16 decimal digits |
+| **FP16** (half) | 16 | 1 | 5 | 10 | ±65504 | ~3-4 digits |
+| **BF16** (bfloat16) | 16 | 1 | **8** (FP32 range) | 7 | ±10^±38 | ~2-3 digits |
+| **FP8** (E4M3 / E5M2) | 8 | 1 | 4 or 5 | 3 or 2 | small | ~1-2 digits |
+
+Value = `(-1)^sign × 1.mantissa × 2^(exp - bias)` (normal numbers).
+
+**Special values:** `+0`, `-0`, `±Inf` (exp all-ones, mantissa zero), `NaN` (exp all-ones, mantissa non-zero — quiet vs signalling), **denormals/subnormals** (exp zero, gradual underflow).
+
+**Rounding modes (IEEE 754):** round-to-nearest-even (default), round-toward-zero, round-up, round-down. The default is the only one most software ever sees, but DSP / NPU pipelines may pick differently per op.
+
+**The five FP exceptions:** invalid (0/0, sqrt(-1)), divide-by-zero, overflow, underflow, inexact. By default they set sticky flags; trap-on is opt-in.
+
+**What goes wrong (the actual interview/bug surface):**
+
+1. **Non-associativity.** `(a + b) + c ≠ a + (b + c)` in general. Re-ordering by the compiler (`-ffast-math`), by SIMD reduction trees, or by parallel-sum across cores changes the bit-exact result. Classic bug: "my unit test passes single-threaded, fails parallel" — it's not a race, it's reduction order.
+2. **Catastrophic cancellation.** Subtracting two near-equal numbers cancels the high bits and amplifies low-bit noise. Numerically stable algorithms (Kahan summation, log-sum-exp, two-pass variance) exist exactly for this.
+3. **Denormals tank performance.** Some hardware traps to microcode on denormal inputs/outputs → 100× slowdown. Audio/DSP code sets **FTZ** (flush-to-zero) and **DAZ** (denormals-are-zero) bits in MXCSR / FPCR. NPU / DSP pipelines often disable denormals entirely.
+4. **Overflow / underflow silently produces ±Inf or 0.** Then a downstream `Inf - Inf = NaN`, and now your whole tensor is NaN. Tracking down "first NaN" is the #1 ML-stack debug skill (`tf.debugging.check_numerics`, ORT `--enable_nan_check`).
+5. **NaN propagation + ordering.** Any arithmetic with a NaN yields NaN. Any comparison with NaN is **false** (including `NaN == NaN`) — use `isnan()`. Sort comparators that don't handle NaN go infinite.
+6. **`-0.0` vs `+0.0`.** Equal under `==` but distinguishable: `1/+0 = +Inf`, `1/-0 = -Inf`. Bites you in numerical kernels.
+7. **FP32 → FP16 / BF16 / FP8 quantisation (NPU world).** Different formats trade range vs precision: BF16 keeps FP32's range (great for training gradients), FP16 has more mantissa bits (better precision in a narrow range). Wrong choice → silent overflow to Inf in attention scores, or precision collapse in small activations.
+8. **FMA changes results.** Fused multiply-add `a*b + c` rounds **once**, not twice → different last-bit result vs separate mul + add. Compilers contract MUL+ADD into FMA opportunistically; turn off with `-ffp-contract=off` if bit-exact required.
+9. **x87 80-bit extended precision.** Legacy x87 stack uses 80-bit internally; spilling to memory rounds to 64-bit. Same expression yields different results depending on register pressure. Modern code uses SSE2/AVX scalar FP to avoid this entirely.
+10. **Cross-vendor non-bit-exactness.** Intel, AMD, ARM, NVIDIA, and a Hexagon NPU may all be IEEE-754-compliant and still produce different last-bit results for the same model — different op orderings, different transcendental approximations (sin/cos/exp are not specified to ULP), different FMA usage. Your post-Si NPU validation lives here: pick a tolerance (relative + absolute), don't bit-compare.
+
+**Validation reflexes:**
+- For numeric regressions, log: were FTZ/DAZ set? Was FMA contraction on? Was reduction order changed by a thread-count delta? Did a denormal slip in?
+- For NPU silent-fallback / accuracy bugs: compare INT8 quantised result vs FP32 reference under a defined tolerance (e.g. cosine similarity > 0.999, or per-element relative err < 1e-2). Bit-exact is the wrong goal.
+- For "first NaN" hunts: enable per-op NaN check, bisect to the layer, then look at the inputs for overflow-to-Inf or underflow-to-zero one stage upstream.
+
+**One-liner for the interview:** *"Floating point isn't real arithmetic — it's a finite grid with rounding rules. Non-associativity, denormal slowdowns, NaN propagation, and reduction-order changes are the four bug shapes you actually hit in validation; bit-exact across vendors is the wrong goal, defined tolerance is the right one."*
+
 ### 7. ISA at interview depth
 
 You don't need to write assembly. You need to articulate trade-offs:

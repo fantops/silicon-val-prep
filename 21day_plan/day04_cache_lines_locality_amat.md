@@ -46,6 +46,34 @@ Without caches, every load would stall the pipeline for 200-400 cycles. Caches k
 - LLC shared; on server SKUs up to 64 MB+.
 - Modern x86 server adds **CHA / mesh** between LLC slices and home agents.
 
+### 2b. SRAM vs DRAM (why caches are SRAM, why main memory is DRAM)
+
+The whole hierarchy above is one cell-tech tradeoff repeated:
+
+| Property | **SRAM** (caches, register file, TCM, VTCM) | **DRAM** (DDR4/5, LPDDR5, HBM) |
+|---|---|---|
+| Bit cell | 6 transistors (cross-coupled inverters + 2 access) | 1 transistor + 1 capacitor |
+| Density | low (big cell) | high (~10× denser per mm²) |
+| Speed | ~1 ns access | ~15 ns row activate, ~50-100 ns full random access |
+| Refresh? | **No** — stable as long as Vdd is on | **Yes** — every cell leaks; refresh every ~64 ms (per row, every ~7.8 µs) |
+| Volatile? | yes (loses state on power-off) | yes |
+| Power | leaky when on, **0 when power-gated** (C6 saves L1/L2 this way) | needs constant refresh → always burns *some* power even idle (DRAM self-refresh in S3) |
+| $/bit | expensive | cheap |
+| Where | on-die: L1, L2, L3, register file, TLB, BTB; on-package SRAM (eDRAM rare today) | DIMMs / on-package LPDDR / HBM stacks |
+
+**Why caches are SRAM:** speed + no refresh. A read is just a gated voltage compare — no row activate, no precharge. The cost is area: an L1D that's 64 KB of SRAM is ~6 × 64 KB × (transistors) on the die.
+
+**Why main memory is DRAM:** density + cost. You can't put 32 GB of SRAM on a die budget. The price is the row-activate / precharge / refresh dance and the ~100 ns latency you spend the rest of this day learning to hide.
+
+**Validation-relevant gotchas:**
+- **DRAM refresh stalls** — a refresh on the bank you're about to read costs you ~100 ns of extra latency. Looks like a perf jitter bug; root cause is just refresh collision.
+- **DRAM self-refresh entry/exit** — entering self-refresh saves power but exit latency is microseconds; PkgC6 / S0ix entry has to coordinate this with the memory controller (Day 13).
+- **SRAM retention voltage** — in C6 the core's V-rail drops to a *retention* voltage that keeps SRAM state (arch regs, L2 if retained) but can't switch. Drop too low → silent SRAM bit flip on wake. Classic pre-Si validation corner.
+- **eDRAM / on-die DRAM** existed (Intel Crystalwell L4) but is rare now — HBM stacks took over for high-BW use cases.
+- **3D-stacked HBM** — still DRAM cells; gets bandwidth via wide bus + TSVs, not faster cells.
+
+**One-liner for the interview:** *"SRAM is fast and doesn't refresh, so it's where caches live; DRAM is dense and cheap so it's main memory; the whole memory hierarchy is just hiding the ~100 ns DRAM cost behind layers of SRAM."*
+
 ### 3. Cache lines (64 bytes is the answer)
 
 Data moves between memory and cache in fixed-size **cache lines**, **64 bytes** on x86 and ARM. A single-byte load brings in the whole 64 B line.
