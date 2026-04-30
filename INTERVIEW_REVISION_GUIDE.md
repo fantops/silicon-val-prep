@@ -5,8 +5,10 @@
 >
 > Targets across the doc:
 > - **Today's round (Qualcomm, pre-Si CPU core, mixed)** — Section 0A
+> - **Adaptive answers (pre-Si / post-Si / system-level) + new-problem / coverage / workload frameworks** — Section 2A
+> - **Bug story bank** (5 stories, tagged by lens) — Section 4A
 > - **Behavioral / leadership** — Section 2
-> - **Career narrative** — Section 1
+> - **Career narrative + 3 reusable current-work framings** — Section 1
 > - **Pre-Si CPU core validation** (today's tech focus) — Section 6A
 > - **Backup tech** (thermal, DVFS, C-states, NPU) — Sections 3-6
 > - **Quick reflexes + checklist** — Sections 9, 10
@@ -101,8 +103,6 @@ Pick the one that comes up — go deep, don't sprint across all. Rehearse 1, 2, 
 
 ---
 
----
-
 ## SECTION 0 - Last-10-min cheat sheet
 
 | Theme | One-liner reflex |
@@ -115,9 +115,6 @@ Pick the one that comes up — go deep, don't sprint across all. Rehearse 1, 2, 
 | **Functional vs code coverage** | **Code = "did the line execute"; functional = "did the *intended scenario* fire". Functional matters more — 100% line + 0 functional intent finds nothing** |
 | **Arm weak vs x86 TSO** | **TSO: only store→later-load reorders. Arm: any pair reorders unless DMB / acquire-release. Producer needs `dmb st` + `stlr`; consumer needs `ldar`** |
 | **x86 → Arm vocab map** | **PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID, MWAIT↔WFI/WFE, MSR↔system-reg, P-state↔OPP, FIVR↔PMIC-over-SPMI** |
-| Why this role | NPU post-Si is where my Microsoft EdgeOptimizer work + Intel pre-Si experience converge - I've validated NPU silicon from bring-up to OEM ship |
-| Why Intel Ireland (other process) | Closes the loop — pre-Si + post-Si on one product, design centre on-site, EU base, English-speaking, deliberate long-horizon move |
-| Why relocate | Role-first not place-first; Leixlip is Intel's flagship non-US engineering site; family-stable, EU base, strong eng culture |
 | Lead-team-of-15 | I'd run as a tech lead, not pure manager. Daily standups, weekly 1:1s, clear ownership matrix, escalate blockers fast. Most senior IC + small-team lead is my comfort zone |
 | Underperforming teammate | First conversation: understand if it's **can't** (skill/blocker) or **won't** (motivation). Different responses for each |
 | Thermal goes up, don't want perf drop | Headroom buying: better cooling, lower V at same F (binning), spread load across cores, schedule heavy work to cool periods, use bigger/LITTLE cluster |
@@ -139,8 +136,25 @@ Pick the one that comes up — go deep, don't sprint across all. Rehearse 1, 2, 
 ### 30-second version
 > "8 years silicon validation. Microsoft now - NPU platform validation Copilot+ PCs (Intel/AMD/QC), built EdgeOptimizer. Intel before - Cambria Xeon pre-Si emulation (C-states, ADR, PCIe Gen6). L&T@SanDisk before that - NVMe post-Si bring-up. M.Tech NIT Durgapur."
 
+### Current work — three reusable framings (pick to match the audience)
+
+Use the framing that matches who's asking. **All three describe the same job; the lens shifts.**
+
+1. **Silicon-side framing (use for pre-Si CPU/SoC interviewers — Qualcomm today):**
+ > "I run platform-level silicon validation for the NPU subsystem on Copilot+ PCs across three vendors. My job is to find behaviours that only show up at the platform level — graph-partitioning escapes, driver/firmware/HW interaction bugs, power/perf regressions across DVFS and C-states — and feed them back to the silicon teams as actionable bug reports with reproducers. I work the layer that catches what pre-Si missed and tells the next-gen silicon team what to cover."
+
+2. **System / cross-stack framing (use for SoC, system-architecture, platform roles):**
+ > "I own NPU validation across the full stack — app, ORT runtime, execution provider, driver, firmware, silicon — on Intel, AMD and Qualcomm parts. The interesting bugs live at layer boundaries: an op the EP doesn't claim, a driver context-cache invalidation that triggers a recompile, a thermal lever that throttles the NPU when the CPU is hot. I built EdgeOptimizer to attribute energy and utilisation per-inference so we can argue about the right layer instead of guessing."
+
+3. **Tooling / leadership framing (use for staff / lead / EM rounds):**
+ > "I lead the platform NPU validation charter at Microsoft for Copilot+ PCs. Beyond the regression and bring-up work, I built the internal tooling — EdgeOptimizer, ETW pipelines, per-inference attribution — that the wider team and our OEM partners now use. Most of my recent leverage has been in turning one-off debug into reusable infra so the team scales without linear headcount."
+
+*Rule of thumb: lead with framing #1 today (pre-Si CPU audience). Hold #2 and #3 for follow-ups.*
+
 ### Why this role / why now
 - "I've done pre-Si and post-Si on three different vendors' silicon. NPU post-Si specifically is the layer I've been pushing hardest in - EdgeOptimizer was my way of building tooling that scaled across vendors. I want to do that work where the silicon is being designed, not just consumed."
+- *(Pre-Si CPU pivot:)* "Post-Si NPU work taught me what escapes look like in the field. Pre-Si CPU core is where I want to apply that — close those classes upstream before they ship."
+- *(System-level pivot:)* "I want a role where the same person who finds a bug also shapes the coverage plan that catches its siblings — pre-Si or system-level both let me do that. Post-Si alone doesn't."
 
 ### Strengths to lead with
 - **Cross-stack debug:** comfortable from RTL/emulation traces up through firmware, kernel drivers, ETW, OS scheduler.
@@ -209,8 +223,10 @@ STAR format: Situation, Task, Action, Result. Quantify where possible.
 
 ### Q: "Why leaving Microsoft?"
 
-**Frame positively:**
-> "Microsoft has been excellent for breadth - three vendors' NPUs and a tooling charter. The next thing I want is depth at the silicon side - working where the NPU silicon is being designed, not where it's being qualified. That's why a vendor-side post-Si role is the right next step."
+**Frame positively (pre-Si pivot, today's audience):**
+> "Microsoft has been excellent for breadth — three vendors' NPUs and a tooling charter. The next thing I want is depth at the silicon side: working pre-Si on a CPU core where I can shape what gets cast, not just qualify what comes back. Post-Si taught me what escapes look like; I want to bring that lens upstream."
+
+*(System / SoC audience variant: "… the next thing I want is to own a subsystem end-to-end inside a silicon team, rather than be the platform-side consumer of three vendors' silicon.")*
 
 ### Q: "Where do you see yourself in 5 years?"
 
@@ -223,6 +239,117 @@ Have 3 ready:
 2. "What's the regression cadence? How does a silicon escape get diagnosed?"
 3. "Where is the team in its growth - hiring to fill gaps, or hiring to scale?"
 4. "What does success look like in this role at 6 months and 12 months?"
+---
+
+## SECTION 2A - Adaptive answering: pre-Si / post-Si / system-level
+
+> **Use this when the interviewer says "how would you approach…".** The question shape is usually generic; the *good* answer is shaped to the role. Read the room first — pre-Si team, post-Si team, or system/SoC team — then pick the lens.
+
+### How to detect which lens to use
+
+| Cue from interviewer | Lens |
+|---|---|
+| "emulation", "RTL", "coverage plan", "testbench", "pre-tape-out", "DV" | **Pre-Si** |
+| "bring-up", "first silicon", "OEM", "field issue", "escape", "regression on platform" | **Post-Si** |
+| "end-to-end", "stack", "SoC integration", "platform", "cross-IP", "performance at system level" | **System-level** |
+
+If unclear → ask: *"Are you thinking pre-Si in emulation, post-Si on a board, or end-to-end on a platform? My approach is similar but the first move differs."* That single question buys credibility.
+
+### Generic answer template (works for any "how would you approach X?")
+
+> **1. Frame the goal** (what does "done" look like — coverage %, perf target, escape budget) → **2. Map the surface** (state space, IP boundaries, stakeholders) → **3. Pick the cheapest signal** (sim < emulation < FPGA < silicon; or log < trace < scope) → **4. Build the smallest reproducer** before scaling → **5. Distribute the work** (who owns what, what's the merge story) → **6. Define exit criteria up front**.
+
+Then specialise step 3 and 4 to the lens.
+
+### Lens 1 — Pre-Silicon (the answer for today)
+
+**Default first move:** "Read the spec, write the coverage plan, agree it with arch + design before writing a single line of stimulus." Coverage is a contract.
+
+**Tools by stage:**
+- *Block-level:* RTL sim (VCS/Xcelium) + UVM + SVA + formal for protocol invariants.
+- *Cluster / subsystem:* sim for focused regressions, emulation (Zebu/Palladium) for stress and OS boot.
+- *SoC:* emulation + FPGA prototype for SW co-dev.
+
+**Signals you trust:** functional coverage, assertion coverage, scoreboard mismatches, X-propagation reports. Code coverage is necessary not sufficient.
+
+**Mindset:** *"The test fails until I can prove the design is right under that stimulus. Don't change the design until the failure is deterministic and minimal."*
+
+**One-liner if asked "how would you approach a new pre-Si feature?":**
+> "Spec → state-space enumeration → functional coverpoints + crosses → SVA for invariants → CR stimulus for the bulk + directed for corners → review with arch and design → run, triage, close holes, repeat. Exit criteria agreed up front, not negotiated at tape-out."
+
+### Lens 2 — Post-Silicon (your current work)
+
+**Default first move:** "Bring-up checklist first — power, clocks, reset, IO link, smoke. Don't run a workload on silicon you haven't proved comes out of reset cleanly."
+
+**Tools by stage:**
+- *Bring-up:* JTAG, scope, LeCroy/protocol analyser, lab PSU + Quarch/Monsoon for power, vendor debugger.
+- *Functional:* OS-level test suites, vendor SDK conformance, golden-vector replays.
+- *Perf / power:* RAPL + ETW + WPA, per-IP counters, thermal cameras, sustained-workload harness.
+- *Field / OEM:* telemetry, crash dumps, repro on golden HW, A/B with last known good driver/FW.
+
+**Signals you trust:** deterministic repro on a known-good HW + driver + FW combination. Everything else is noise.
+
+**Mindset:** *"Silicon is fixed. My job is to characterise it, find the escapes, and either get a workaround into FW/driver or a fix into the next stepping. Every bug needs a reproducer that the silicon team can run without the platform."*
+
+**One-liner if asked "how would you approach a new post-Si bring-up?":**
+> "Power-on smoke → IO links up → boot to OS → vendor sanity suite → functional regression → perf characterisation → stress + thermal + power → corner cases. Each milestone gates the next; failures get a minimal reproducer before they leave my desk."
+
+### Lens 3 — System-level / SoC integration
+
+**Default first move:** "Map the IP boundaries and the data/control flows that cross them. The bugs live at the seams."
+
+**Tools:** end-to-end traces (Perfetto, ETW, ftrace), per-IP perf counters, system-level SVA at AXI/CHI boundaries, fault injection, workload mixes (real apps not microbenchmarks).
+
+**Signals you trust:** end-to-end latency/throughput under realistic mixed workloads; counter consistency across IPs (does CPU's view of memory traffic match the interconnect's view?).
+
+**Mindset:** *"Each IP can pass its unit tests and the system can still be wrong. My job is to design the workloads and instrumentation that exercise the integration."*
+
+**One-liner if asked "how would you approach a system-level perf regression?":**
+> "Reproduce on golden config → instrument every IP on the path → bisect (workload, kernel, driver, FW, silicon stepping) → identify the IP whose counters diverged → hand off to that IP team with a minimal repro and the trace. Don't blame; bring data."
+
+### Cross-cutting frameworks (every lens uses these)
+
+#### Approaching a new problem (the universal recipe)
+
+1. **Restate the problem in one sentence** out loud or in writing. If you can't, you don't understand it yet.
+2. **Define done** — what observable, measurable thing tells you you're finished?
+3. **Inventory what's known vs assumed** — list assumptions explicitly; each is a future bug.
+4. **Find the cheapest signal that disambiguates** — a 10-min experiment that rules out a hypothesis is worth more than a 2-day perfect one.
+5. **Build the minimum reproducer** before scaling.
+6. **Write down the plan** (3-7 bullets), share with one peer, then execute.
+7. **Timebox** — if no progress in N hours, change approach or ask for help. Stuck-time is the enemy.
+
+*Use this verbatim when asked "how would you approach a problem you've never seen before?"*
+
+#### Planning coverage (works for any IP, any lens)
+
+1. **Spec read** — every legal state, transition, stimulus. Write down ambiguities; file them.
+2. **State-space enumeration** — variables × ranges. Bin them; don't try to cover 2^N.
+3. **Functional coverpoints** — per-state, per-transition, per-event. Tag each to a spec section.
+4. **Crosses** — state × stimulus × neighbour-IP-state. This is where most real bugs live.
+5. **Corner buckets** — min, max, zero, overflow, back-to-back, interrupted, error-injection.
+6. **Assertions / invariants** — protocol rules expressed as SVA (pre-Si) or runtime checks (post-Si).
+7. **Stimulus strategy** — directed for the ugly corners, constrained-random for the bulk, real workloads for system-level.
+8. **Exit criteria** — % functional, % code, zero failing assertions, N clean regressions. **Agreed up front.**
+9. **Review** — with arch + design + (post-Si: with FW + driver owners). Coverage plan is a contract.
+10. **Iterate on escapes** — every found bug → "what coverpoint would have caught this?" → add it.
+
+#### Distributing workload (the tech-lead answer)
+
+When asked "you have N engineers and M weeks — how do you split the work?":
+
+1. **Decompose by IP / feature / lifecycle stage**, not by person. Get the work shape right first.
+2. **Identify the critical path** — what blocks tape-out / bring-up / ship. Staff that first, with your strongest IC + a backup.
+3. **One DRI per workstream** — directly responsible individual. Backup named. Escalation path written.
+4. **Match skill to workstream** — stretch assignments for growth, but never put a stretch on the critical path without a senior backup.
+5. **Parallelise the independent, serialise the dependent** — draw the dependency graph; anything not on the critical path can run in parallel.
+6. **Build shared infra once** — testbench, regression harness, triage portal. Don't let three people each build their own.
+7. **Cadence** — daily 15-min standup per sub-team, weekly 1:1s, weekly tech sync across leads, fortnightly milestone review.
+8. **Buffer** — keep ~20% capacity unallocated for triage, escapes, OEM escalations. A 100%-allocated team has zero resilience.
+9. **Visible state** — single dashboard of workstream health (green/yellow/red, owner, blockers). Update weekly.
+10. **Re-plan at every milestone** — not at every standup. Plans that change daily aren't plans.
+
+*One-liner version:* "Decompose the work, name a DRI per stream, staff the critical path first with backup, parallelise the independent, keep 20% buffer, and re-plan at milestones not standups."
 
 ---
 
@@ -295,9 +422,70 @@ P_leak ~ exp(T) approximately
 
 **DVFS bug shapes:** binning escape (V too low at F), PCU FW opcode-ordering (Cambria-style), per-cluster V-rail penalty (paying for noisy neighbour's V).
 
-### Cambria Core C6 bug — the headline pre-Si story (own this cold)
+*Headline pre-Si DVFS bug story (Cambria Core C6 wake-loss) lives in Section 4A as Bug 1.*
 
-> "On Intel Cambria Xeon, PCU firmware had an opcode-ordering issue in the C6 entry sequence. Under back-to-back snoop + timer wake-up traffic, a 1-deep CFC FIFO between core PMA and PCU could drop a wake acknowledgment. Symptom: thread blocked forever after a timer interrupt. Caught pre-Si on Zebu emulation by stress-pattern with overlapping snoop+IRQ. Fix: PCU FW added explicit re-arm after timeout. Would have been a P0 silicon escape."
+---
+
+## SECTION 4A - Bug story bank (pick by lens; rehearse the top 3)
+
+> **Pattern for every bug story (90 sec, STAR-ish):** *Context (1 line) → Symptom (1 line) → Hypothesis & repro (2 lines) → Root cause (2 lines) → Fix + impact (1 line) → Lesson / what I added to coverage (1 line).* End on the lesson, not the heroics.
+
+### ⭐ Bug 1 — Cambria Core C6 wake-loss (PRE-SI, headline for today)
+
+- **Context:** Intel Cambria Xeon, owned C6 entry/exit on Zebu emulation.
+- **Symptom:** sporadic emulation hang — one thread never resumed after a timer wake under stress.
+- **Repro:** built a directed stress pattern overlapping snoop traffic with timer IRQ at the C6 exit window; failure became deterministic in ~3 days of seed sweeping.
+- **Root cause:** 1-deep CFC FIFO between core PMA and PCU dropped a wake-ack when an opcode arrived in the same cycle as the snoop drain. Pure pre-Si bug — the spec said the FIFO had backpressure; the RTL didn't.
+- **Fix:** PCU FW added explicit re-arm-after-timeout; RTL added a 2-deep FIFO in the next stepping.
+- **Lesson / coverage added:** new functional coverpoint = `{snoop_active, irq_pending, c6_exit_state}` cross. Caught two more siblings in regression that quarter. **"Would have been a P0 silicon escape — this is the bug that made me believe in pre-Si."**
+
+### ⭐ Bug 2 — QNN driver context-cache invalidation (POST-SI, your current MS work)
+
+- **Context:** Qualcomm Snapdragon X Elite, NPU EP via QNN; OEM camera SR pipeline regressed first-launch latency by ~200 ms after a driver bump.
+- **Symptom:** every cold launch took the compile path instead of loading the cached binary; warm launches were fine.
+- **Repro:** ORT profiler showed `compile` phase on every cold launch; minimal repro = single-op model + reboot loop.
+- **Root cause:** driver's context-cache invalidation key over-invalidated on a benign metadata change → cache miss → full graph rebuild.
+- **Fix:** filed with reproducer; vendor narrowed the invalidation key in next driver. Saved OEM ~200 ms first-launch on the camera SR scenario.
+- **Lesson:** added cold-launch latency as a first-class regression metric in EdgeOptimizer (was previously only warm-launch). **"Post-Si bugs hide in the cold paths nobody runs in CI."**
+
+### ⭐ Bug 3 — Silent EP fallback (SYSTEM-LEVEL, cross-stack)
+
+- **Context:** Copilot+ workload, mixed-vendor (Intel/AMD/QC), one model started running on CPU instead of NPU after an ORT version bump.
+- **Symptom:** functional pass, perf collapse — inference latency 8× higher, NPU utilisation 0.
+- **Repro:** EdgeOptimizer's per-inference EP-assignment log showed every node assigned to CPU EP. Bisect on ORT version pinned it.
+- **Root cause:** ORT graph partitioner now required a newer opset for an op the EP supported in the older opset → the EP refused the whole subgraph silently → CPU fallback.
+- **Fix:** opset bump in model export pipeline; opened ORT issue to make silent-fallback noisy (warning by default).
+- **Lesson / coverage added:** "silent-fallback detector" became a permanent EdgeOptimizer check; now part of every OEM pre-ship audit. **"Functional-pass perf-fail is the most expensive class of bug because nobody's alarms go off."**
+
+### Bug 4 — NVMe CSTS.RDY hang (POST-SI bring-up, early-career, use sparingly)
+
+- **Context:** L&T@SanDisk, NVMe SSD bring-up, JTAG + Metaware + LeCroy.
+- **Symptom:** controller never asserted `CSTS.RDY=1` after `CC.EN=1` on cold boot in ~1/50 power cycles.
+- **Repro:** Python power-scenario harness toggling rails at varied ramp rates; failure rate climbed at fast ramps.
+- **Root cause:** PHY calibration FSM raced power-good signal at fast V-ramp; a state was sampled before stable.
+- **Fix:** FW added a 2-ms guard delay before kicking the calibration FSM; later stepping fixed the FSM reset.
+- **Lesson:** rail-ramp variance belongs in the standard bring-up matrix, not just a one-off characterisation. **"Bring-up bugs that only fire 1-in-N are almost always race conditions, not 'bad units'."**
+
+### Bug 5 — CXL firmware ordering (PRE-SI, Star of the Month)
+
+- **Context:** Cambria Xeon, CXL link bring-up on Zebu, joined the debug as the emulation owner.
+- **Symptom:** intermittent CXL.cache transaction hang during link training under specific FW build.
+- **Repro:** narrowed by bisecting FW images against last-known-good RTL; built a smaller traffic pattern that fired in <1 hr instead of overnight.
+- **Root cause:** FW issued a config-write before a credit-return on the same VC; legal per spec but exposed an RTL ordering assumption.
+- **Fix:** FW reordered; RTL added an SVA for the assumption so it can never silently re-emerge.
+- **Lesson:** *"When the spec is ambiguous, write the assertion first — it pins the agreement."* Won Star of the Month.
+
+### How to pick which story
+
+| If they ask about… | Lead with |
+|---|---|
+| Pre-Si CPU / RTL / emulation | Bug 1 (Cambria C6) |
+| Pre-Si subsystem / fabric / FW interaction | Bug 5 (CXL) |
+| Post-Si platform / driver / FW | Bug 2 (QNN) |
+| Post-Si bring-up / silicon characterisation | Bug 4 (NVMe CSTS.RDY) |
+| System-level / cross-stack / perf regression | Bug 3 (silent EP fallback) |
+| "Hardest bug you've owned" (open-ended) | Bug 1 if pre-Si audience, Bug 3 if system audience |
+| "Most impactful bug" | Bug 2 (quantified OEM impact) or Bug 1 (would-have-been-respin) |
 
 ---
 
@@ -405,21 +593,6 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 | Reset / init | X-propagation through a non-reset flop on first cycle |
 | Clock domain crossing | Async FIFO metastability not protected by sync flops on one of N paths |
 
-### Coverage plan — the canonical answer
-
-If asked "design a coverage plan for *X*":
-
-1. **Read the spec.** Identify every state, every legal transition, every legal stimulus.
-2. **Enumerate the state space.** Variables + ranges. Bin them (don't try to cover all 2^N).
-3. **Define functional coverpoints + crosses.**
-   - Per-state: "did we hit state S with attribute A=foo, B=bar?"
-   - Crosses: state × stimulus × neighbour-state.
-   - Corner buckets: min/max/zero/overflow/back-to-back/interrupted.
-4. **Add SVA** for protocol invariants (e.g. "req → eventually ack within N cycles", "no two grants in same cycle").
-5. **Pick stimulus strategy:** directed for the ugly corners, CR for the bulk. Constrain to legal but biased toward interesting.
-6. **Define exit criteria:** % functional coverage, % code coverage, zero failing assertions, regression clean for N runs.
-7. **Review with arch + design.** Coverage plan is a contract; it has to be agreed before you start measuring.
-8. **Iterate.** When a bug is found that the plan would have missed, add the coverpoint that would have caught it.
 
 ### Sporadic emulation failure — the canonical debug answer
 
@@ -446,11 +619,20 @@ If asked "design a coverage plan for *X*":
 
 **Stack:** App → ORT/DirectML → Execution Provider (QNN/OpenVINO/XDNA) → vendor driver+FW → NPU silicon (Hexagon HMX+HVX) → shared DDR / VTCM SRAM.
 
-**Silent EP fallback (THE post-Si NPU bug):** one unsupported op → whole graph silently drops to CPU EP → functional pass, perf collapses. Detect via per-node EP_assignment log.
+**What I actually do (generic, role-agnostic version):**
+- Own the regression + bring-up matrix for new NPU silicon arrivals across three vendors. Each vendor = different EP, different FW cadence, different debug surface.
+- Per-inference attribution: tie energy / utilisation / latency back to the specific node, EP, and HW IP that ran it. This is what makes silent fallbacks visible.
+- Cross-stack triage: a regression could be model export, ORT, EP, driver, FW, or silicon stepping. My job is to bisect to the layer and hand off with a minimal repro the silicon team can run without my platform.
+- Tooling: EdgeOptimizer (ETW + WPA + RAPL pipeline, per-inference attribution, silent-fallback detection). Reused by the team and OEMs.
+- OEM-facing: when an OEM ships a Copilot+ device, I'm the escalation point for NPU-related issues found in their qualification.
 
-**QNN page-fault bug story (own this):** at Microsoft, driver bump caused first-run latency spike on every cold launch. Root-cause: context-cache invalidation over-invalidating → rebuilt binary instead of loading cache. Detected via ORT profiler showing compile phase on every launch. Filed with reproducer; vendor shipped fix; saved OEM 200ms first-launch on camera SR.
+**Silent EP fallback (THE post-Si NPU bug):** one unsupported op → whole graph silently drops to CPU EP → functional pass, perf collapses. Detect via per-node EP_assignment log. *Full story = Bug 3 in Section 4A.*
 
-**Honest framing:** "Platform-side NPU validation — graph partitioning, EP fallback, energy/inference, version-matrix regression. Not Hexagon RTL. Value-add is cross-stack debug app→driver and tooling that scales across vendors (EdgeOptimizer: ETW + RAPL + per-inference attribution)."
+**QNN page-fault / context-cache bug:** *Full story = Bug 2 in Section 4A.* One-liner: driver context-cache over-invalidation → every cold launch recompiled → 200 ms first-launch hit on OEM camera SR → vendor narrowed the invalidation key.
+
+**Honest framing:** "Platform-side NPU validation — graph partitioning, EP fallback, energy/inference, version-matrix regression. Not Hexagon RTL. Value-add is cross-stack debug app→driver and tooling that scales across vendors."
+
+**How to pivot this work to a pre-Si CPU audience (today):** "The reason this work matters for a pre-Si role is that I see exactly which classes of bug escape pre-Si and surface at the platform. Silent fallbacks, cold-path bugs, version-matrix bugs — these are coverage holes upstream. I want to bring that 'what escapes look like' lens back into a pre-Si team."
 
 ---
 
@@ -501,9 +683,14 @@ If asked "design a coverage plan for *X*":
 **For TODAY (Qualcomm pre-Si CPU core, mixed):** prioritise the ⭐ items.
 
 - [ ] ⭐ Career narrative (60 sec) — lead with **pre-Si Cambria → post-Si NPU → back to pre-Si CPU core**
+- [ ] ⭐ Current-work framing #1 (silicon-side lens, Section 1) rehearsed — NOT the OEM-side default
 - [ ] ⭐ "Why pre-Si after post-Si?" answer ready (Section 0A)
-- [ ] ⭐ Cambria Core C6 wake-loss bug — full STAR story
-- [ ] ⭐ Coverage plan recipe (8 steps, Section 6A)
+- [ ] ⭐ Cambria Core C6 wake-loss bug — full STAR story (Bug 1 in Section 4A)
+- [ ] ⭐ One backup bug ready (CXL = Bug 5, or QNN = Bug 2 if they pivot to current work)
+- [ ] ⭐ Adaptive answer cue: if asked "how would you approach…", clarify pre-Si vs post-Si vs system first (Section 2A)
+- [ ] ⭐ Coverage plan recipe (10 steps, Section 2A)
+- [ ] ⭐ New-problem framework (7 steps, Section 2A) — for open-ended "never seen this before" questions
+- [ ] ⭐ Workload-distribution framework (10 steps, Section 2A) — for tech-lead / N-engineers questions
 - [ ] ⭐ Sporadic emulation debug recipe (deterministic → minimal → bisect, Section 6A)
 - [ ] ⭐ Arm-vs-x86 mapping ready (PCU↔RPMh, IOMMU↔SMMU, PCID↔ASID, TSO vs weak)
 - [ ] ⭐ Pipeline hazards + OoO bug shapes (Section 6A table)
