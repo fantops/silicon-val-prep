@@ -156,31 +156,30 @@ These are distinct layers. Calling the QNN/ORT regression a "cache miss" is a vo
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Walk `0x0000_7FFF_FFFF_E000` through 4-level x86-64 paging.**
-PML4[0xFF], PDPT[0x1FF], PD[0x1FF], PT[0x1FE], offset 0x000.
+*Virtual memory is a contract between OS, MMU, and DRAM. Each design choice trades latency, area, and software policy. Derive — don't recall. No answer key.*
 
-**Q2. Minor vs major page fault?**
-Minor: page is in RAM but PTE wasn't present (COW, demand-zero, freshly touched). Microseconds. Major: page must be read from disk. Milliseconds.
+**D1. Why a 4-level page table on x86-64 — why not a single flat translation array?**
+*Constraints to weigh:* 256 TB VA space → flat would need $2^{36}$ PTEs = 256 GB per process; sparse address space is the norm; walk cost vs page-table memory cost; tradeoff between depth (walk latency) and breadth (radix). 5-level for 57-bit VA — what forced the addition, and what's the next inflection?
 
-**Q3. Why does the page offset pass through translation unchanged?**
-The page is contiguous in both VA and PA spaces; the offset identifies a byte within the page.
+**D2. Why are minor page faults charged to the OS, not the hardware?**
+*Constraints to weigh:* page-table state lives in OS-owned memory, allocator policies (COW, demand-zero, swap-in) are policy not mechanism, hardware would need to know file-backed vs anonymous, security boundary. What would a "hardware-resolves-minor-faults" SoC look like, and what would it cost in flexibility?
 
-**Q4. Which PTE bits matter for an MMIO mapping?**
-P, R/W, U/S, **PWT/PCD set so the page is uncached**, NX. PWT/PCD wrong is a textbook MMIO bug.
+**D3. Why is the page offset never translated — what design freedom does that lock in?**
+*Constraints to weigh:* pages are physically contiguous within themselves, offset bits skip the TLB entirely, page-size choice trades TLB coverage vs internal fragmentation. If pages were *not* required to be physically contiguous, what does the MMU need to look like instead?
 
-**Q5. Cost of a full 4-level walk?**
-Up to 4 memory accesses (~400 ns uncached); reason TLB exists.
+**D4. MMIO PTEs need PWT/PCD set. Why doesn't the CPU just detect "this address is in a device range" and bypass the cache automatically?**
+*Constraints to weigh:* range registers (MTRRs) actually do this on x86 but are coarse and limited; per-page attribute is finer; who owns the device-range knowledge (BIOS/firmware, OS, neither). What does the hybrid (MTRR + PAT) buy — and what bug class would PAT-only invite?
 
-**Q6. PCID / ASID — what do they buy?**
-Tag TLB entries with process ID so a context switch doesn't flush the TLB.
+**D5. TLB shootdown is an IPI storm. Construct the workload where it dominates wall time, and reason about how to design it away.**
+*Constraints to weigh:* `munmap` rate, cores-per-process, per-PTE invalidation cost, ASID/PCID amortisation, range-flush hardware (`TLBI VMALLE1` vs `TLBI VAALE1`). ARM has hardware-broadcast TLBI; x86 doesn't. Why the divergence — area vs ABI?
 
-**Q7. Was the QNN/ORT regression a cache problem?**
-No — it was a virtual-memory / minor-fault problem at 4 KB page granularity, not a 64 B cache locality problem.
+**D6. Imagine DRAM becomes byte-addressable persistent (NVDIMM-style throughout). Does the page-fault model survive?**
+*Constraints to weigh:* zero-copy memory-mapped IO, CoW semantics on persistent state, what "minor fault" means when the page is always present, durability barriers, file-system-as-memory-allocator. Where do faults still earn their place, and where do they collapse?
 
-**Q8. How does a 2 MB huge page skip a level?**
-The PD entry has the PS bit set and points directly to a 2 MB-aligned frame; the PT level is skipped, bits [20:0] become offset.
+**D7. Page faults vs TLB misses vs cache misses are three different layers. From a perf trace alone — without naming any counter first — derive a heuristic to tell them apart.**
+*Constraints to weigh:* user/kernel time split, per-event latency distributions (ns vs µs vs ms), correlation with `mmap`/`brk` syscalls, CPI breakdown shape. What does the latency histogram tell you before you read any specific counter?
 
 ---
 

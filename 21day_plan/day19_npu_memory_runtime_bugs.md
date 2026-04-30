@@ -234,37 +234,30 @@ For any "NPU bug" report:
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Page-fault count jumped 14×, virtual memory grew 67%. Silicon bug?**
-No — almost certainly host runtime memory lifecycle. Build version matrix; correlate page faults with VirtualAlloc and peak VM together.
+*NPU bugs are mostly platform-layer (lifecycle, EP, scheduler, power) not silicon. Reason about why — and what evidence would actually justify escalation. No answer key.*
 
-**Q2. Camera preview drops frames whenever Paint SR runs — root cause path?**
-Single non-preemptive NPU command queue. SR's 36 tiles run back-to-back ahead of Camera's tile. GPUView shows the wait.
+**D1. The QNN page-fault bug looked like silicon. Reason from first principles about why "page faults spike" is almost never silicon.**
+*Constraints to weigh:* page faults are OS-visible at 4 KB granularity, hardware doesn't distinguish minor from major, allocator policy lives in user/kernel, version-matrix isolates per layer. What's the one signal that *would* point at silicon?
 
-**Q3. ORT verbose log says half your ops landed on CPUExecutionProvider. What broke?**
-Silent EP fallback. Likely cause: QDQ pattern not recognised after rebuild; check `keep_quantized_weights`. Or EP version mismatch; or unsupported op variant.
+**D2. HTP has a single non-preemptive command queue. Reason about whether preemption is the right architectural fix.**
+*Constraints to weigh:* tile-DMA in flight at preempt, save/restore cost of NPU state (registers + VTCM), latency-vs-throughput trade, framework-side priority lanes as alternative. What does a GPU's preemption granularity do differently, and why doesn't an NPU just copy it?
 
-**Q4. Per-tile latency on a model doubled with no code change. First check?**
-QNN profile + compile log. Suspect tile-size cliff: tile no longer fits in VTCM; one compute tile = two DMA trips.
+**D3. EP fallback to CPU is silent. Reason from first principles about what *should* break loudly.**
+*Constraints to weigh:* developer ergonomics vs perf-cliff visibility, model-portability promise, regression-gate threshold. Construct the gate that catches it without false positives — what's the metric that distinguishes "I meant to fall back" from "I didn't notice"?
 
-**Q5. PkgC10 residency dropped after enabling NPU EP. Why?**
-NPU runtime keep-alive holds device in active power state; blocks package idle entry (Day 13).
+**D4. NPU runtime keep-alive blocks PkgC10. Reason from first principles about why the runtime even has a keep-alive policy.**
+*Constraints to weigh:* first-frame latency (compile + DMA setup), context-load cost, idle-power vs warm-state, S0ix-residency target. What's the right tradeoff curve, and who decides — runtime, framework, or OS?
 
-**Q6. EP fallback vs scheduler bug — how do you tell them apart?**
-EP fallback: CPU% high during inference; EP-assignment log shows CPU ops. Scheduler bug: NPU command queue is busy; latency is wait-time, not compute-time; GPUView shows waiting at queue head.
+**D5. Version matrix (EP × ORT × SDK × model build). Reason about why "vary one variable" wins over "fix the latest."**
+*Constraints to weigh:* combinatorial regression space, hidden coupling between versions, what reproducibility looks like in a 4D matrix. What's the smallest matrix that catches 90% of regressions, and which axis is most often the culprit?
 
-**Q7. Why is "never blame silicon first" the rule?**
-Most NPU bug reports are runtime / EP / model / build issues. A wrong silicon claim costs IHV-side time and can derail a tape-out plan. Cross-check IHV only after you've isolated to a layer.
+**D6. "Never blame silicon first." Reason about the cost asymmetry that makes this rule load-bearing.**
+*Constraints to weigh:* IHV escalation cost, silicon-fix cycle (months), reputational risk of false-positive RTL claims, time-to-isolate at platform layer. When does the rule reverse — what evidence is sufficient to escalate to IHV?
 
-**Q8. What goes in an NPU regression gate?**
-EP version, ORT version, QNN SDK version, model build hash, EP-assignment ratio (%NPU), per-tile latency, page-fault count, peak VM, S0ix residency.
-
-**Q9. The "version matrix" — what is it and why?**
-Cartesian product of independently-versioned components (EP × ORT × SDK × model build). Vary one at a time to isolate which version step caused the regression. Without the matrix you guess.
-
-**Q10. Honest framing on the QNN page-fault story — what did you NOT do?**
-Did not debug Hexagon RTL, did not claim a VTCM hardware defect. Worked at the platform layer with OS counters, ORT/QNN logs, and source-code pointers.
+**D7. Imagine an NPU that's coherent (CXL.cache peer of CPU). Which Day-19 bug classes survive and which die?**
+*Constraints to weigh:* DMA-lifecycle bugs (gone), context-cache (still needed), EP fallback (still applicable), scheduler bugs (still single-queue HW), S0ix (still a power-budget issue). What new bug class appears that didn't exist when NPUs were DMA-only?
 
 ---
 

@@ -183,37 +183,30 @@ State **time/space complexity unprompted** for every solution: "O(n log n) avera
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Spinlock vs mutex — when each?**
-Spinlock: very short CS (<µs), rare contention, cannot sleep (IRQ). Mutex: longer CS, contention possible, blocking thread is acceptable. Hybrid: spin briefly, then sleep.
+*Concurrency primitives are constrained by the memory model, cache-line geometry, and contention shape. Derive which primitive wins under which constraints. No answer key.*
 
-**Q2. Acquire / release in one minute.**
-Acquire on a load: no subsequent reads/writes can reorder before. Release on a store: no preceding reads/writes can reorder after. Pair them: producer release-stores a flag; consumer acquire-loads it; everything before the release is visible after the acquire.
+**D1. "Pick the weakest correct memory order" is the rule. What's wrong with always using seq_cst?**
+*Constraints to weigh:* seq_cst forces a global total order — full-fence semantics (drain store buffer, snoop, IPI on weak archs), perf cost on every atomic op, lock-free DS throughput drop. Construct the workload where seq_cst is 10× slower than acq/rel.
 
-**Q3. Why can SPSC be lock-free but MPSC/MPMC need locks or CAS?**
-SPSC has one writer per pointer → no CAS needed for the writer side; only acquire/release for visibility. MPSC: multiple producers race on `tail` → CAS or per-producer slot. MPMC: CAS both ends + ABA defence.
+**D2. SPSC is lock-free; MPSC needs CAS. Reason from first principles why one writer changes the algorithm class.**
+*Constraints to weigh:* head/tail single-owner invariant, no race on increment, what breaks at two writers (lost increment, torn pointer). Why is per-producer-slot + epoch reaping a workaround, not a fix?
 
-**Q4. False sharing on a ring — describe and fix.**
-Producer writes `tail`, consumer reads `head`; if they share a 64 B line, every write invalidates the other side's cached copy → cache-line ping-pong. Fix: `alignas(64)` on each.
+**D3. ABA defends against reuse-during-CAS. Reason about why hardware doesn't just provide a wider CAS that bakes in a counter.**
+*Constraints to weigh:* DCAS (double-word CAS) exists on x86 (cmpxchg16b) and ARM (LDXP/STXP), but most lock-free libs avoid it — generation-counter overflow, portability, why hazard pointers / RCU often win. What would a 128-bit native CAS actually unlock that DCAS doesn't?
 
-**Q5. ABA — what is it?**
-Pop reads ptr A → descheduled → another thread pops A, pushes B, pushes A again at a different version → original CAS succeeds against the wrong "A". Fix: tagged pointer / hazard pointer / RCU / epoch GC.
+**D4. Spinlocks are pointless on uniprocessor. Construct — if you can — a UP workload where spinlocks beat mutexes.**
+*Constraints to weigh:* preemption-disabled regions, ISR vs task context, hybrid spin-then-sleep, expected-CS-length distribution. What does Linux actually compile spinlocks to on UP, and why?
 
-**Q6. Why is `volatile` not enough for cross-core synchronisation?**
-`volatile` only constrains the compiler for that variable's accesses; doesn't constrain CPU reordering and doesn't ensure cross-core visibility. Use `_Atomic` with the right memory order.
+**D5. Cache-line padding fixes false sharing but wastes memory. Construct an SPSC ring that is contention-free without padding.**
+*Constraints to weigh:* head and tail on different lines, batch updates, separate "shadow" copies in producer/consumer cores. What does kfifo / DPDK rte_ring actually do, and where does the trick fail?
 
-**Q7. State complexity for two-sum (sorted vs unsorted).**
-Unsorted: O(n) time + O(n) space (hashmap). Sorted: O(n) time + O(1) space (two pointers).
+**D6. `volatile` is not a synchronisation primitive. Reason from first principles about why beginners think it is.**
+*Constraints to weigh:* compiler-side ordering for that variable vs CPU-side ordering vs cross-core visibility, single-core asymmetry, "it works on x86" trap. What language change would make volatile genuinely sufficient — and why does no language do it?
 
-**Q8. BFS vs DFS — which to use for shortest path on an unweighted grid?**
-BFS — first time you reach the target is guaranteed shortest because all edges cost 1.
-
-**Q9. Top-K largest in a stream — data structure?**
-Min-heap of size K. Push every element; if heap size > K, pop. O(n log K).
-
-**Q10. Spinlock on a uniprocessor — what happens?**
-Pointless — holder can't run while you spin. Yielding mutex is the right choice.
+**D7. Lock-free is not wait-free. Construct a workload where you need wait-free, not just lock-free.**
+*Constraints to weigh:* hard real-time deadlines, ISR contexts, attacker-resistant data structures, fairness. What does wait-free buy that lock-free can't, and why isn't it the default?
 
 ---
 

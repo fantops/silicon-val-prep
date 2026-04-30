@@ -218,40 +218,30 @@ command_id (16) | status (16)  ← bit 0 = phase, bits [15:1] = SC/SCT/M/DNR
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why does NVMe scale beyond AHCI?**
-Per-CPU lock-free queues, MSI-X per queue, posted doorbells, simple 64 B commands, no SATA translation.
+*NVMe is the shape of every queue-based device protocol. Each design choice (per-CPU SQ/CQ, posted doorbell, phase bit, PRP) is a tradeoff. Derive — don't recall. No answer key.*
 
-**Q2. Why are doorbells posted writes?**
-One-way notify, no response needed; non-posted would round-trip per IO and serialise submissions.
+**D1. NVMe scales to 1M+ IOPS where AHCI tops out at 200K. Reason from first principles which design choice mattered most.**
+*Constraints to weigh:* per-CPU queues (lock contention), MSI-X-per-queue (interrupt aggregation), 64-byte commands (cache footprint), posted doorbells (CPU stall), the death of the SATA translation layer. Rank them — which one would have been worth doing alone?
 
-**Q3. Phase bit — what does it save?**
-Per-IO `memset` on completions and a per-completion device→host doorbell. One bit comparison per poll.
+**D2. Why must the host disable the controller (`CC.EN=0`) before writing AQA/ASQ/ACQ? What hardware state would the alternative break?**
+*Constraints to weigh:* admin-queue base in registers vs in flight, in-flight admin commands referencing the old base, atomic re-arm of the controller front end. What would let a future spec skip the disable dance?
 
-**Q4. Disable / re-enable sequence in detail.**
-`CC.EN=0`; poll `CSTS.RDY=0` (within `CAP.TO × 500 ms`); only **then** write `AQA`/`ASQ`/`ACQ`; `CC.EN=1`; poll `CSTS.RDY=1`. AQA/ASQ/ACQ writeable only while disabled.
+**D3. Phase bit on completions saves a doorbell. Construct the trade-off and a workload where the phase bit *loses*.**
+*Constraints to weigh:* per-completion poll cost vs per-batch doorbell cost, cache-line write traffic on the host side (every CQE write is a coherence event), false-completion detection. What is the analogous trick on a CXL device, and what changes?
 
-**Q5. `CSTS.RDY` never goes to 1 — debug path.**
-`CSTS.CFS` first. Then re-read AQA/ASQ/ACQ from BAR0 (writes stuck? alignment?). Then re-derive `DSTRD`. Then IOMMU EVTQ for the first DMA. Then PCIe link state. Last: power-cycle + protocol analyser capture.
+**D4. PRPs vs SGLs. Reason about why NVMe started with PRPs and added SGLs later.**
+*Constraints to weigh:* PRP has a 4 KB stride assumption (page-shaped IO), SGL allows arbitrary scatter, hardware complexity of SGL traversal, host-side allocator pressure. What workload class forced SGLs into the spec?
 
-**Q6. Why physical (or IOVA) addresses in PRPs?**
-Controller is a PCIe DMA master; no concept of OS virtual address space. Driver translates with `dma_map_*` and writes the returned address.
+**D5. "`CSTS.RDY` never asserts" has a standard suspect list. Derive that list from the bring-up state machine without recall.**
+*Constraints to weigh:* what each register write must traverse (host → PCIe → controller fabric → NVMe FW), where each can fail (alignment, IOMMU, DSTRD, link state), what the controller is *trying* to do internally before asserting RDY. Walk the failure points and build the list.
 
-**Q7. Identify Controller vs Identify Namespace — why both?**
-Controller-level: vendor, MQES, MDTS, NS count. Namespace-level: capacity, LBA size (512 vs 4096), atomic write size. Driver needs both to issue valid IO.
+**D6. NVMe is PCIe-native. Imagine a future fabric where the SSD is a CXL.mem peer (memory-semantic SSD). Which NVMe artefacts survive?**
+*Constraints to weigh:* ring-buffer SQ/CQ vs load/store semantics, doorbell vs cache-line write, completion vs eviction. What's the new bug class that didn't exist for NVMe-over-PCIe?
 
-**Q8. Doorbell offset for SQ tail of queue 1 with `DSTRD=1`?**
-`0x1000 + 2*1 * 8 = 0x1010`.
-
-**Q9. `AQA` for a 32-entry admin SQ and 32-entry admin CQ?**
-`((32-1) << 16) | (32-1) = 0x001F001F`.
-
-**Q10. Create-order for I/O queues?**
-I/O **CQ** first (opcode 0x05), then I/O **SQ** that points at it (opcode 0x01). Reverse → `Invalid Completion Queue`.
-
-**Q11. Completion never arrives. Top 3 suspects?**
-PRP holds a virtual address (no DMA mapping); SMMU/IOMMU fault on the data DMA; CQ base wrong (controller wrote completion to nowhere).
+**D7. Per-CPU queue is the scaling unlock. Reason about what limits it as core counts go to 1024.**
+*Constraints to weigh:* MSI-X vector exhaustion, controller-side queue arbitration, IO-completion fanout, command-tag ID space. Where does the model break, and what's the next layer of partition?
 
 ---
 

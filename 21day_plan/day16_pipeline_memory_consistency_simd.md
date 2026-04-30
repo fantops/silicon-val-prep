@@ -227,38 +227,34 @@ Calling conventions: x86-64 SysV vs Microsoft x64 vs AArch64 AAPCS — relevant 
 
 ## Interview Explanation (60-90 sec)
 
-> "Modern cores are deeply pipelined out-of-order machines. The front end fetches, predicts, decodes, and feeds μops; on x86 a μop cache bypasses the variable-length decoder bottleneck. The backend renames registers into a large physical file to kill WAR and WAW, schedules μops to functional units when operands are ready, and retires in order through the ROB. Three hazards block the pipeline: structural, data, control. The memory consistency model decides what reorderings the hardware exposes — x86 is TSO so most code "just works," ARM is weak so you have to put `dmb st` between data and flag in any producer-consumer pattern. SIMD widens each instruction; on Intel each wider class draws more current, so the license level preemptively cuts core frequency to maintain V margin — sprinkling AVX-512 into mostly-scalar code can be a net loss. Prefetchers hide latency, but they also hide bugs — disabling them is a standard triage step when silicon A passes and silicon B regresses."
+> "Modern cores are deeply pipelined out-of-order machines. The front end fetches, predicts, decodes, and feeds μops; on x86 a μop cache bypasses the variable-length decoder bottleneck. The backend renames registers into a large physical file to kill WAR and WAW, schedules μops to functional units when operands are ready, and retires in order through the ROB. Three hazards block the pipeline: structural, data, control. The memory consistency model decides what reorderings the hardware exposes — x86 is TSO so most code "just works," ARM is weak so you have to put `dmb st` between data and flag in any producer-consumer pattern. The classic tell is a ring buffer that passes a 24-hour x86 stress and falls over in minutes on a Snapdragon dev kit: consumer sees `ready=1` with stale payload because the producer's two stores reordered at retire — `dmb st` between them, or release-store on the flag, fixes it without touching the consumer. SIMD widens each instruction; on Intel each wider class draws more current, so the license level preemptively cuts core frequency to maintain V margin — sprinkling AVX-512 into mostly-scalar code can be a net loss. Prefetchers hide latency, but they also hide bugs — disabling them is a standard triage step when silicon A passes and silicon B regresses."
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Branch mispredict on a 16-stage pipeline at IPC=3 — wasted work?**
-~16 × 3 = ~48 μops squashed plus front-end refill (4-8 cycles).
+*Pipelines, memory consistency, and SIMD width are all area/power/throughput tradeoffs against the workload's ILP and data parallelism. Derive why each design landed there. No answer key.*
 
-**Q2. Why does x86 need a μop cache and ARM doesn't?**
-x86 instructions are variable length and decode is serial/expensive; μop cache delivers post-decode μops at higher bandwidth. ARM's fixed 4-byte format decodes trivially in parallel.
+**D1. Why do deep OoO pipelines beat in-order at the same clock? Derive the lever.**
+*Constraints to weigh:* in-flight ILP from rename + ROB, memory-latency hiding, branch-mispredict squash cost (rises with depth), area+power overhead. When does in-order win — Apple's E-cores and ARM Cortex-A55 are in-order, why?
 
-**Q3. TSO vs weak — give one bug that occurs on ARM but not x86.**
-Producer writes data then `ready=1`; consumer polls flag then reads data. On TSO stores propagate in order; on weak ARM, `ready=1` can become visible before data → consumer reads stale data.
+**D2. x86 needs a µop cache; ARM doesn't. Reason from ISA design about why.**
+*Constraints to weigh:* variable-length x86 instructions (1-15 bytes), serial decode bottleneck, fixed-width ARM (4 B), parallel decode trivially. What does RISC-V's variable-width compressed mode threaten to bring back, and how is it being designed around?
 
-**Q4. HW prefetcher hides a bug — describe.**
-Software's missing manual prefetch is masked by HW stride PF. Silicon B (different heuristic / PF off in BIOS) regresses. Triage: disable HW PF (`MSR 0x1A4`).
+**D3. TSO vs weak memory ordering. Imagine ARM moved to TSO tomorrow; reason about who wins and loses.**
+*Constraints to weigh:* every kernel weak-memory bug stops happening, store-buffer drain energy + complexity, snoop traffic on every store-to-shared-line, retire-side complexity. Why didn't ARM make the change at v8 when given the chance?
 
-**Q5. Why does AVX-512 sometimes make code slower?**
-License level cuts F when AVX-512 is active; if it's a small fraction of the code, scalar-around it runs slower for the recovery window — net loss.
+**D4. Branch mispredict costs $\approx \text{depth} \times \text{IPC}$ µops. Derive the workload where predictor improvements stop mattering.**
+*Constraints to weigh:* branch density per dynamic instruction, mispredict rate floor (irreducible randomness), depth growth, alternative — predication / cmov / branchless. Where does a perfect predictor still lose to a branchless rewrite?
 
-**Q6. RAT, ROB, RS — one sentence each.**
-RAT: rename table, maps arch reg → physical reg, kills WAR/WAW. ROB: in-order retirement buffer that bounds the instruction window. RS: wakes μops with ready operands and dispatches to FUs.
+**D5. SIMD width keeps doubling (128 → 256 → 512 → AMX tiles). Reason about why this trend slowed at 512.**
+*Constraints to weigh:* license-level F penalty, ISA fragmentation across cores, tail-loop overhead on small data, register-file area, dataflow accelerators (AMX, NPU) eating long-vector workloads. What's the architecture-level limit, and what comes after?
 
-**Q7. Forwarding / bypass — what does it eliminate?**
-Pipeline stall on RAW dependency that would otherwise wait for write-back; result is forwarded directly from EX/MEM to dependent EX.
+**D6. Why is the producer-consumer ring-buffer race the canonical TSO-vs-weak bug?**
+*Constraints to weigh:* two-store ordering (data, then flag), where the reorder occurs (retire vs propagate), what `dmb st` actually does, why x86 hides it. Construct the bug, the trace, and the minimal fix — then explain why the fix has a perf cost the x86 version never paid.
 
-**Q8. RAS (return address stack) — purpose?**
-Predicts the target of `RET` from the matching `CALL`. Mispredicted RAS = function-call hot path tanks.
-
-**Q9. Why is branch mispredict worse on a deeper pipeline?**
-More in-flight work to squash; more cycles to refill the front end after re-steer.
+**D7. Imagine a future ISA mandates seq_cst as the default. Reason about who wins and what dies.**
+*Constraints to weigh:* every barrier-bug disappears, store-buffer + snoop cost on every store, lock-free DS throughput, single-thread perf. Where does the perf cliff live, and would the industry pay for it — or only pay it where it earns its way (security domain crossings)?
 
 ---
 

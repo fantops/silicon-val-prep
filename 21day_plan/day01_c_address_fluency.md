@@ -184,31 +184,30 @@ If your `reg_field_write` and `wait_for_bit_set` are sloppy, every later bug sto
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why `1U << n` instead of `1 << n` when building masks?**
-`1` is signed; shifting into the sign bit is undefined. `1U` is unsigned and well-defined modulo $2^{32}$.
+*Reason from constraints. Don't recall a textbook answer — derive why the design has to look this way given the C language, the bus, and the silicon. No answer key.*
 
-**Q2. `volatile` vs memory barrier?**
-`volatile` prevents compiler reordering and elision of accesses to a specific variable. A barrier (`dmb`, `dsb`, `__sync_synchronize`) prevents CPU reordering of accesses around it. On x86 (TSO) `volatile` alone is usually enough for single-core MMIO. On ARM/RISC-V (weak ordering) the descriptor-then-doorbell pattern needs a barrier.
+**D1. Why bother with `reg_read32`/`reg_write32` accessors when a `volatile uint32_t *` cast would compile to the same instruction?**
+*Constraints to weigh:* what the compiler is allowed to do under `-O3` (load-store hoisting, dead-store elimination, narrowing), where you'd inject a barrier without re-touching every call site, traceability/printf-debug hooks, test-double substitution for unit tests, fault injection. Where would the typed-pointer style fail first when the architecture changes from x86 to ARM?
 
-**Q3. RMW gotchas?**
-Not atomic across cores or against HW; corrupts W1C status registers; race against HW updates of the same register.
+**D2. Why do silicon designers expose W1C status bits at all instead of plain RW status fields?**
+*Constraints to weigh:* the race between hardware setting a bit and software clearing it (lost-event problem on RW), atomic event capture without a software lock, what failure mode RW would create when the IP sets a bit between the SW read and the SW write. Construct the workload where W1S is the right primitive instead.
 
-**Q4. What does `wait_for_bit_set` look like and what is the most common bug?**
-6 lines: loop, read, mask-and-compare, return 0 on match, sleep, return -1 after the loop. Most common bug is forgetting the timeout return.
+**D3. Polling vs interrupts — under what residency/wake distribution does polling actually win?**
+*Constraints to weigh:* per-poll cost (cycles + cache pollution), interrupt latency + ISR overhead + context switch, wake energy on a sleeping core, jitter, what fraction of polls hit. NVMe completion queues poll on hot paths and interrupt on cold — derive the crossover from first principles.
 
-**Q5. Predict `FIELD_GET(0x12345678, 23, 16)`.**
-`0x34`. Mask is `0x00FF0000`; AND gives `0x00340000`; shift right 16 gives `0x34`.
+**D4. `volatile` is necessary but not sufficient for MMIO. Why does the C standard not just define `volatile` to imply a full barrier?**
+*Constraints to weigh:* portability (C is multi-arch but barriers are per-arch), per-access cost on TSO vs weak machines, who pays when 99% of `volatile` uses are sig_atomic_t flags not MMIO, who would even own the new semantics. What would a hypothetical `mmio_t` qualifier need to specify?
 
-**Q6. `sizeof(int *)` on a 64-bit system?**
-8 bytes. The pointee type doesn't change pointer size.
+**D5. RMW on a control register isn't atomic across cores. Why doesn't hardware provide an `atomic_field_write` MMIO opcode?**
+*Constraints to weigh:* MMIO bus semantics (single-beat transactions, no per-IP arbiter for SW agents), per-IP mutex hardware area, who arbitrates across CPUs vs DMA agents vs the IP itself, software simplicity vs HW cost. What does the equivalent on coherent CXL.cache space look like, and why is it different?
 
-**Q7. Can you `dereference` a `void *`?**
-No — must cast first. The compiler doesn't know the size or interpretation.
+**D6. `wait_for_bit_set` needs a timeout. Derive the right value for `CSTS.RDY` from first principles — and explain why "1 second" is wrong.**
+*Constraints to weigh:* spec'd worst-case ready time (`CAP.TO`), VRM ramp + PLL relock budget, what the host should *do* on timeout (reset, log, escalate), test-vs-production split. What goes wrong system-wide if every driver picks 1 s "to be safe"?
 
-**Q8. `const int *p` vs `int *const p`?**
-"p is a pointer to a const int" vs "p is a const pointer to an int." Read right-to-left.
+**D7. The same `read/wait/write` accessor pattern shows up in NVMe, PCIe, clocking, and bare-metal probes. What would force a future SoC to abandon it?**
+*Constraints to weigh:* uniform mental model for bring-up, debuggability, transactional MMIO with completions (CXL.io), in-band error signalling, virtualised MMIO with paravirt accessors. When the bus is no longer "dumb," what survives and what must change?
 
 ---
 

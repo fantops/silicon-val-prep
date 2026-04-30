@@ -269,37 +269,30 @@ This day is rehearsal of Day 20 stories — no new bugs. The reps are the work.
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. 60-second "tell me about yourself" structure?**
-Current role → past experience → why this role. Microsoft → Intel → L&T → close.
+*Interview delivery is itself a constraint problem: a 60-90 second budget, an interviewer with priors, and finite working memory under stress. Reason about why each piece of the playbook lands where it does. No answer key.*
 
-**Q2. Tailoring for Qualcomm — what do you lead with?**
-Multi-vendor NPU validation including Hexagon HTP v79, ARM/Snapdragon vocabulary, NVMe post-Si background.
+**D1. The 60-second "tell me about yourself" goes current → past → why this role. Reason about why this order beats chronological.**
+*Constraints to weigh:* recency bias of interviewers, signal density of current role, reverse-chronological as default. What does the candidate signal by leading with present-day work — and what does chronological accidentally signal?
 
-**Q3. Tailoring for Intel — what do you lead with?**
-Cambria Zebu pre-Si, PCIe Gen6 C++ transactor, ADR / Core C6 bug stories, CXL familiarity.
+**D2. Tailoring per company (Qualcomm/Intel/Microsoft). Reason about which dimension of your background to lead with.**
+*Constraints to weigh:* what the team actually builds, what bugs they value, vocabulary alignment (Hexagon vs Cambria vs Copilot+), bridge-stories that work for all three. Construct the lead sentence for each — and identify which sentence works for none.
 
-**Q4. Tailoring for Microsoft — what do you lead with?**
-The current job — three-vendor breadth, EdgeOptimizer, ETL/WPA + agentic workflows.
+**D3. The "why this company" 4-sentence template. Reason about why generic answers fail.**
+*Constraints to weigh:* interviewer can detect a copy-paste, specificity buys credibility, research effort signals interest. What's the minimum-research move that delivers maximum specificity — and what's the failure mode of over-research?
 
-**Q5. Three bug stories you'd lead with for Qualcomm?**
-QNN page-fault (4), Paint SR vs Camera (4b), NVMe CSTS.RDY (2).
+**D4. Three bug stories per company. Reason about how to choose which three.**
+*Constraints to weigh:* relevance to their stack, depth of mechanism, breadth of ownership, honest-framing constraints. What's the bug story that you should *not* lead with at any company, and why — even if it's your best story?
 
-**Q6. Three bug stories you'd lead with for Intel?**
-ADR (1), Core C6 (3), NVMe CSTS.RDY (2). QNN as bridge to modern AI work.
+**D5. The night-before reread order. Reason from first principles about what you genuinely retain under interview stress.**
+*Constraints to weigh:* recall vs recognition, working-memory limits, anchor-sentence priming, what sleep does to consolidation. What's the smallest possible reread set that survives a 9 AM interview — and what should you *not* read the night before?
 
-**Q7. The 4-sentence "why this company" template?**
-What I do now → what I want → why my background fits → why this company specifically (research-driven).
+**D6. "Tell me about a time you disagreed with a designer." Reason about what answer pattern wins.**
+*Constraints to weigh:* situation specificity, evidence over opinion, escalation discipline, outcome honesty (both sides may be right), process-change afterwards. What's the failure mode of a "I was right, they were wrong" answer — even when you were?
 
-**Q8. Night-before reread order?**
-Per-company anchor sentences → Day 20 stories → Day 16 memory model → Day 9 ARM (if QC) → Day 11 boot (if QC) → Day 17 spinlock + SPSC.
-
-**Q9. Honest framing for the QNN story when Microsoft asks?**
-Platform validation; correlated EP/ORT versions, ETL counters and source pointers; did not debug Hexagon RTL or claim VTCM defects.
-
-**Q10. The meta-answer — your debug method?**
-Observe → reproduce → isolate → hypothesise → test → root-cause → fix. Convert vague failure into one controlled signal.
+**D7. Imagine you have one interview slot left and must pick one bug story to lead with. Reason about which story you choose, and why.**
+*Constraints to weigh:* mechanism depth, your ownership clarity, interviewer follow-up surface area, recency, alignment with role. Defend the choice — or admit it varies by company and explain how you'd decide in the moment.
 
 ---
 

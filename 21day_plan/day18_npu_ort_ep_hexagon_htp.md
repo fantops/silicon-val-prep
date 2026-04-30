@@ -189,37 +189,30 @@ This is what you reach for during NPU validation, the same way you'd reach for `
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Six layers from model to silicon — name each.**
-Framework (PyTorch/TF) → ONNX → ORT → EP (QNN / OpenVINO / DirectML / CPU) → vendor runtime + compiler → NPU silicon.
+*The NPU stack is six layers because each layer is a tradeoff (portability vs performance, flexibility vs determinism). Reason about why each landed there — and what would force a redesign. No answer key.*
 
-**Q2. Why is EP fallback the silent perf cliff?**
-One unsupported op → partition splits → per-op tensor copy NPU↔host. Functional pass; throughput collapses. Detect by counting `EP_assignment == CPU` ops.
+**D1. Why does the AI stack have six layers (Framework → ONNX → ORT → EP → vendor runtime → silicon)?**
+*Constraints to weigh:* model-author flexibility, vendor-portability, IR stabilisation point (ONNX), runtime hot-swap, vendor-specific codegen. What collapses if Framework→silicon directly (PyTorch's MPS does this) — and what's the cost in portability?
 
-**Q3. What is QDQ fusion and what happens when it fails?**
-Compiler pass collapsing `Quantize → Op → Dequantize` into a single INT8 op. If it fails (rebuild without `keep_quantized_weights`, scale mismatch, unrecognised pattern), Q/D stay as standalone ops and the op drops to CPU EP.
+**D2. EP fallback is the silent perf cliff. Reason about why ORT doesn't just refuse to run if any op falls back.**
+*Constraints to weigh:* model-author convenience (functional first), partial-acceleration as a feature, debug-build vs prod-build expectations. What would a "strict" mode look like, and who would actually enable it in production?
 
-**Q4. What is VTCM and what's the tile-size cliff?**
-Hexagon HTP's on-chip SRAM (8 MB on v79), software-managed, not in CPU coherence. Tile-size cliff: compiler picks a tile too big → multiple DMA trips per tile → per-tile latency doubles.
+**D3. QDQ fusion collapses Q-Op-DQ into INT8. Reason about why the framework doesn't just emit fused INT8 ops directly.**
+*Constraints to weigh:* model interoperability across vendors with different fused-op support, training-time vs inference-time graph, opset stability, calibration metadata location. What does ONNX's QOperator format buy that QDQ doesn't?
 
-**Q5. Walk the NPU execute hot loop.**
-CPU writes doorbell → NPU DMA DDR→VTCM → HMX matmul + HVX requant + DMA next tile (3-engine pipeline) → DMA VTCM→DDR → MSI-X → ORT returns tensor.
+**D4. VTCM is software-managed (not coherent with CPU). Reason about why NPUs trade coherence for area/power.**
+*Constraints to weigh:* coherence interconnect cost, prefetch/tile predictability, deterministic latency, INT8 dataflow doesn't need fine-grain sharing. When CXL.cache makes coherent NPUs viable, what dies first — VTCM or DMA?
 
-**Q6. What is a context cache and why does it matter?**
-Serialised compiled artifact (`*.bin`); second launch loads it via `QnnContext_createFromBinary()` and skips compile. Missing cache = seconds of first-frame latency every launch.
+**D5. The tile-size cliff: barely overflow VTCM → 2× DMA trips → 2× latency. Reason about what makes this cliff sharp.**
+*Constraints to weigh:* on-chip vs off-chip latency ratio, tile-DMA double-buffering, compiler-heuristic conservatism, weight-vs-activation tile split. What does a future "VTCM = 16 MB" buy and what does it not change?
 
-**Q7. NPU vs GPU at interview depth.**
-NPU: fixed-function INT8 dataflow accelerator, software-managed SRAM, deterministic latency, very high TOPS/W on quantised models. GPU: programmable shader cores, hardware-coherent caches, FP throughput, more flexible but lower perf/W on quantised inference. NPUs trade flexibility for efficiency.
+**D6. Context cache saves seconds on launch. Reason about why the compile cost is so high in the first place.**
+*Constraints to weigh:* graph optimisation, op fusion, tile sizing, codegen for HVX/HMX, register allocation. Where does the cost actually live — IR optimisation, scheduling, or codegen — and which is amortisable across model versions?
 
-**Q8. Why is "more partitions = worse perf"?**
-Each partition boundary is a tensor copy out of NPU memory back to host. Cost is proportional to tensor size × boundary count.
-
-**Q9. Hexagon HTP family — which generation doubled VTCM?**
-v73 on SD 8 Gen 2: 4 MB → 8 MB. v75 (SD 8 Gen 3) and v79 (X Elite) both kept 8 MB.
-
-**Q10. What does ETW give you that `perf stat` doesn't?**
-Windows kernel + provider-specific events with timestamps in one trace: ORT EP events, QNN DLL loads, GPUView NPU queue timeline, memory counters (VirtualAlloc, page faults), CPU sampling — correlated in WPA.
+**D7. NPU vs GPU vs CPU for inference. Imagine a future where one architecture wins. Reason about which and why.**
+*Constraints to weigh:* TOPS/W, programmability, model-shape flexibility, batch size, memory bandwidth. Construct the workload where each genuinely wins today, and project which converges first.
 
 ---
 

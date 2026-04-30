@@ -205,37 +205,30 @@ The byte-by-byte version generates the same code on a modern compiler with optim
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. `volatile` vs memory barrier — when do you need each?**
-`volatile` prevents compiler reordering and elision. Barrier prevents CPU reordering across the barrier. On x86 (TSO) `volatile` alone usually suffices for single-core MMIO. On ARM/RISC-V you need a barrier for the descriptor-then-doorbell pattern.
+*Reason from constraints. Endianness, RMW, polling, and `volatile` are policy decisions of the C standard and the bus, not laws of physics. Derive why each landed where it did. No answer key.*
 
-**Q2. Why is struct overlay on MMIO dangerous?**
-Padding mismatch with the register map, bulk struct assignment becomes a `memcpy` that hits W1C side effects, field write order is not guaranteed.
+**D1. Why is endianness a thing at all — why didn't the industry standardise on one?**
+*Constraints to weigh:* native carry-propagation direction, human-readable byte order in hex dumps, network protocols predating x86 dominance, swap cost (zero on x86 LE, ~1 cycle on ARM with REV), legacy hardware that exposes the wire format. What concrete things break if you forced one endianness on the world today?
 
-**Q3. What does `READ_ONCE` / `WRITE_ONCE` (Linux) buy over `volatile *` casts?**
-Single-instruction access (no torn reads/writes), prevents the compiler from reading/writing twice, documents intent at the access site rather than the declaration.
+**D2. PCIe defines LE on the wire even though PCI was endian-neutral. Reason about who paid the cost and why.**
+*Constraints to weigh:* host CPU population at the time, swap cost in PCIe controller silicon, debug ergonomics with a logic analyser, BE host viability. Network is BE, PCIe is LE — what does this say about who bargains harder, the chip vendor or the protocol committee?
 
-**Q4. RMW the divider in bits [15:12] of `0xABCD1234` to `0x9` in your head.**
-mask=`0xF000`; `(0xABCD1234 & ~0xF000) | (0x9<<12) = 0xABCD9234`.
+**D3. Why doesn't the compiler insert a memory barrier automatically around every `volatile` access on weak-ordered targets?**
+*Constraints to weigh:* most `volatile` uses are flags not MMIO; cost of a universal `dmb` on every load; portability of C; explicit-is-safer philosophy; how a "smart" compiler would distinguish MMIO from flag without losing portability. What would a `volatile_mmio_t` extension need, and why hasn't it landed?
 
-**Q5. Why `n & (n-1)` clears the lowest set bit?**
-`n-1` flips all bits at and below the lowest set bit; ANDing keeps only positions where both have 1, which excludes the lowest set.
+**D4. Polling-loop timeouts are universal. Derive when polling beats interrupts for a given event arrival rate.**
+*Constraints to weigh:* per-poll cost (cycles + cache pollution), interrupt latency + ISR overhead, jitter tolerance, what the CPU does between polls (busy-wait vs WFE vs yield), expected wait distribution. NVMe goes from interrupts to polling on hot completions — derive the crossover.
 
-**Q6. Right-shifting a negative signed int — what does C guarantee?**
-Implementation-defined. Always operate on `unsigned` for register fields.
+**D5. W1C status bits exist because of a hardware/software race. Why isn't "read-to-clear" used everywhere instead?**
+*Constraints to weigh:* re-entrant ISR safety (a second handler must see the bit), debug printk reading status without side effects, RC requires every handler to remember not to read twice. What are the failure modes of each, and which one a multi-CPU OS prefers — and why?
 
-**Q7. Draw `0x12345678` at `0x100` in LE and BE.**
-LE: `78 56 34 12`. BE: `12 34 56 78`.
+**D6. Struct-overlay over an MMIO block is forbidden but ergonomic. What would the language need to add to make it safe?**
+*Constraints to weigh:* per-field load/store semantics (no bulk memcpy), explicit no-padding, explicit field width, no implicit RMW. Rust's `bitfield` crate and Linux's `regmap` solve this differently — compare. What survives in a hypothetical `mmio struct` keyword?
 
-**Q8. Why does PCIe define LE byte order even though PCI was endian-neutral?**
-PCIe is x86-native; LE on the wire means zero conversion cost on the dominant host. BE hosts pay the swap.
-
-**Q9. Network packet field reads as `0x5000` on x86; correct value is port 80 (`0x0050`). Fix?**
-`ntohs()` or `read_be16(buf)`.
-
-**Q10. Why parse byte-by-byte instead of `uint8_t*` → `uint32_t*` cast?**
-Endianness mismatch, unaligned-access trap, strict-aliasing UB.
+**D7. Imagine MMIO is replaced by CXL.io with full request/response semantics. Which Day-3 disciplines stay load-bearing, and which become legacy?**
+*Constraints to weigh:* completion semantics replace posted-write fire-and-forget, error reporting becomes synchronous, ordering becomes per-transaction, but `volatile` + barrier still constrains the *compiler*. What does a "modern" register-poke look like in CXL-land?
 
 ---
 
@@ -366,6 +359,44 @@ The NVMe completion queue with phase bit (Day 11) is *poll-style* even though MS
 - **RMW on bit fields** — *what:* read | mask | write / *why:* preserve other bits / *how:* `*reg = (*reg & ~MASK) | val` / *connects:* race if HW also writes the reg, W1C semantics
 - **polling vs interrupt** — *what:* CPU spin vs HW notify / *why:* latency vs CPU-cycle tradeoff / *how:* poll for sub-µs events, IRQ for long waits / *connects:* NVMe SQ doorbell + CQ phase bit, NAPI hybrid
 - **W1C / W1S registers** — *what:* write-1-to-clear / write-1-to-set / *why:* avoid RMW races on status bits / *how:* HW clears bit on write of 1 / *connects:* IRQ status regs, why `reg |= bit` is wrong on W1C
+
+---
+
+## Extension — Low-speed buses (UART / I2C / SPI / QSPI flash)
+
+The MMIO + polling fluency above is the same pattern you use to bring up every low-speed peripheral. MCU/SoC bring-up roles (Renesas, NXP, TI, ST, Infineon, Microchip) ask these by name.
+
+### UART
+- Frame: start (0) + data LSB-first + optional parity + stop. Common 8N1.
+- Baud = source clock / divider; **end-to-end error budget ≤ ~2%** per frame (TX clock + RX clock combined). Wrong PLL ⇒ wrong divisor ⇒ garbled console — first thing to check when banner is gibberish.
+- Flow control: RTS/CTS HW; XON/XOFF SW. Break = TX held low > 1 frame.
+- Bring-up checks: scope TX (idle high, frame shape, baud measured = 1/bit-width); loopback TX→RX; start at 9600, then target.
+- Bug class: pin-mux strap routes UART to alt pins → no banner; level-shifter direction wrong on probe.
+
+### I2C
+- **Open-drain** both lines; pull-up sized for bus capacitance: $R_p \le \frac{t_r}{0.8473 \cdot C_b}$. Typ 2.2k–10k for 100–400 kHz; lower for 1 MHz Fast-Mode+.
+- Frame: START → 7-bit addr + R/W → ACK → data + ACK → STOP. RESTART (Sr) for combined R/W. 10-bit addr prefixed by `1111 0xxR/W`.
+- **Clock stretching**: slave holds SCL low; master must tolerate.
+- **Multi-master** arbitration on SDA — first to drive 0 while peer drives 1 wins.
+- **Stuck-SDA-low recovery** (memorise): master toggles SCL up to **9 cycles** until SDA released, then issues STOP.
+- Bug class: wrong pull value → slow rise → false 0 at high speed; two devices at same address.
+
+### SPI
+- 4-wire SCLK / MOSI / MISO / CSn, full-duplex, master clock.
+- **CPOL/CPHA** ⇒ 4 modes (0–3). CPOL = idle clock polarity; CPHA = sample edge (0 = first, 1 = second). Mode-mismatch on the wire = all zeros or shifted-by-one bytes.
+- CS setup before first SCLK + hold after last SCLK per slave datasheet.
+- Multi-IO: single / dual / quad / octal — used by NOR flash for throughput.
+
+### QSPI / OSPI NOR flash + XIP boot
+- Standard ops: **READ 0x03, Fast Read, SFDP, WREN 0x06, Page Program 0x02, Sector Erase 0x20/0xD8, Read Status 0x05, Write Status 0x01, JEDEC ID 0x9F**.
+- **SFDP** is the discoverable parameter table — read it, don't hardcode part IDs.
+- **XIP**: flash mapped into address space, CPU fetches directly. Boot ROM XIPs from QSPI for BL1.
+- **Continuous-read-mode bit trap**: skips the opcode on subsequent reads (faster) but is **stateful**; if a warm reset doesn't clear it, ROM's first opcode is interpreted as data → boot dies. Classic post-warm-reset hang.
+
+### Bring-up dependency order (after a UART console exists)
+```
+UART → I2C (PMIC, sensors, EEPROM) → SPI/QSPI (flash, FRAM) → DDR train → high-speed (PCIe/USB/Eth) → app IPs (CAN/LIN, ADC, accel)
+```
 
 ---
 

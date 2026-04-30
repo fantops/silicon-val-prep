@@ -123,35 +123,34 @@ Each maps to a Day on this plan: 1 → Day 4-5, 2 → today, 3 → Day 6, 4 → 
 
 ## Interview Explanation (60-90 sec)
 
-> "Device submission is descriptor, barrier, MMIO doorbell, device DMA via the IOMMU, completion. Each arrow has a failure mode. On ARM the descriptor write can be reordered after the doorbell, so I always put a `dmb st` between them; `volatile` on its own only orders compiler-side, not CPU-side. On non-coherent DMA paths I clean the descriptor line so the device reads DRAM, not stale cache; after the device writes the completion I invalidate before reading. MMIO ranges must be uncached in the PTE — the classic bring-up bug is a status register that reads back the same value forever because the cache cached it. The IOMMU is the device-side MMU and its fault register tells me whether the OS forgot to map a buffer or the device sent a stale IOVA. The whole picture is the same physics as MESI on Day 5 — the device is just another coherence agent that has to see the latest copy in the right order at the right physical address."
+> "Device submission is descriptor, barrier, MMIO doorbell, device DMA via the IOMMU, completion. Each arrow has a failure mode. On ARM the descriptor write can be reordered after the doorbell, so I always put a `dmb st` between them; `volatile` on its own only orders compiler-side, not CPU-side. The way this fails in the wild is intermittent — it works at low throughput because the store buffer drains naturally between submits, then under sustained load the doorbell wins the race and the device fetches a half-written descriptor; you see queue stalls or completion errors that don't reproduce on x86 because TSO masks the ordering. On non-coherent DMA paths I clean the descriptor line so the device reads DRAM, not stale cache; after the device writes the completion I invalidate before reading. MMIO ranges must be uncached in the PTE — the classic bring-up bug is a status register that reads back the same value forever because the cache cached it. The IOMMU is the device-side MMU and its fault register tells me whether the OS forgot to map a buffer or the device sent a stale IOVA. The whole picture is the same physics as MESI on Day 5 — the device is just another coherence agent that has to see the latest copy in the right order at the right physical address."
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why does `volatile` not save you on ARM for descriptor + doorbell?**
-`volatile` orders compiler emissions; the CPU is still free to reorder the descriptor store after the doorbell store on weak memory. Need a `dmb st` (or `dsb sy`).
+*Reason from constraints. The right answer is whichever the physics + cost + workload force. No answer key.*
 
-**Q2. Coherent vs non-coherent DMA?**
-Coherent: device participates in coherence; nothing for the driver to do. Non-coherent: driver must clean before device reads, invalidate after device writes.
+**D1. Why doorbells at all — why doesn't the CPU just stream descriptors directly over a memory-mapped FIFO and skip the MMIO write?**
+*Constraints to weigh:* MMIO bandwidth vs DRAM bandwidth, posted-write semantics, batching (one doorbell amortises N descriptors), back-pressure when the device is slower than the bus, what happens to the queue if the CPU stalls mid-stream. What does NVMe SQ tail vs MSI-X completion path actually optimise for?
 
-**Q3. Why must MMIO mappings be uncached?**
-Otherwise reads can return cached values and status bits appear stuck.
+**D2. Why does ARM expose weak memory ordering when x86 TSO "just works"? What would break if ARM moved to TSO?**
+*Constraints to weigh:* store-buffer drain energy, OoO retire complexity, snoop traffic on every store-to-shared-line, mobile/server power budgets, whether weak ordering is a feature for the hardware or a tax on the software. Who pays — the chip designer, the kernel, or the application?
 
-**Q4. Walk an IOMMU fault to a culprit.**
-Read fault register → BDF + IOVA + reason. If buffer was mapped: device sent unexpected IOVA (FW/driver). If not: OS missed `dma_map_*` (driver).
+**D3. Why is there a per-device IOMMU translation when the CPU already has an MMU? Why not just give the device the CPU's page table?**
+*Constraints to weigh:* devices don't take page faults the way CPUs do, ATC/PRI complexity, isolation between devices (one bad NIC shouldn't see another's buffers), virtualisation (passthrough to a VM with its own VA space), legacy 32-bit DMA. What does ATS buy and what does it cost?
 
-**Q5. What is a posted MMIO write?**
-A store with no return completion the CPU waits for. Once on the bus, CPU moves on.
+**D4. Why are MMIO writes posted by default? Construct the workload where you'd want them all non-posted.**
+*Constraints to weigh:* CPU stall per write vs throughput, ordering guarantees you give up, cost of an explicit read-back fence, error reporting (a posted write that faults can't return SIGBUS to the issuing instruction). When does an FPGA/accelerator team actually demand non-posted MMIO, and what do they give up?
 
-**Q6. NVMe doorbell offset for SQ tail of queue 1, given `CAP.DSTRD = 0`?**
-`0x1000 + 2*1 * (4 << 0) = 0x1008`. With `DSTRD = 1`: `0x1000 + 2 * 8 = 0x1010`.
+**D5. Three ARM barrier scopes (`ish`/`osh`/`sy`). Why three? What's the cost of always using `sy`?**
+*Constraints to weigh:* snoop traffic radius, drain time scales with how far the barrier reaches, energy cost of waking a sleeping interconnect ring, observability of bugs (narrower-than-needed = silent corruption; wider-than-needed = perf only). If the SoC had only one shareability domain, what design simplification appears, and what perf is lost?
 
-**Q7. Phase bit in NVMe completion queue — purpose?**
-Self-signal validity; flips each lap so host knows a CQ entry is fresh without a per-completion device→host doorbell.
+**D6. A future SoC promises fully-coherent accelerators (NPU/GPU snoop CPU caches natively). Which artefacts in today's driver stack become obsolete? Which survive?**
+*Constraints to weigh:* `dma_map_*` and bounce buffers, cache clean/invalidate, IOVA→PA translation, ordering barriers, doorbell semantics. The interconnect still has finite bandwidth and latency — what stays load-bearing? CXL.cache vs CXL.mem is the real-world version of this question.
 
-**Q8. Cache maintenance after device write — clean, invalidate, or both?**
-Invalidate (or clean+invalidate). The device wrote DRAM; CPU cached copy is stale; invalidate drops it.
+**D7. Why is the descriptor → barrier → doorbell → DMA → completion → MSI pipeline *six* stages and not four? What collapses if you merge any pair?**
+*Constraints to weigh:* who owns each stage (CPU, interconnect, device, IOMMU), what failure mode each stage isolates, how the on-call engineer would triage if two stages were fused (e.g. doorbell-as-descriptor). The pipeline shape is a debug contract as much as a perf one.
 
 ---
 

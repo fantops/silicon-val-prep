@@ -226,31 +226,30 @@ POR → PBL (ROM, EL3, validates SBL signature, loads to SRAM)
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Linux kernel + KVM + a TrustZone TA + an Android app — which EL is each?**
-App: NS-EL0. Kernel: NS-EL1. KVM: NS-EL2. ATF / Secure Monitor: EL3. TA: S-EL0 on top of QSEE/Trusty kernel at S-EL1.
+*ARM and Qualcomm's design choices reflect mobile-first power, multi-firmware aggregation, and weak-memory bets. Derive why each landed there — and what would force a redesign. No answer key.*
 
-**Q2. Linux runs unchanged across x86 and ARM. How?**
-Architecture-abstracted barrier macros: `smp_mb`, `smp_rmb`, `smp_wmb`, `READ_ONCE/WRITE_ONCE`, `atomic_*`. On x86 most expand to compiler barriers (TSO does the rest); on ARM they expand to `DMB ISH`, `LDAR`, `STLR`. Hand-rolled accessors are x86-only bugs.
+**D1. Why does ARM expose four exception levels (EL0/1/2/3) when x86 collapsed to two practical rings?**
+*Constraints to weigh:* mobile-first hardware-virtualisation story, TrustZone as a peer to the hypervisor, signed-firmware boot chain, attack-surface partitioning. What would x86 have to add to match — and what does the lack of an EL2-equivalent cost in cloud workloads?
 
-**Q3. SMMU fault during NVMe bring-up — top 3 suspects.**
-(1) Stream ID not registered in SMMU stream table. (2) IOVA in SQ/CQ base never DMA-mapped through the SMMU API. (3) Stage-2 enabled but no S2 page tables installed. Read EVTQ — fault syndrome decides.
+**D2. Why does Snapdragon need RPMh on top of standard PSCI when x86 has PCU alone?**
+*Constraints to weigh:* multiple independent firmwares (Apps/Modem/ADSP/CDSP) voting on shared rails, no single OS to arbitrate, always-on aggregation point, PMIC over SPMI. What does Intel's PCU do that aggregates implicitly that RPMh has to do explicitly — and why?
 
-**Q4. Why does Qualcomm need RPMh on top of standard PSCI?**
-PSCI tells one OS instance how to request CPU power states. Snapdragon has many subsystems running independent firmwares, each able to vote on shared rails/clocks/buses at any time. RPMh aggregates the max needed across them and programs the PMIC. Without it, subsystems would fight over shared rails.
+**D3. ARM is weakly ordered, x86 is TSO. If ARM moved to TSO tomorrow, derive who wins and who loses.**
+*Constraints to weigh:* store-buffer drain energy, retire complexity, snoop traffic on every store-to-shared-line, mobile/server power budgets, software-portability tax (every weak-→-strong port today is a kernel bug). Why won't Apple/ARM make the move even at parity perf?
 
-**Q5. Per-core DVFS on DynamIQ — what's the catch?**
-Cores often share a voltage rail by cluster. Per-core *frequency* is real; per-core *voltage* is not — rail voltage = max across cores on that rail. Validation: characterise voltage = `max(per-core requests)` and find waste.
+**D4. PSCI is a spec for OS↔firmware power calls. What would a SoC do without PSCI — what does the spec actually save?**
+*Constraints to weigh:* per-vendor SMC ABIs, kernel-side per-SoC code, secure-monitor entry semantics, multi-cluster CPU online/offline. What does Linux's `arm,psci-0.2` DT binding paper over, and where does it leak?
 
-**Q6. Glitch-free mux — why doesn't an OR gate work?**
-ORing two async clocks produces runt pulses near transitions; downstream flops see partial edges → metastable. The right structure is a state machine that gates the current source, waits for it low, switches select, gates the new source's enable, then opens it.
+**D5. Snapdragon boots PBL → SBL → ATF → ABL → kernel, with a signature check at every handoff. Reason about why so many stages.**
+*Constraints to weigh:* ROM-immutable trust anchor, RAM unavailable until LPDDR train completes (SBL's job), separation of TZ from non-TZ, fastboot/recovery flexibility, A/B slot semantics. What collapses if you merged SBL+ATF — and what attack surface would that open?
 
-**Q7. Walk Snapdragon boot from POR to Linux init.**
-POR releases → PBL (ROM, EL3) validates SBL, loads to SRAM, jumps. SBL trains LPDDR, loads ATF + TZ + ABL into DRAM. ATF brings up secure services, jumps to ABL. ABL fastboot, verifies boot.img, loads kernel + DT + ramdisk. Kernel `start_kernel()`, probes via DT, mounts root, exec init. Each handoff is a signature check.
+**D6. Per-core voltage on DynamIQ is mostly a lie because cores share a rail. What architectural choice would make it real, and at what cost?**
+*Constraints to weigh:* per-core LDO area + efficiency, package power-delivery network, per-core PMIC channels, validation matrix explosion. Apple's M-series and Intel's per-core FIVR took different bets — which one is "right" for what workload?
 
-**Q8. Cold boot hangs only at -20 °C. Path?**
-LPDDR per-bit DQ window collapses at slow PVT corner; trained timings from room temp don't fit. Re-train at temperature; or store per-corner trained values in fuses; or use vendor's MR-based retraining.
+**D7. The GIC routes SGI/PPI/SPI/LPI; the ITS handles MSI. Reason about why MSI was retrofitted via the ITS rather than as a fifth native class.**
+*Constraints to weigh:* PCIe-MSI is endpoint-driven and OS-programmable, GIC SPI count is fixed at design time, MSI requires a translator (memory-write → interrupt), backwards compatibility with GICv2. What does GICv4 direct-injection buy for KVM, and what does it cost?
 
 ---
 
@@ -443,6 +442,94 @@ This is what makes the answer feel like a *validator's* answer, not a Wikipedia 
 - **boot ROM** — *what:* masked, on-die, immutable / *why:* root of trust / *how:* authenticates next stage with key in fuses / *connects:* secure boot, eFuse OTP, why ROM bugs are silicon respins
 - **bootloader** — *what:* DRAM init, load kernel / *why:* ROM is too small for full bring-up / *how:* trains DDR, sets up MMU, parses DT/ACPI / *connects:* device tree (ARM) vs ACPI (x86), PSCI handoff
 - **secure boot chain** — *what:* each stage verifies signature of next / *why:* prevent persistent rootkits / *how:* public key in fuses, hash chain / *connects:* TPM, measured boot, TF-A BL1→BL2→BL31→BL33
+
+---
+
+## Extension — POR, reset, clocks/PLL, straps, fuses, boot ROM, secure boot (MCU/SoC bring-up)
+
+Everything that has to be **already correct** before a single instruction executes. If POR/reset/clock/strap/fuse/boot-image is wrong, the chip looks broken at every higher layer and you waste days debugging the wrong thing.
+
+### Power-on sequencing
+- Rail order is in the datasheet (e.g., `VDD_CORE → VDD_SOC → VDDIO_1V8 → VDDA_PLL → VDDIO_3V3`). Violations: forward-bias ESD diodes (latch-up), float I/O into powered core, mis-train DDR PHY because PLL analog rail is late.
+- PMIC (Renesas RAA, TI, Maxim, QC SPMI) vs discrete LDO + sequencer (e.g., LM3880).
+- Validate: scope all rails simultaneously; check ramp slew (too fast → overshoot, too slow → POR misfires); droop on transient (sleep-wake current step is 10s of A on modern SoCs); PGOOD chain reaches PORESET de-assert.
+- Common bugs: cold-corner late VR, PGOOD mis-chained, PMIC OTP from prior board rev.
+
+### Reset domains (NOT one signal)
+| Reset | Source | Clears | Preserves |
+|---|---|---|---|
+| Cold (POR) | rails good + PGOOD | everything incl. sticky | fuses |
+| Warm | watchdog, SW reset bit | most of SoC | sticky debug, RTC, retention RAM |
+| Wake (sleep) | wake source | only what was clock/power-gated | most state |
+| Functional / IP | per-IP reset bit | one IP only | rest of SoC |
+| Debug | JTAG / DBGRSTREQ | core debug logic | functional state |
+
+Validate that sticky debug bits survive warm reset (else you lose post-mortem) and wake doesn't accidentally hit cold path (DDR retention loss = bug).
+
+### Clocks & PLLs
+- Tree: XO → PLL0/1/2 → /N dividers → CPU / DDR / SerDes / peripheral clocks.
+- PLL block: **PFD → CP → LPF → VCO → /N feedback → output divider**. Knobs: ref divider M, feedback N, output divider P, loop BW, VCO range, fractional-N.
+- **Lock detect** must assert before downstream switch; else garbage clock.
+- **Bypass mode** = route XO directly while PLL re-locks.
+- **Glitch-free MUX** for runtime clock switching (DVFS) — cannot be a plain OR gate.
+- **SSC** (spread-spectrum) modulates VCO ±0.5% for EMI; some Ethernet PHYs reject SSC on ref.
+- Validate: scope ref XO; read PLL status CSR for lock + cross-check freq with counter; phase noise / jitter on PCIe / SerDes (<1 ps RMS class); idle current drop proves clock gating.
+
+### Straps (sampled once at PORESET de-assert)
+- Configure boot source, JTAG enable, PLL multiplier preset, endianness, debug mode, package ID.
+- Internal weak pull loses to board pull — board pull dominates.
+- Sample window is short; external RC must settle **before** the window.
+- Pin re-purposes as functional I/O after sample (often shared with GPIO/bus).
+- Common bugs: shared peripheral drives line at boot; slow RC + leakage → not at VIH at sample → latched as 0; board rev changed pulls without updating strap table.
+- Validate: read strap-status CSR post-boot; scope strap pin at the PORESET edge if any doubt.
+
+### Fuses (eFuse / OTP) — one-way
+- Contents: boot mode override, root pubkey hash, JTAG-lock, **lifecycle (CM → DM → SE → RMA)**, PVT trims, ADC offset, oscillator trim, chicken bits (errata workarounds), die ID, wafer/lot.
+- Blown via high-V pulse gated by unlock CSR + state. Often **mirrored to shadow regs** at boot; SW reads shadow.
+- Fuse plan is **the most reviewed doc** in the program — wrong fuse on a wafer lot = scrap.
+- Validate: each fuse reads correctly across every reset type; lifecycle transitions in correct order; JTAG locks at SE.
+
+### Boot ROM
+- **Mask ROM** (in-silicon, immutable). Tiny (KB–10s of KB).
+- Flow: read straps + fuses → init minimal clocks (XO-direct or PLL bypass) → init chosen boot interface (QSPI / eMMC / UART / USB DFU / NAND) → read BL1 header → verify signature against fuse-rooted key hash → copy to **SRAM** (DDR not trained) → jump.
+- Error reporting (no panic backtrace): GPIO heartbeat, UART error string + numeric code, write to **persistent register** sticky over warm reset. **Memorise the SoC's ROM-error-code → meaning table** — first lookup on every boot fail.
+- Validate every boot source path AND every error path (corrupt header / corrupt signature / missing device / wrong fuse).
+
+### Boot loaders
+- ARM TF-A (Cortex-A): `ROM (BL1 in mask) → BL2 (loader) → BL31 (secure monitor, EL3) → BL33 (U-Boot/UEFI) → OS`, with optional `BL32` (TEE OS, EL1-S, e.g., OP-TEE).
+- MCU (Cortex-M, Renesas RA): `ROM → MCUboot (signed slot select + swap) → app`.
+- Each stage measures + verifies the next. **Anti-rollback counter** prevents downgrade. A/B slots + failsafe revert on N failed boots. Recovery / DFU on intentional failure.
+
+### Secure boot + secure IP
+- Root of trust = ROM + fuses. Each stage hashes next image, verifies signature against fuse key (or cert chain), optionally measures into HW measurement reg.
+- Renesas blocks: **SCE** (Secure Crypto Engine, RA), **TSIP** (Trusted Secure IP, RX/RA-higher), **RSIP** (RZ). Generic equivalents: ARM CryptoCell, Intel CSE.
+- **Lifecycle**: CM → DM → SE → RMA, each transition a fuse blow.
+- **Debug authentication**: locked JTAG re-opens via signed challenge-response (debug certificate signed by OEM key).
+- Validation tasks: bit-flip the signed image header → expect rejection at correct stage with correct error code; replay old image → anti-rollback rejects; secure-world memory invisible to non-secure (read returns 0/abort).
+
+### DDR / LPDDR bring-up — the #1 first-silicon hang
+- Init: PHY power-up → reset DRAM (tINIT) → program **MR registers** (BL, CL, drive strength, ODT, write recovery) → **ZQ cal** (output Z trim) → **training** → enable traffic.
+- Training steps (DDR4 / LPDDR4/5):
+  - **CA training** (LPDDR / RDIMM) — command/address deskew.
+  - **Write leveling** — DQS edge aligned to CK at the DRAM (compensates fly-by topology).
+  - **Read DQS gate training** — controller knows when to enable DQS receiver.
+  - **Read DQ/DQS deskew**, **Write DQ/DQS deskew** — per-bit eye centering.
+  - **Vref training** — DRAM-internal Vref-DQ + controller-side Vref.
+- Validation: save the training log every boot + diff across boards/temps; memory tests (march C-, walking-1, address-bar, random + checksum); per-byte eye margin via PHY's built-in eye monitor; sweep PVT (Vmin, -40/+85/+125 °C, multiple parts); ECC inject correctable + uncorrectable, verify scrub.
+- Common bugs: cold-corner Vref offset insufficient (write-leveling fails at -40 °C only); ZQ resistor wrong on board; routing skew exceeds training range on one byte lane; refresh policy ignoring DRAM high-temp `2× tREFI` signal.
+
+### SRAM
+- **TCM/ITCM/DTCM**: tightly-coupled, single-cycle, no cache. **System SRAM**: shared scratchpad; where boot stages run before DDR. **Backup/retention SRAM**: always-on rail or coin cell, survives sleep. **Parity/ECC** SECDED on safety MCUs (ASIL); validation injects errors and verifies reporting. **MBIST** at boot must pass before SW trusts memory.
+
+### Bring-up failure tree (use for triage)
+```
+No PGOOD                  → rail not coming up: scope rail, check enable, check input
+PGOOD but no PORESET deassert → reset chip / sequencer wiring
+PORESET OK but no IDCODE  → XO dead? PLL bypass for JTAG clk? TRST asserted? strap puts JTAG on alt mux?
+IDCODE OK but no UART     → pin-mux strap, baud divider (PLL not locked → wrong baud), ROM error code on GPIO/persistent reg
+ROM banner then halt      → image signature, fuse lifecycle, anti-rollback, QSPI mode bit, missing image
+BL2 then DDR train fail   → DDR PHY rail late, ref clock wrong, PVT corner, board layout
+```
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Generic reference for any silicon validation interview** — pre-Si CPU core, post-Si bring-up, NPU/AI accelerator, system/SoC integration, platform validation. Tune the lens (Section 2A) to the role.
 >
-> **Day-of interview prep** → [Section 0A](#section-0a---day-of-interview-prep). **Reflex cheat sheet** → [Section 0](#section-0---last-10-min-cheat-sheet). **20-day system-thinking one-liners** → [Section 4B](#section-4b---20-day-system-thinking-one-liner-reference).
+> **Day-of interview prep** → [Section 0A](#section-0a---day-of-interview-prep). **Reflex cheat sheet** → [Section 0](#section-0---last-10-min-cheat-sheet). **21-day architect-drill index** → [Section 4B](#section-4b---21-day-architect-drill-index).
 >
 > Doc map:
 > - **Day-of prep** (5-min checklist + cultural notes per company type) — Section 0A
@@ -12,7 +12,7 @@
 > - **Adaptive answering** (pre-Si / post-Si / system-level) + universal frameworks (new-problem, coverage, workload distribution) — Section 2A
 > - **Backup tech depth** — Sections 3 (thermal/power), 4 (DVFS), 5 (C-states)
 > - **Bug story bank** (5 stories, tagged by lens) — Section 4A
-> - **20-day system-thinking one-liner reference** — **Section 4B** *(distilled from the technical day notes — every concept boiled to a tradeoff one-liner)*
+> - **21-day architect-drill index** — **Section 4B** *(every concept boiled to its constraint-axes — derive the answer in the room, don't recall it)*
 > - **Pre-Si CPU core depth** — Section 6A
 > - **Post-Si NPU depth** — Section 6
 > - **Puzzles + quick reflexes + final checklist** — Sections 7, 9, 10
@@ -92,7 +92,7 @@ Pick the one that comes up — go deep, don't sprint. Cold rehearse 1, 2, 5.
 7. **"Failing assertion — test bug, RTL bug, or spec bug?"** → Reproduce → re-read assertion vs spec → check test preconditions → check RTL under legal stimulus → loop in arch when ambiguous; never silently disable.
 8. **"How would you bring up a new CPU core in emulation, day 1?"** → Section 6A canonical walkthrough.
 9. **"Walk me through system boot."** → Day 9 generic 5-phase boot (POWER → ROM → PLATFORM INIT → BOOTLOADER → OS+INIT) + chain of trust.
-10. **"Why multi-level cache / SRAM vs DRAM / virtual memory / clock gating / multiple C-states / ..."** → Section 4B for the framing on each.
+10. **"Why multi-level cache / SRAM vs DRAM / virtual memory / clock gating / multiple C-states / ..."** → Section 4B for the constraint-axes per concept (derive the design in the room).
 
 ### Step 7 — What to NOT volunteer
 
@@ -139,7 +139,7 @@ Pick the one that comes up — go deep, don't sprint. Cold rehearse 1, 2, 5.
 | **Failing assertion triage** | Reproduce → re-read assertion vs spec (spec ambiguity?) → check test preconditions → check RTL under legal stimulus → loop in arch when ambiguous; never silently disable |
 | **Approaching a new problem** | Restate in one sentence → define done → inventory known-vs-assumed → find cheapest disambiguating signal → minimum reproducer → write down plan → timebox |
 
-### Tech-spine reflexes (concept-per-row, distilled — full one-liners in [Section 4B](#section-4b---20-day-system-thinking-one-liner-reference))
+### Tech-spine reflexes (concept-per-row, distilled — constraint-axes per concept in [Section 4B](#section-4b---21-day-architect-drill-index))
 
 | Theme | One-liner reflex |
 |---|---|
@@ -563,76 +563,96 @@ P_leak ~ exp(T) approximately
 
 ---
 
-## SECTION 4B - 20-day system-thinking one-liner reference
+## SECTION 4B - 21-day architect-drill index
 
-> **The point of this section:** every interview "explain X" question maps to one of these tradeoffs. Lead with the *tradeoff*, then the mechanism. The interviewer is testing whether you reason like a systems engineer or recite facts.
+> **The shift in posture.** The 21-day plan no longer ends each day with a Q&A list. It ends with **Architect Drills** — first-principles questions that cannot be answered by recall. Each drill names the *constraint axes* you must reason across (physics, area, power, workload, cost, validation matrix). The interviewer is testing whether you can derive the design when one constraint shifts — not whether you memorised the textbook.
 >
-> Each row: **the question** → **the one-liner** → **the day file with full reasoning**.
+> **How to use this index in an interview.** When asked "explain X" or "why does Y exist":
+> 1. **Name the constraint axes** (the *italic* hint per row). 15 sec.
+> 2. **Derive the resolution** the constraints force. 30 sec.
+> 3. **Stress-test:** describe what changes if one constraint shifts (DRAM 10× faster, ARM goes TSO, NPUs become coherent). 15 sec.
+> 4. **Stop.** Let them drill.
+>
+> Each row: **concept** → **constraints to weigh** → **future-shift twist** → **day source**.
 
-### Foundations (C, memory, hardware access)
+### Foundations (C, memory, hardware access) — Days 1, 2, 3
 
-| Concept | One-liner answer | Source |
-|---|---|---|
-| **Why C exposes addresses** | C is the only mainstream language that lets you see the machine; hardware is an address space and the language must let you say it. Pointer math is type-aware so array walks are correct by construction. `volatile` / `const` / `restrict` are not type decorations — they're contracts about the world *outside* the program, and the compiler optimises against those contracts. | [Day 01](21day_plan/day01_c_address_fluency.md) |
-| **Why memory has a layout** | Lifetime, protection, and access pattern are three different questions; one region (stack/heap/BSS) cannot answer all three. Alignment matters because hardware loads in chunks — misaligned data costs atomicity, speed, and DMA correctness. Compiler padding is the visible cost of natural alignment. | [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) |
-| **Why MMIO ≠ memory access** | Writing a hardware register is not writing memory. `volatile` stops the compiler caching loads in registers. Uncached/Device mappings stop the cache coalescing or reordering writes. Barriers stop the CPU's reorder buffer. Polling beats IRQs when events arrive faster than the IRQ entry/exit cost. Each keyword opts one optimisation layer back out — because hardware doesn't follow C's rules. | [Day 03](21day_plan/day03_bits_mmio_volatile_polling.md) |
+| Concept | Constraints to weigh | Future-shift twist | Source |
+|---|---|---|---|
+| **Why C exposes addresses** | What the compiler may do under `-O3` (hoisting, dead-store elimination, narrowing); where you'd inject a barrier; debug/trace hooks; test-double substitution; portability vs per-arch barriers | If C added an `mmio_t` qualifier, what would it specify and why doesn't one exist? | [Day 01](21day_plan/day01_c_address_fluency.md) |
+| **Why alignment is a HW requirement** | Memory-bus width, cache-line crossing, atomic-access guarantees, MMU page boundaries, barrel-shifter cost in the LSU | ARMv7 trapped, ARMv8 mostly allows; why the change, why does Apple Silicon still penalise it on hot paths? | [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) |
+| **Why W1C status bits exist** | Lost-event race between HW set and SW clear, atomic event capture without a SW lock, what RW would create when the IP sets a bit between SW read and SW write | When is W1S the right primitive instead, and what bug class does it invite? | [Day 03](21day_plan/day03_bits_mmio_volatile_polling.md) |
+| **Why polling vs interrupts** | Per-poll cost (cycles + cache pollution), interrupt latency + ISR overhead + context switch, wake energy on a sleeping core, jitter, fraction of polls that hit | NVMe goes from interrupts to polling on hot completions — derive the crossover from arrival-rate distribution | [Day 03](21day_plan/day03_bits_mmio_volatile_polling.md) |
 
-### Cache, coherence, virtual memory
+### Cache, coherence, virtual memory — Days 4, 5, 6, 7
 
-| Concept | One-liner answer | Source |
-|---|---|---|
-| **Why multi-level cache (not one big cache)** | You cannot build one cache that is simultaneously 1-cycle fast, 32 MB large, and shared across N cores — physics, area, and contention forbid it. The hierarchy is the resolution: each level trades one constraint for another. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
-| **How CPU "decides" what to cache** | The CPU doesn't decide — it reacts. Demand fetch on miss, predict next line via prefetchers, evict via PLRU. The "decision" is locality: what you touched, you'll touch again; what's adjacent, you'll touch soon. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
-| **Cache lookup walk** | TLB translates VA→PA in parallel with L1 indexing; PA splits into tag/set/offset; set read parallel-fetches all ways; tag compare picks the match (or miss); on hit mux out + update PLRU; on miss allocate victim, fill from L2 critical-word-first. Coherence wrinkle: write hit must be in M/E or send invalidate first. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
-| **SRAM vs DRAM** | SRAM = 6T cross-coupled latch — fast, sparse, volatile only on power loss. DRAM = 1T1C capacitor — dense, cheap, leaks in milliseconds and needs refresh. SRAM where latency dominates, DRAM where capacity dominates. | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
-| **Why coherence (MESI)** | Coherence is the silicon tax for keeping the illusion of one memory across N private caches. Every line has a state, every state change is a protocol transaction, every transaction shows up as latency. False sharing, atomic contention, and lock costs are all the protocol charging you because data sharing was implicit in the layout. | [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) |
-| **Why virtual memory** | An indirection that solves isolation, sharing, and oversubscription in one mechanism. Page fault is the kernel's signal to do allocation, swap-in, copy-on-write, or file-mapping lazily. Cost is a TLB lookup on every load + page walk on every TLB miss; we pay it because no simpler mechanism gives all three properties. | [Day 06](21day_plan/day06_virtual_memory_page_faults.md) |
-| **Why TLB / huge pages / IOMMU** | TLB exists because translation has its own locality and a cold page walk would erase the VM benefit. Huge pages stretch TLB reach — tradeoff is fragmentation + coarser perms. IOMMU is the MMU re-applied to devices: per-device isolation, scatter-gather, 32-bit-device support. Same pattern at a different layer. | [Day 07](21day_plan/day07_tlb_huge_pages_iommu_smmu.md) |
+| Concept | Constraints to weigh | Future-shift twist | Source |
+|---|---|---|---|
+| **Why a multi-level cache hierarchy** | SRAM access time scales with $\sqrt{\text{capacity}}$; per-port area cost; AMAT if you collapse levels; hit-rate vs latency curve | If DRAM latency dropped 10×, does the hierarchy still earn its area? | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
+| **Why a 64 B cache line** | Spatial locality vs false-sharing penalty vs DRAM burst length vs tag-array overhead vs interconnect width | If DDR burst doubles, does the line follow? If cores go to 1024, which way does it move? | [Day 04](21day_plan/day04_cache_lines_locality_amat.md) |
+| **Why MESI specifically (not M+I)** | Read-shared workloads, invalidate-on-every-share traffic, S→M upgrade ordering, snoop-fabric pressure | What workload forces MOESI vs MESIF, and why didn't AMD and Intel converge? | [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) |
+| **Why caches are transparent but TLBs need explicit invalidation** | Coherence-protocol scope (caches snoop, TLBs don't), what the cached truth is (data lives in DRAM owned by coherence; translations live in page tables owned by OS), broadcast cost | What would a coherent-TLB system look like and why don't we have one? | [Day 06](21day_plan/day06_virtual_memory_page_faults.md) |
+| **Why a 4-level page table (vs flat)** | 256 TB sparse VA space, walk cost vs PT memory cost, depth vs breadth tradeoff | What forced 5-level for 57-bit VA — and what's the next inflection? | [Day 06](21day_plan/day06_virtual_memory_page_faults.md) |
+| **Why TLB coverage matters more than entry count** | CAM access time scales with entries, per-entry area + leakage, fill-bandwidth from page walker, real working-set distribution | What's the actual bottleneck — area, latency, or fill rate? | [Day 07](21day_plan/day07_tlb_huge_pages_iommu_smmu.md) |
+| **Why a separate IOMMU per device** | Devices don't take page faults like CPUs (no pre-PRI), per-device isolation, virtualisation, legacy 32-bit DMA, ATC semantics | What does ATS+PRI buy and what does it cost? | [Day 07](21day_plan/day07_tlb_huge_pages_iommu_smmu.md) |
 
-### Device, interconnect, storage
+### Device, interconnect, storage — Days 8, 9, 10, 11
 
-| Concept | One-liner answer | Source |
-|---|---|---|
-| **CPU↔device DMA / barriers** | Two ordering universes meeting. The descriptor → barrier → doorbell pattern is the contract: descriptor visible to device, barrier ensures global ordering, doorbell triggers the device read. Cache management bridges the cache, which is transparent to CPUs but not to non-coherent DMA. Get any of these wrong and you get the classic "works at low rate, fails at line rate" bug. | [Day 08](21day_plan/day08_dma_doorbells_ordering_barriers.md) |
-| **System boot flow (vendor-agnostic)** | Five phases everywhere: **POWER** (PMIC ramps rails, releases reset) → **ROM** (mask ROM verifies next stage from fuse-locked key) → **PLATFORM INIT** (DDR training in FSBL) → **BOOTLOADER** (loads OS kernel) → **OS+INIT** (kernel discovers HW, brings up cores, mounts rootfs). Chain of trust at every hop, fuses pin the root. Names change per vendor (UEFI/PEI/DXE on x86, BL1/BL2/BL31 on ARM TF-A, PBL/SBL/TZ on Snapdragon) — roles identical. | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) |
-| **PCIe** | A packet-switched, layered serial network that fits in a chassis. PHY/DLL/TLP layering enables generation-over-generation rate doubling without breaking drivers. LTSSM trains because Gbps serial links must train, not just turn on. Credit-based flow control wins on a lossless link by eliminating idle gaps. Power states (L0s/L1/L1.1/L1.2) mirror CPU C-states — deeper saves more, costs more wake. | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md) |
-| **NVMe** | AHCI's bottleneck list, inverted. Per-core SQ/CQ pairs kill the queue lock. MSI-X per CQ kills the cross-core IRQ wake. Polling with phase bits kills the IRQ entirely at high IOPS. The descriptor-doorbell pattern is unchanged from any modern DMA device. The hard part isn't the data path — it's the bring-up sequence (CSTS.RDY, AQA, DSTRD), where MMIO field widths and barriers cause "doesn't enumerate" bugs. | [Day 11](21day_plan/day11_nvme_queues_bringup.md) |
+| Concept | Constraints to weigh | Future-shift twist | Source |
+|---|---|---|---|
+| **Why doorbells (not streamed descriptors)** | MMIO BW vs DRAM BW, posted-write semantics, batching amortisation, back-pressure when device is slower than bus, what happens to the queue if CPU stalls mid-stream | What does CXL.cache replace doorbell-as-MWr with, and what new failure mode appears? | [Day 08](21day_plan/day08_dma_doorbells_ordering_barriers.md) |
+| **Why ARM is weak / x86 is TSO** | Store-buffer drain energy, OoO retire complexity, snoop traffic on every store-to-shared-line, mobile vs server power budgets, who pays the tax (HW or SW) | If ARM moved to TSO, who wins and loses? | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) |
+| **Why Snapdragon needs RPMh on top of PSCI** | Multiple independent firmwares (Apps/Modem/ADSP/CDSP) voting on shared rails, no single OS to arbitrate, always-on aggregation, PMIC over SPMI | What does Intel's PCU do implicitly that RPMh has to do explicitly, and why? | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) |
+| **Why 4 ARM exception levels (vs 2 x86 rings)** | Mobile-first hardware-virt story, TrustZone as a peer to the hypervisor, signed-firmware boot chain, attack-surface partitioning | What does the lack of an EL2-equivalent cost x86 in cloud workloads? | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) |
+| **Why PCIe has 3 layers (PHY/DLL/TL)** | What fault each layer catches (bit error / packet drop / protocol error), where retry is cheapest, debug-tooling vocabulary | Compare to Ethernet's 7 layers — why does PCIe stop at three? | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md) |
+| **Why posted MWr for doorbells** | Round-trip latency × IOPS, ordering vs response coupling, BW amortisation, what "completion" would mean for a doorbell | Construct the workload where non-posted is safer at the perf cost | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md) |
+| **Why NVMe scales 5× over AHCI** | Per-CPU lock-free queues, MSI-X per queue, posted doorbells, 64-byte commands, no SATA translation | Rank these — which one alone would have been worth doing? | [Day 11](21day_plan/day11_nvme_queues_bringup.md) |
+| **Why CSTS.RDY suspect list (derived, not memorised)** | What each register write traverses (host → PCIe → fabric → FW), where each can fail (alignment, IOMMU, DSTRD, link state), what the controller is trying to do internally | Walk the failure points and build the list — don't recall it | [Day 11](21day_plan/day11_nvme_queues_bringup.md) |
 
-### Power, thermal, idle states
+### Power, thermal, idle states — Days 12, 13, 14, 15
 
-| Concept | One-liner answer | Source |
-|---|---|---|
-| **Why DVFS (V & F coupled)** | $P_{dyn} = \alpha C V^2 F$, and V & F are coupled by physics — lower F enables lower V, giving near-cubic energy savings. P-states are a curated list of safe (V, F) pairs the silicon was characterised at. Governors exist because hardware sees load but not intent. PVT sensors close the loop in real time because every die is different and worst-case static voltage wastes energy on the typical die. | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) |
-| **Static vs dynamic power** | Dynamic = $\alpha C V^2 F$ — cost of toggling. Leakage = $V \cdot I_{leak}(T)$ — cost of being powered, exponential in temperature. Clock gating kills dynamic only. Power gating kills both, but you lose state and pay μs of wake-up. Every C-state and DVFS decision is choosing which lever to pull. | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
-| **Why clock gating + ICG cells** | RTL `if(en)` patterns rewritten by synthesis into ICG cells — a latch+AND that gates the clock pin without glitching. Three tiers: leaf gates the tool inserts automatically, regional gates the architect hand-codes per unit, root gates the power FSM drives for whole IPs. Together they kill the 30-40% of dynamic power the clock tree would otherwise burn on idle flops. Validation: LEC, glitch checks, X-prop at reset, gating-efficiency coverage. | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
-| **Why a C-state ladder** | Every idle state pays an entry/exit energy cost; only deeper states save more leakage. A single state is wrong for short idles (you waste more entering than you save) and wrong for long idles (you leak more than you need to). The OS picks the deepest state whose break-even residency fits the predicted idle window. Multiple C-states = multiple price points on the energy/latency curve. | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
-| **PCU firmware / ADR / Core C6** | PCU is firmware (a microcontroller) because power policy is too complex, too SKU-specific, and too release-sensitive for RTL. ADR exists because persistent memory commits are in-flight in the WPQ on power loss — PCU has μs to drain it. Core C6 bugs are silent because the save/restore surface is wide and the bug only shows after a wake under specific timing. | [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md) |
-| **Thermal management = control loop** | Workload power isn't predictable and worst-case cooling is too expensive. Throttling is the negative feedback that breaks the leakage-temperature runaway. Perf counters are sampled because programmable beats fixed and statistical sampling is enough for most analysis. First diagnostic question for any "why is my CPU slow?" is: which throttle reason fired? | [Day 15](21day_plan/day15_thermal_power_perf_counters.md) |
+| Concept | Constraints to weigh | Future-shift twist | Source |
+|---|---|---|---|
+| **Why $P=\frac{1}{2}CV^2F$ (derive)** | Energy per switching event, switches per second ∝ F, what charges and discharges (gate cap), why V is squared and F is linear | Where does the formula break (near-Vt, leakage-dominated)? | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) |
+| **Why a discrete P-state ladder** | Characterisation matrix (each OPP needs validation), VRM transient response, OS predictability, common-OPP libraries reused across SKUs | What does Apple Silicon's near-continuous OPP cost that discrete saves — and what does it buy? | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) |
+| **Why a discrete C-state ladder (not continuous)** | Every state needs a coordinated entry/exit FW+HW sequence, validation matrix per rung; continuous = infinite matrix | What would a 5th rung between C6 and C10 actually buy? | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
+| **Why retention SRAM (not DRAM-save) in C6** | Exit-latency budget (DRAM ~100 ns + path setup vs SRAM ~1 ns), DRAM may be in self-refresh and need wake first, energy trade, who restores the path that restores the cores | What forces a future SoC to drop retention SRAM? | [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md) |
+| **Why ADR opcode order is fixed (IO_QUIESCE → WPQ_FLUSH → SR_ENTRY → NVDIMM_SAVE)** | In-flight writes still entering WPQ during quiesce, self-refresh entry condition (no pending writes), NVDIMM needing power-fail-safe state | Walk each pair-swap and identify the failure mode — this *is* the headline bug | [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md) |
+| **Why a Core C6 wake can be lost** | CDC during PLL relock, reset-window asymmetry, retention-state restore order, who gates whom | What's the cheapest pre-Si hook that would have caught it in unit-sim? | [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md) |
+| **Why $T_j$-lumped model works (when die is non-uniform)** | Lumped vs distributed thermal RC, hotspot vs average, when the model breaks (transient PROCHOT) | When does a per-tile model justify its complexity over lumped steady-state? | [Day 15](21day_plan/day15_thermal_power_perf_counters.md) |
+| **Why top-down PMU has 4 buckets** | Counter budget on the PMU, actionability for a perf engineer, cross-vendor portability of methodology | What does TMA L2 add at 6+ buckets, and where does marginal information die? | [Day 15](21day_plan/day15_thermal_power_perf_counters.md) |
 
-### Pipeline, concurrency, accelerators
+### Pipeline, concurrency, accelerators — Days 16, 17, 18, 19
 
-| Concept | One-liner answer | Source |
-|---|---|---|
-| **OoO + memory consistency + SIMD** | OoO and speculation extract ILP from a serial stream; SIMD extracts data parallelism orthogonally. Memory consistency models are a tradeoff between HW freedom and SW programmability — weaker (ARM) goes faster but needs explicit barriers; stronger (x86 TSO) is easier to program. Every concurrency bug is the CPU's reordering becoming visible across cores or to devices. Spectre-class side channels are the same optimisation leaking through a side channel — validation now tests both correctness and mitigation effectiveness. | [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) |
-| **Lock-free queues** | Queues are the universal primitive for decoupling producers and consumers across cores, IPs, and CPU↔device boundaries. Lock-free is required where locks can't reach (devices, real-time, hot paths). Pick the most-restrictive flavor that fits — SPSC is dramatically faster than MPMC. ABA is the value-matched-but-world-changed bug that makes naive CAS wrong; tagged pointers or hazard pointers fix it. Cache-line padding between head and tail is the difference between toy code and shipped code. | [Day 17](21day_plan/day17_concurrency_queues_dsa.md) |
-| **Why NPUs exist** | Dedicated matmul silicon is 100–1000× more energy-efficient than CPU SIMD — the cost is a separate ISA, memory, address space, and power domain. The Execution Provider (EP) abstraction lets one model target many backends; each EP is a partitioner + a kernel library. The accelerator is a separate compute domain with its own everything; that isolation is its efficiency advantage and its debug pain. | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md) |
-| **Where NPU bugs live** | At the boundary — CPU↔NPU memory, VA↔IOVA, coherent↔non-coherent, runtime↔driver — because each domain is correct in isolation but the contract is fragile. First diagnostic: attribute slowdowns to a specific miss class (page fault, TLB, IOMMU, coherence), not to the model. FastRPC / EP runtimes are the marshalling layer where most leak/handle bugs hide. | [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) |
+| Concept | Constraints to weigh | Future-shift twist | Source |
+|---|---|---|---|
+| **Why deep OoO beats in-order at same clock** | In-flight ILP from rename + ROB, memory-latency hiding, branch-mispredict squash cost (rises with depth), area+power overhead | When does in-order win — Apple E-cores and Cortex-A55 are in-order, why? | [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) |
+| **Why x86 needs a μop cache; ARM doesn't** | Variable-length x86 (1–15 B), serial decode bottleneck, fixed-width ARM (4 B), parallel decode trivially | What does RISC-V's compressed mode threaten to bring back? | [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) |
+| **Why "pick the weakest correct memory order"** | seq_cst forces global total order — full-fence (drain store buffer, snoop, IPI on weak archs); perf cost on every atomic op | Construct the workload where seq_cst is 10× slower than acq/rel | [Day 17](21day_plan/day17_concurrency_queues_dsa.md) |
+| **Why SPSC is lock-free; MPSC needs CAS** | Head/tail single-owner invariant, what breaks at two writers (lost increment, torn pointer) | Why is per-producer-slot + epoch reaping a workaround, not a fix? | [Day 17](21day_plan/day17_concurrency_queues_dsa.md) |
+| **Why six layers (Framework → ONNX → ORT → EP → vendor RT → silicon)** | Author flexibility, vendor-portability, IR stabilisation point, runtime hot-swap, vendor-specific codegen | What collapses if Framework→silicon directly (PyTorch MPS does this) — and at what cost? | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md) |
+| **Why VTCM is software-managed (not coherent)** | Coherence-interconnect cost, prefetch/tile predictability, deterministic latency, INT8 dataflow doesn't need fine-grain sharing | When CXL.cache makes coherent NPUs viable, what dies first — VTCM or DMA? | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md) |
+| **Why "page faults spike" is almost never silicon** | Faults are OS-visible at 4 KB, hardware doesn't distinguish minor/major, allocator policy lives in user/kernel, version-matrix isolates per layer | What's the one signal that *would* point at silicon? | [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) |
+| **Why "never blame silicon first"** | IHV escalation cost, silicon-fix cycle (months), reputational risk of false-positive RTL claims, time-to-isolate at platform layer | When does the rule reverse — what evidence is sufficient to escalate? | [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) |
 
-### Method (the meta-skill)
+### Method (the meta-skill) — Days 20, 21
 
-| Concept | One-liner answer | Source |
-|---|---|---|
-| **Debugging is method, not intuition** | Bisection + symptom-vs-cause + hypothesis-and-bound — because intuition has bias and method has guaranteed convergence. A polished bug story is method demonstrated through a concrete artifact: precise symptom, first hypothesis, bounding experiment, fix, and the test that prevents regression. The interviewer is hiring the method, not the trivia. | [Day 20](21day_plan/day20_debug_method_bug_polish.md) |
+| Concept | Constraints to weigh | Future-shift twist | Source |
+|---|---|---|---|
+| **Why the 7-step framework is load-bearing** | "Hypothesis without reproduction" / "isolation without test" / "fix without root-cause" each predicts a different failure mode | If debug tooling improved 100×, which steps still survive? | [Day 20](21day_plan/day20_debug_method_bug_polish.md) |
+| **Why repro rate classifies the bug** | 100% → single-step; intermittent → trigger+capture; corner-only → PVT sweep; single-unit → defect chase | Why does "intermittent" cost the most engineering hours per bug? | [Day 20](21day_plan/day20_debug_method_bug_polish.md) |
+| **Why "lead with the symptom" in 90 sec** | Interviewer attention budget, signal-to-noise, what they're testing (thinking pattern, not chronology) | Construct the same bug story in story-then-symptom order — show the cost in lost signal | [Day 21](21day_plan/day21_final_mock_company_tailoring.md) |
+| **Why honest framing wins ("I don't debug Hexagon RTL")** | Interviewer-side fact-check, internal-credibility downstream, what an over-claimed story does when the follow-up question hits | Construct the question chain that exposes a bluff | [Day 21](21day_plan/day21_final_mock_company_tailoring.md) |
 
-### How to use this section in an interview
+### The architect-mode answer pattern (use verbatim)
 
-When asked "explain X" or "why does Y exist":
-1. **Lead with the tradeoff** (the *italic* part of the one-liner). 10 seconds.
-2. **Name the mechanism** that resolves it. 20 seconds.
-3. **Drop one validation hook** — what counter you'd watch, what bug class this enables, what test you'd add. 30 seconds.
-4. **Stop.** Let them drill if they want depth.
+> "The constraint axes here are **[A, B, C]**. Given those, the design has to look like **[mechanism]** because **[A forces X; B forces Y; C forces Z]**. The interesting case is when **[constraint shifts]** — then **[what changes / what survives]**."
 
-Total: ~60-second answer that shows tradeoff thinking, mechanism literacy, and validation discipline. That's the senior bar.
+That's a 60-second senior-bar answer. It demonstrates: tradeoff thinking, mechanism literacy, and the architect move of re-deriving the design when one constraint shifts.
+
+### What this section deliberately does *not* give you
+
+It does not give you the answer. The 21-day plan's Architect Drills end without an answer key on purpose — if you can't derive the design in 5 minutes from the constraint axes above, that's the layer to re-read in the source day file. Recall is fragile under interview stress; derivation is robust.
 
 ---
 

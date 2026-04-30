@@ -207,46 +207,30 @@ If your endpoint doesn't advertise L1.2 in the L1 PM Substates capability, PkgC6
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why did PCIe move 8b/10b → 128b/130b at Gen3?**
-20% → 1.5% encoding overhead; doubled throughput at 8 GT/s without doubling raw rate.
+*PCIe is a layered protocol whose every choice (3 layers, posted writes, 11-state LTSSM, train-up-from-Gen1) is a tradeoff. Derive why — don't recall. No answer key.*
 
-**Q2. What does PAM4 buy and cost at Gen6?**
-2 bits/symbol = 2× rate at same symbol clock; 1/3 noise margin; mandates FEC and FLIT framing.
+**D1. Why three layers (PHY/DLL/TL) and not two or four? Reason from what each layer isolates.**
+*Constraints to weigh:* what fault each layer catches (bit error / packet drop / protocol error), where retry is cheapest, debug-tooling vocabulary (LTSSM vs ACK/NAK vs UR), what would collapse if PHY+DLL merged. Compare to Ethernet's 7-layer OSI — why does PCIe stop at three?
 
-**Q3. Why no separate clock wire on PCIe?**
-At Gen5/6 routing aligned clock is harder than CDR; encoding guarantees enough transitions for the PLL to lock.
+**D2. Why did PCIe move from 8b/10b → 128b/130b at Gen3 instead of further to 256b/258b?**
+*Constraints to weigh:* encoding overhead vs DC balance, run-length limits, CDR lock-time, cost of larger framing units at higher rates. What does PAM4+FEC at Gen6 implicitly say about where this trend dead-ends?
 
-**Q4. Posted vs non-posted vs completion — example each, perf implication.**
-Posted MWr (doorbell) — fire-and-forget, no stall. Non-posted MRd/CfgRd — block on Cpl, ~µs. Completion (CplD) — response carrying read data. Drivers prefer posted; reads serialise the queue.
+**D3. Posted memory writes are fire-and-forget; reads block. Reason from first principles why doorbell-as-MWr won the design.**
+*Constraints to weigh:* round-trip latency × IOPS, ordering vs response coupling, bandwidth amortisation, what "completion" would even mean for a doorbell. Construct the workload where non-posted doorbells would be safer, even at the perf cost.
 
-**Q5. Flow-control credits run out — what happens?**
-Sender stops; link looks alive, throughput drops to zero. Look for missed UpdateFC DLLPs.
+**D4. LTSSM has 11 states. Why so many — could it be expressed in 4?**
+*Constraints to weigh:* each state isolates a different failure mode (refclk, EQ, polarity, FC credit, power), debug-protocol exposure, link-power transitions need their own state space. Which states are vestigial vs load-bearing in 2025?
 
-**Q6. Walk BAR sizing.**
-Save → write 0xFFFFFFFF → read back → mask type bits → bits cleared = size, two's-complement → restore.
+**D5. PCIe trains at Gen1 first then negotiates up. Reason about why no spec ever just "starts at the highest rate."**
+*Constraints to weigh:* receiver equalisation needs a known training sequence, cross-vendor interop matrix, downshift recovery on signal-integrity failure, LTSSM Recovery as the universal back-channel. What would a "start-at-Gen6" spec sacrifice?
 
-**Q7. ECAM formula for `01:1F.3` reg `0x10` with base `0xE0000000`?**
-`0xE0000000 | (1<<20) | (0x1F<<15) | (3<<12) | 0x10 = 0xE01FB010`.
+**D6. Flow-control credits — why aren't they implicit (just stop sending if you don't get an ACK)?**
+*Constraints to weigh:* receive-buffer sizing visibility, head-of-line blocking, per-VC isolation, protocol overhead of credit-return DLLPs. What did PCI-X's bus-mastering retry teach the PCIe spec authors that they encoded into the credit scheme?
 
-**Q8. Stuck in Polling — top 3 suspects?**
-Refclk frequency / not running; receiver termination; lane polarity inversion.
-
-**Q9. Why does every link train at Gen1 first?**
-Most robust signalling; baseline that all devices speak. Negotiate up only after L0 by entering Recovery and equalising.
-
-**Q10. L1.1 vs L1.2?**
-L1.1: PLL off + CLKREQ# de-asserted. L1.2: + common-mode voltage off, only Vaux. L1.2 saves an order of magnitude more power but takes longer to exit (~32-64 µs).
-
-**Q11. Why does PkgC6 require L1.2 specifically?**
-Only L1.2 drops common-mode bias so the package rail can collapse. L1 alone leaves residual draw.
-
-**Q12. Gen6 FLIT — what changes about TLP processing?**
-TLPs no longer self-framed; packed into 256 B FLITs with FEC parity. Per-FLIT ACK/NAK. Validation: check FEC error counters and FLIT alignment, not just LCRC.
-
-**Q13. What does L0p solve that L0s/L1 don't?**
-Low-but-constant traffic. L1 entry/exit costs more than the idle; L0p reduces lane count (e.g., x16 → x2) at FLIT granularity in tens of ns.
+**D7. Imagine PCIe's successor lets devices share CPU coherence (CXL.cache). Which LTSSM/TLP artefacts survive, and which are obsoleted?**
+*Constraints to weigh:* the PHY and DLL stay (they're the wire), TL might evolve for cache-line semantics, LTSSM still needs power states and equalisation, doorbell-as-MWr loses to coherent loads/stores. What new failure mode appears for `.cache` that PCIe never had?
 
 ---
 
@@ -386,6 +370,68 @@ Because PHY and link-level power dominates idle PCIe energy on laptops. Same lad
 - **TLP / DLLP** — *what:* transaction-layer pkt vs link-layer pkt / *why:* layered like a network stack / *how:* headers + LCRC + sequence numbers / *connects:* credit-based flow control via UpdateFC DLLPs
 - **credits** — *what:* rx buffer space advertised by receiver / *why:* lossless = no drops, deterministic latency / *how:* InitFC at link-up, UpdateFC during run / *connects:* credit starvation = link hangs, not packet loss
 - **enumeration** — *what:* BIOS walks bus, assigns BARs / *why:* devices need address-space windows / *how:* config-space type 0/1 reads, BDF / *connects:* ACS, hot-plug, SR-IOV VFs
+
+---
+
+## Extension — Automotive buses (LIN / CAN / CAN-FD / Auto Ethernet / TSN / FlexRay)
+
+PCIe is the high-speed serial protocol; the same protocol-validation discipline (3 layers, error states, compliance) applies to the automotive buses MCU/SoC bring-up roles (Renesas, NXP, TI, ST, Infineon, Tier-1 auto) centre on.
+
+### LIN
+- Single wire (LIN bus) ref to battery; **master/slave**, master-polled. 1–20 kbit/s. Body electronics (mirrors, seats, climate).
+- Frame: **break (≥13 dom bits) → sync (0x55) → PID → 0–8 data → checksum**.
+- Validate: bit timing across 8–18 V supply, slave wake-up, transceiver dominant-timeout.
+
+### CAN / CAN-FD
+- Differential pair (CAN_H / CAN_L), terminated **120 Ω at each bus end** (60 Ω effective DC).
+- **Dominant (0)** wins over **recessive (1)** on the wire (wired-AND).
+- **Arbitration** by ID — lower ID wins; non-destructive, no retransmit on arbitration loss.
+- **Bit stuffing** — insert opposite bit after 5 same-polarity bits.
+- **Error states** — error-active → error-passive (TEC ≥ 128) → bus-off (TEC ≥ 256). Bus-off recovery requires controller intervention + 128 × 11 recessive bits.
+- **CAN-FD** — same arbitration phase, switches to **higher data-phase rate** (5–8 Mbit/s) and **payload up to 64 B**.
+- Validation:
+  - CAN analyzer (Vector CANoe, PEAK PCAN) for protocol decode + error-frame counts.
+  - Scope diff signal: bit time, slew, ringing on dominant→recessive (most common SI offender).
+  - Termination check: 60 Ω measured between H and L with bus powered down.
+  - Error injection: corrupt CRC, force error frames, drive bus-off and verify recovery.
+  - Bus loading: sustained 80–90 % busload + worst-case ID collisions.
+- Bug class: termination wrong (e.g., 60 Ω at one node and a third node missing → reflections → form errors clustered on dominant→recessive edges → error-passive under load).
+
+### Automotive Ethernet
+- **100BASE-T1**: single twisted pair, **PAM3**, full-duplex 100 Mbit/s.
+- **1000BASE-T1**: **PAM4**, 1 Gbit/s.
+- PHY link-up: **master/slave roles configured, NOT auto-negotiated** like consumer Ethernet.
+- **AVB / TSN** on top:
+  - **gPTP (802.1AS)** — sub-µs time sync.
+  - **TAS (802.1Qbv)** — time-aware shaper, gated traffic per cycle.
+  - **CBS (802.1Qav)** — credit-based shaper for AVB streams.
+  - **Frame preemption (802.1Qbu / 802.3br)**.
+- Compliance: IEEE 802.3 conformance for the PHY layer; gPTP/TSN have separate test suites.
+
+### FlexRay (legacy but still appears)
+- Dual channel, **TDMA** with static + dynamic segments, deterministic. Historically chassis (brake/steer).
+
+### Vendor MCU/SoC family map (Renesas worked example — mirror the same shape per JD)
+| Family | Core | Slot |
+|---|---|---|
+| **RH850** | Renesas G3/G4 | automotive MCU (powertrain, body) |
+| **RA** | ARM Cortex-M | general MCU (consumer/industrial) |
+| **RZ** | ARM Cortex-A / R | MPU, HMI, industrial |
+| **RL78** | Renesas 16-bit | low-power MCU |
+| **R-Car** | ARM Cortex-A + accelerators | ADAS / IVI SoC |
+| **RX** | Renesas 32-bit | industrial MCU |
+
+Other vendors land on the same axes (auto MCU / general MCU / low-power MCU / MPU / auto SoC):
+- **NXP** — S32 (auto MCU/MPU) / Kinetis / LPC (general MCU) / i.MX (industrial MPU) / Layerscape (networking)
+- **TI** — Hercules TMS570 (safety MCU) / MSP430 (low-power) / Sitara AM (industrial MPU) / Jacinto TDA (auto SoC)
+- **ST** — SPC58 / Stellar (auto) / STM32 (general MCU+MPU)
+- **Infineon** — AURIX TC3xx/TC4xx (auto MCU) / XMC (industrial) / PSoC (general)
+
+### Protocol compliance + corner / stress (applies to PCIe AND automotive)
+- **Compliance** = conformance to spec under specified conditions (PCIe-CEM CTS, USB-IF, IEEE 802.3, ISO 16845 CAN, JEDEC DDR). Not "works on my board".
+- **Corner cases** = voltage (Vmin/Vnom/Vmax), temp (-40/25/85/125 °C for auto), process (FF/TT/SS samples), frequency (Fmin/Fmax), silicon revision (A0/A1/B0).
+- **Stress** = long-soak (24/72 h), thermal cycling, power cycling, simultaneous-IP load, pattern stress (DDR march, walking-1 across pins), error injection.
+- **Margining** = Vmin search (binary search to first fail), shmoo plots (V vs F), eye-margin shrink for SI.
 
 ---
 

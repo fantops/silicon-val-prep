@@ -209,37 +209,30 @@ The "Why isn't S3M defeating the purpose?" interview question: S3M is a few KB a
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. What is PLI and why does it matter for the validation budget?**
-Power Loss Imminent. It is the PSU-driven signal that says rails will sag in 10-30 ms. Every IP that has to quiesce eats into that budget. The validation deliverable is end-to-end latency characterisation against the budget.
+*ADR and Core C6 are sequencing across firmware, power-gated logic, and always-on islands. The bugs are predictable from the constraints. Derive — don't recall. No answer key.*
 
-**Q2. Why must IO be quiesced before WPQ flush?**
-If IO continues, new writes can enter the IMC write-pending queue while it is being drained, so self-refresh entry condition is never met. This is the PCU/ADR bug above.
+**D1. Why is the ADR hold-up budget 10-30 ms specifically — what physics sets it?**
+*Constraints to weigh:* PSU bulk capacitance, rail-decay rate at idle current, max IO+memory drain time, NVDIMM SAVE budget, board-level cap cost. What would a 1 ms budget force redesign of, and what would 100 ms cost on the BOM?
 
-**Q3. Difference between ADR and eADR?**
-ADR drains IMC WPQ. eADR also writes back the LLC, so app-direct PMem stores are persisted without explicit `clwb`. eADR costs more hold-up time.
+**D2. Why is the ADR opcode sequence (IO_QUIESCE → WPQ_FLUSH → SR_ENTRY → NVDIMM_SAVE) ordered exactly that way? What collapses if any pair swaps?**
+*Constraints to weigh:* in-flight writes still entering the WPQ during quiesce, self-refresh entry condition (no pending writes), NVDIMM needing power-fail-safe state of memory. Walk each swap and identify the failure mode — this *is* the headline bug.
 
-**Q4. What is the P-channel?**
-The handshake protocol Core PMA uses to request a C-state from PCU. PCU evaluates blockers and acks/declines.
+**D3. PCU FW carries an opcode table addressing other IPs. Why isn't the table burned into hardware (decoder ROM)?**
+*Constraints to weigh:* stepping-to-stepping changes, power-management algorithm evolution, security-patch cadence, debug-via-FW-trace. What goes wrong when FW and HW disagree on opcode mapping (and how would you detect the disagreement before it ships)?
 
-**Q5. What is S3M SRAM?**
-Always-on SRAM that holds the core's architectural state during C6. Powered from the AON rail with ECC.
+**D4. Core C6 wake travels through always-on, CFC FIFO, and re-clocked logic. Reason from first principles why this domain crossing is the bug-prone one.**
+*Constraints to weigh:* clock-domain crossing during PLL relock, reset-window asymmetry, retention-state restore order, who gates whom. What does a 2-FF synchroniser fix, and what does it not?
 
-**Q6. Why can a Core C6 wake be lost?**
-The wake crosses from always-on logic into a domain whose clock and reset are still transitioning after PLL relock. If the ack edge crosses a CFC FIFO mid-reset, it never makes it across, and the core stays in C6.
+**D5. eADR adds LLC writeback to ADR. Construct the workload where eADR is necessary, not a luxury.**
+*Constraints to weigh:* persistent memory `clwb`+sfence semantics, app-direct PMem, hold-up budget cost of LLC drain, IMC vs LLC writeback bandwidth. What does CXL.mem persistence do to this picture — does it make eADR obsolete or universal?
 
-**Q7. Why is "works in unit-sim, fails in full-die emulation" the C6-wake-bug archetype?**
-Unit sims usually do not model the CFC reset window or AON-to-core domain crossing realistically. You only see the race when you have the full clock/reset infrastructure modelled, i.e. on emulation or first silicon.
+**D6. PkgC6 has a long blocker list (PCIe L1.x, IIO, IMC refresh, …). Why doesn't the PCU just force-quiesce everything instead of waiting?**
+*Constraints to weigh:* in-flight transactions, completion ordering, partner-domain (PCIe endpoint) state, data loss vs safe abort, latency of force-quiesce vs negotiated quiesce. When does "force" win — is there a SoC where it's already the default?
 
-**Q8. PkgC6 vs Core C6 in 30 seconds?**
-Core C6: one core power-gates, others can stay active. PkgC6: ALL cores in C6, LLC flushed, package Vcc collapsed, PLLs off. PkgC6 has a long blocker list (PCIe L1.x, IIO outstanding txns, IMC refresh, etc.).
-
-**Q9. You said "PCU FW had a stale opcode mapping after a silicon stepping change" elsewhere — what does that mean?**
-PCU FW carries an opcode table addressing other IPs over IOSF-SB. A new stepping changed an opcode value; the FW table wasn't updated, so the message went to the wrong target (or no target) and was dropped silently. Caught by cross-checking PCU FW trace against the IOSF-SB log.
-
-**Q10. What evidence is sufficient to claim root cause for a C6 wake bug?**
-A trigger condition that catches every failure (`wake_in && cfc_init_busy`), a directed test that reproduces 100%, and a fix that closes the race in the always-on holding logic. Bonus: a Perspec assertion in regression.
+**D7. "Works in unit-sim, fails in full-die emulation" is the C6-wake archetype. Why is this a *predictable* class of bug, and what would make it findable in unit-sim?**
+*Constraints to weigh:* unit-sim doesn't model the CFC reset window or AON crossing realistically, what assertion or interface mock would catch it, RTL UVM coverage gap, formal-verification scope. What's the cheapest pre-Si hook that finds 80% of these?
 
 ---
 

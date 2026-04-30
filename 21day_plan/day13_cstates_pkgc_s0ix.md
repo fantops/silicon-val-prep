@@ -186,34 +186,30 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Clock gating vs power gating — what does each save and cost?**
-Clock gating: dynamic only, ~µs wake, no state loss. Power gating: dynamic + leakage, ~100 µs wake, state must be saved to retention SRAM.
+*Idle is an architecture problem disguised as a power one. Reason from constraints — entry cost, exit cost, residency, break-even — not from the C-state names.*
 
-**Q2. Why does PCIe being out of L1.2 block PkgC6?**
-PCIe controller only asserts idle when the link is in L1.2 (common-mode off). PCU waits for every uncore IP to assert idle. No L1.2 → no PCIe idle → PCU blocks PkgC6.
+**D1. Why a discrete ladder (C0/C1/C6/C10) and not a continuous knob — "sleep deeper the longer I'm idle"?**
+*Constraints to weigh:* every state needs a coordinated entry/exit sequence (rails, clocks, retention save, cache flush, snoop quiesce); each sequence is FW + HW co-designed and validated separately. Continuous would mean infinite validation matrix. Why are the chosen rungs spaced where they are (what makes the gap from C1 to C6 worth the validation cost)? What would a 5th rung between C6 and C10 actually buy?
 
-**Q3. Why is LLC reload the dominant PkgC6 exit cost?**
-LLC was flushed to DRAM and power-gated on entry. On exit it starts cold; every line must re-fetch from DRAM. Hundreds of µs for multi-MB LLC.
+**D2. Why does PkgC6 require *every* uncore IP to be idle? Why can't the package power-gate cores independently and leave uncore running?**
+*Constraints to weigh:* shared rails (the same VR feeds cores and uncore on most designs), snoop traffic (an active uncore agent can issue a coherent probe into a power-gated core), the PCU as a single arbiter with a single global view, retention-state consistency. Where does the assumption break — is there a SoC topology where independent core gating is genuinely possible?
 
-**Q4. The retention SRAM stays powered in C6 — why isn't that defeating the purpose?**
-A few KB, almost never accessed (only entry/exit). Its leakage is tiny vs a multi-MB cache + execution units running at high V.
+**D3. Retention SRAM stays powered in C6. Why retention at all — why not save core state to DRAM and skip the dedicated array?**
+*Constraints to weigh:* exit latency budget (DRAM access ~100 ns + path setup vs SRAM ~1 ns), DRAM controller itself may be in self-refresh and need wake first, energy of one SRAM array vs energy of waking the memory subsystem to read 4 KB, and the chicken-and-egg of "who restores the path that restores the cores." When does the trade flip — what would force a future SoC to drop retention SRAM?
 
-**Q5. PkgC6 residency = 0 on a quiet system — where do you look first?**
-Read the PCU blocking-reason MSR. Whatever IP it names → check that IP's PM contract.
+**D4. S0ix depends on PCIe L1.2. What architectural change would let a platform reach S0ix-class power without L1.2?**
+*Constraints to weigh:* common-mode current on the link (~mW per lane) is the dominant non-CPU residual; alternatives are full link-down + re-train (latency cost), side-band wake signalling, or moving the device to a different rail entirely. CXL idle states are a real-world rerun of this question — what did the spec authors land on, and why?
 
-**Q6. PkgC6 entered then immediately exited — what's happening?**
-A wake source kept tripping. Trace wake reason — usually a periodic timer or device heartbeat that wasn't masked.
+**D5. Derive the break-even residency for entering a deeper C-state. When is going deeper a *net loss*?**
+*Constraints to weigh:* entry energy $E_{\text{in}}$, exit energy $E_{\text{out}}$, savings rate $\Delta P$ while in the state, expected residency $T_r$. Inequality: enter only if $T_r > (E_{\text{in}} + E_{\text{out}}) / \Delta P$. How does the OS/PCU estimate $T_r$ in practice, and what happens to the estimator under bursty wake patterns (the "ping-pong" failure mode)?
 
-**Q7. Why does Modern Standby (S0ix) depend on PkgC6 working?**
-S0ix targets PkgC10; PkgC6 is the first big residency contributor. If PkgC6 is broken, the platform never deepens past PC2 and S0ix power is over budget.
+**D6. If wake latency could be made arbitrarily fast (~ns), what changes about the C-state ladder?**
+*Constraints to weigh:* the ladder exists because exit cost is high enough to justify staying shallow for short idles. Collapse exit cost → the ladder collapses to two states (on/deep). What's then the bottleneck — is it OS scheduler granularity, interrupt-controller wake path, or the physics of restoring rail voltage? Pick one and argue why it is now load-bearing.
 
-**Q8. Snapdragon equivalent of PkgC6 entry?**
-OS PSCI request → RPMh aggregates votes → TCS fires → PMIC drops rails over SPMI. Same debug ladder.
-
-**Q9. Why is ADR a cross-IP bug magnet?**
-PCU + memory controller + cache hierarchy + power supply must coordinate within milliseconds; opcode ordering bugs cause data loss (Day 14 story).
+**D7. PkgC6 residency = 0 on a quiet system. Reason about where you look *before* reading any blocking-reason MSR — what does the system shape predict?**
+*Constraints to weigh:* what *can* keep an IP busy on a "quiet" system (tick timers, USB SOFs, PCIe LTR, audio DMA at 10 ms cadence, GPU compositor, SMI storms). Rank these by base rate. Does "residency = 0" vs "residency = 30%" point to different culprit classes? The blocking-reason MSR is the *confirmation*, not the *hypothesis*.
 
 ---
 

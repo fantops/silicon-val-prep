@@ -213,37 +213,30 @@ Using arithmetic mean on ratios changes ranking when you change the baseline —
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Apply $T_j = T_a + P\theta_{JA}$. $T_a = 35$, $P = 80$, $\theta_{JA} = 0.4$.**
-$T_j = 35 + 32 = 67$°C. With $\theta_{JA} = 0.8$ (dried TIM): 99°C — at PROCHOT.
+*Thermal is physics; PMU/RAPL/top-down are abstractions over it. Reason from constraints — what each model captures and where it leaks. No answer key.*
 
-**Q2. PROCHOT asserts at 85°C, spec is 100°C. Top 3 suspects?**
-DTS calibration fuses; FW/BIOS-overridden threshold; bidirectional PROCHOT from a neighbour.
+**D1. Why is $T_j = T_a + P\theta_{JA}$ a useful model when in reality the die is non-uniform?**
+*Constraints to weigh:* lumped-parameter approximation, thermal RC network of die-TIM-IHS-sink-air, hotspot vs average, when the model breaks (transient PROCHOT). What does a per-tile thermal model buy that justifies its complexity — and where would steady-state lumped still win?
 
-**Q3. Why is hotspot temperature higher than die-average and why care?**
-Density variation. Throttle on hotspot, not average — single sensor degradation.
+**D2. PROCHOT exists at the package level. Reason about why per-IP thermal throttling isn't more aggressive — what stops a future SoC from per-tile DVFS?**
+*Constraints to weigh:* per-IP DTS sensor area, PCU latency to react per tile, voltage-rail granularity, software visibility (one PROCHOT bit vs N), validation matrix. What does Apple's per-block thermal headroom actually cost in silicon and FW?
 
-**Q4. Voltage droop + AVX-512 — relate them.**
-Load step → V droops → if V < Vmin for F → setup violation. Mitigation: license levels preemptively cut F so V margin holds.
+**D3. RAPL underestimates wall power by 20-30%. Construct the cause stack and reason about which gap is fixable.**
+*Constraints to weigh:* VR efficiency (model vs measurement), DRAM not in client RAPL, platform devices, PSU efficiency. What would a "true platform RAPL" need that today's doesn't have — sensors, calibration, or scope?
 
-**Q5. Five multi-IP interference classes + their counters.**
-BW starvation (per-agent BW), LLC thrash (occupancy/miss), NoC congestion (link util), power budget (RAPL), IOTLB (miss + walk latency).
+**D4. Top-down PMU classifies every slot into 4 buckets. Why exactly 4 — could it be 2 or 8?**
+*Constraints to weigh:* what each bucket isolates (frontend / backend / bad-spec / retiring), counter budget on the PMU, actionability for a perf engineer, cross-vendor portability of the methodology. What does Intel's TMA L2 add at 6+ buckets, and where does the marginal information die?
 
-**Q6. Why is geomean correct for SPEC and arithmetic wrong?**
-Arithmetic mean of ratios depends on baseline; geomean is invariant under rescaling.
+**D5. HW prefetchers can hide a missing software prefetch. Reason about why disabling HW PF is a triage step, not a fix.**
+*Constraints to weigh:* silicon-A vs silicon-B prefetcher heuristic differences, BIOS-disabled scenarios, perf cost of explicit prefetch, what the bug-report should say (data, not "disable PF"). When does software prefetch genuinely beat HW prefetch?
 
-**Q7. RAPL says 45 W, wall says 65 W. Account for the gap.**
-VR loss (~5-15%), DRAM not in client RAPL, platform devices, PSU efficiency.
+**D6. AVX-512 license-level cuts F to maintain V margin. Construct a workload where AVX-512 is a net loss vs AVX-256.**
+*Constraints to weigh:* fraction of time in vector code, recovery window after license drop, scalar-around-vector latency, license-transition cost. What does Intel's AMX do differently to avoid this trap, and why didn't earlier vector ISAs?
 
-**Q8. IPC unchanged but wallclock 30% slower between runs. First thing to check?**
-`MSR_CORE_PERF_LIMIT_REASONS` — frequency dropped (thermal / RAPL / current). Confirm via ref cycles vs core cycles.
-
-**Q9. NPU EP fallback — why is it a perf problem and how do you spot it?**
-Each fallback inserts NPU↔host tensor copy + CPU compute. Count `EP_assignment == CPU` ops per inference; mitigate by quantising/reshaping.
-
-**Q10. CAT/CLOS — when does it help, when does it hurt?**
-Helps with one noisy neighbour evicting a small hot working set. Hurts when workloads are bursty — static partition under-utilises capacity. Modern Intel allows runtime reconfig.
+**D7. Five interference classes on a multi-IP SoC (BW, LLC, NoC, power, IOTLB). Construct the diagnostic decision tree from a single "perf is bad" signal.**
+*Constraints to weigh:* counter-per-class, what symptoms overlap (BW-starvation looks like LLC-thrash if you only see IPC), order of cheap-to-expensive checks. Build the triage in the right order — which class do you rule in/out first and why?
 
 ---
 
@@ -368,6 +361,37 @@ Without intervention, this is a runaway. The control loop must (a) detect $T_j$ 
 - **perf counters (PMU)** — *what:* HW event counters / *why:* see what CPU actually did, not what you assumed / *how:* PMU MSRs, perf / VTune / pmu-tools / *connects:* cache-misses, branch-mispred, IPC attribution
 - **Tj / TjMax** — *what:* junction temperature, max safe junction / *why:* reliability spec / *how:* on-die DTS reports / *connects:* throttle threshold, why Pmax shifts down with rising T
 - **leakage-temperature runaway** — *what:* hotter → more leakage → hotter / *why:* $I_{leak}$ exponential in T / *how:* throttle breaks the loop / *connects:* why deep C-states matter, why cooling matters even at idle
+
+---
+
+## Extension — Mixed-signal (ADC), PVT corner sweeps, lab power instruments
+
+Thermal/perf counters are one PVT axis. The mixed-signal block and power instruments are the rest of the validator's quantitative toolkit.
+
+### ADC
+- Topologies: **SAR** (Msps, 8–16 bit, most MCU ADCs), **sigma-delta** (24 bit, low speed, sensor/audio), **pipelined** (high-speed video / SerDes monitor), **flash** (very high speed, low res).
+- Specs to speak: **resolution** (bits) vs **ENOB** (effective bits after noise); **SNR, SINAD, THD, SFDR**; **INL / DNL** (linearity); **sample-and-hold** aperture, settling vs source impedance.
+- **Vref quality directly limits LSB**: 1 LSB at 12-bit, 3.3 V Vref ≈ **800 µV** — Vref noise eats accuracy first.
+- Validation: DC sweep with precision source → INL/DNL plot; AC pure tone → FFT → SNR/SINAD/SFDR/THD; Vref noise (analog rail PSRR); temp drift across -40/+125 °C; cross-talk by driving adjacent channels.
+
+### PVT corner sweeps (the V and T part of "PVT")
+- **Vmin search**: binary-search V at fixed F until the first fail; plot Vmin vs F (shmoo).
+- **Temp**: -40 / 25 / 85 / 125 °C for automotive; -10 / 25 / 85 for client.
+- **Process**: characterise across **FF / TT / SS** sample lots; FF parts hit thermal walls first, SS parts hit Vmin walls first.
+- **Frequency**: Fmin (often gated by retention/refresh) and Fmax (timing closure + thermal).
+- **Silicon revision**: A0/A1/B0 — repeat full sweep each spin; characterise margin shrink/grow.
+
+### Power instruments (bench)
+- **Bench DC source/load** (Keysight N6705, Chroma) — sweep V, log µA at high sample rate.
+- **Current probe (CT)** — non-invasive but BW-limited.
+- **Shunt + DMM / SMU** with **Kelvin sense** — best DC accuracy for low IR drop.
+- **µA-class S0ix / sleep** measurement: filtered shunt + low-noise sense + long average; differentiate **leakage** vs **periodic wake**.
+- Pair with the perf-counter / RAPL stack already covered above to reconcile **HW-reported** vs **wall-measured** power (the gap is real, especially for off-die rails RAPL can't see).
+
+### Bench discipline (applies to every capture)
+- Save `.wfm`/`.csv` with timestamp + DUT serial + silicon rev in filename.
+- Label channels in-file (CH1=PORESET#, CH2=DDR_VDD…).
+- Reproduce twice before filing — once is noise, twice is signal, three is publishable.
 
 ---
 

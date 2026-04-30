@@ -163,37 +163,30 @@ Tools:
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Walk MESI for: C0 reads X, C1 reads X, C0 writes X, C1 reads X.**
-C0:E → both S → C0:M, C1:I → snoop M, cache-to-cache, both S (mem updated).
+*Coherence is a policy decision under interconnect, area, and workload constraints. Derive why MESI/MOESI/MESIF look the way they do, and what changes when the constraints shift. No answer key.*
 
-**Q2. Why does E exist?**
-Lets a core silently upgrade clean exclusive to M without an invalidate transaction.
+**D1. Why MESI specifically — why not just M and I (dirty/invalid) and let everything else miss?**
+*Constraints to weigh:* read-shared workloads (mostly-read structures), invalidate-on-every-share traffic on the snoop bus, ordering of upgrades (S→M needs an invalidate), critical-section overhead. Construct the workload where M+I alone catastrophically loses, and the workload where it'd be fine.
 
-**Q3. Two threads each increment "their own" counter; throughput is 10× too low. Cause and confirmation?**
-False sharing. Confirm with HITM perf counter on the line containing both counters, or `perf c2c`. Fix with cache-line padding and aligned allocation.
+**D2. Why did AMD add O (MOESI) and Intel add F (MESIF)? Construct the workload that forces each.**
+*Constraints to weigh:* dirty-line forwarding without writeback (O), forwarder selection in a multi-S-copy line (F), interconnect topology (ring vs mesh vs HT), writeback bandwidth pressure on shared LLC. Why didn't both vendors converge — what's structurally different about their fabrics?
 
-**Q4. Why does false sharing only show on multicore?**
-No coherence traffic with one core; both "shared" variables sit in the same line and stay valid.
+**D3. Snoop vs directory coherence. Derive the core count where each crosses over.**
+*Constraints to weigh:* snoop traffic = $O(\text{cores})$ per coherence event vs directory state = $O(\text{sharers})$ per line, directory storage cost (1-3% of LLC), latency of an indirected request. Pick AMD's CCX, Intel's mesh, or ARM's CMN and explain its choice.
 
-**Q5. Padded by 64 bytes and bug didn't go away — what did you miss?**
-Struct itself wasn't 64 B-aligned, so the second field still landed on the same line. Use `aligned(64)` on the struct AND on the field, plus `posix_memalign`.
+**D4. Cache-line size sets the false-sharing penalty. If line size dropped to 16 B, what bug classes disappear and which appear?**
+*Constraints to weigh:* DRAM burst length mismatch, tag-array overhead 4×, prefetcher reach, lock-word neighbour pollution, per-thread stat counter packing. Why hasn't anyone shipped a 16 B line size — what would it take?
 
-**Q6. MOESI vs MESIF in one sentence each?**
-MOESI = "owned dirty line can be shared without write-back." MESIF = "one S copy is designated forwarder for snoops."
+**D5. Coherence is "free" up to the snoop fabric saturating. At 256 cores, derive what changes.**
+*Constraints to weigh:* snoop-filter capacity, NUMA traffic, per-line directory fanout, hierarchical coherence (cluster + global). Why does GPU compute use *non*-coherent caches with explicit synchronisation, and where could a CPU borrow that without breaking software?
 
-**Q7. Snoop-based vs directory-based — which scales?**
-Directory scales because cost is $O(\text{sharers})$ not $O(\text{cores})$. Snoop filters bridge the two.
+**D6. Padded per-thread counters "fix" false sharing but waste DRAM. Construct a counter that's both compact and contention-free.**
+*Constraints to weigh:* per-CPU storage (sum on read), CAS-free updates, cache-line packing of *unrelated* counters, RCU read-mostly patterns, observability (sum cost). What do Linux's `percpu` counters actually look like, and where do they still cost?
 
-**Q8. Cost trade-off of padding?**
-Wasted DRAM and worse single-threaded footprint. Only pad fields you've measured contended.
-
-**Q9. How does the descriptor-then-doorbell DMA bug map to MESI?**
-The CPU cache holds the descriptor in M; the non-coherent device reads DRAM (stale). Fix: clean (write back) + barrier + doorbell.
-
-**Q10. Why do contended mutexes scale badly?**
-The mutex word is on a single line that ping-pongs between every contender. Same physics as false sharing, intentional this time.
+**D7. CXL.cache lets accelerators be peers in the coherence domain. Which Day-5 bug classes follow the accelerator into the new design?**
+*Constraints to weigh:* false sharing across CPU and NPU, MESI states held by an NPU L1, snoop-filter sizing for non-CPU peers, who holds M in a heterogeneous workload. What new bug class appears that didn't exist when accelerators were DMA-only?
 
 ---
 

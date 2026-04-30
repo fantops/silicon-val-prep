@@ -157,43 +157,30 @@ This day **is** the bugs. They are sized to interview delivery. The full templat
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. State the 7-step framework.**
-Observe, reproduce, isolate, hypothesise, test, root-cause, fix & verify.
+*Debug method is itself an architecture: each step exists because skipping it produces a predictable failure mode. Reason about which step is load-bearing under which constraints. No answer key.*
 
-**Q2. Repro rate of 0.1% — what class of bug?**
-Race condition, marginal timing, voltage droop or process outlier. Need stress amplification before chasing.
+**D1. The 7-step framework (observe → reproduce → isolate → hypothesise → test → root-cause → fix). Reason about which step is most often skipped, and why that fails.**
+*Constraints to weigh:* "I have a hypothesis" without reproduction, isolation without test, fix without root-cause (band-aid), no regression coverage. Construct a triage where skipping each step in turn predicts a different failure mode.
 
-**Q3. "Works in emulation, fails in silicon" — usual mechanisms?**
-Analog issue, timing closure, CDC race, real-world interference, process corner. Emulation is cycle-inaccurate and no analog.
+**D2. Repro rate (100% / intermittent / corner-only / single-unit) classifies the bug. Reason about how rate determines triage tooling.**
+*Constraints to weigh:* 100% → single-step debug; intermittent → trigger + capture; corner-only → PVT sweep; single-unit → defect chase. Why does "intermittent" cost the most engineering hours per bug — what's the irreducible work?
 
-**Q4. Why does bug-finding cost rise 10× per stage?**
-Each stage adds people, tools and integration; post-tape-out adds NRE and schedule risk.
+**D3. Cost rises 10× per stage from RTL → emul → FPGA → post-Si. Reason about why the curve is so steep.**
+*Constraints to weigh:* tool licenses, people involved, integration scope, NRE on physical changes, schedule risk. Where would a future methodology (formal, AI-assisted) flatten the curve, and where is it irreducibly steep?
 
-**Q5. Lead with the symptom — why?**
-Interviewer is testing how you think. Backstory dilutes signal in the 90-second budget.
+**D4. "Lead with the symptom" in the 90-second story. Reason about why backstory dilutes signal.**
+*Constraints to weigh:* interviewer attention budget, signal-to-noise, what they're testing (thinking pattern, not chronology). Construct the same bug in story-then-symptom order — show the cost in lost signal.
 
-**Q6. Honest framing on the QNN page-fault story — why does it matter?**
-Overclaiming RTL ownership reads as exaggeration; precise platform-validation framing reads as competence and integrity.
+**D5. Honest framing matters ("I don't debug Hexagon RTL"). Reason about why under-claiming wins.**
+*Constraints to weigh:* interviewer-side fact-check, internal-credibility downstream, what an over-claimed story does when the follow-up question hits. Construct the question chain that exposes a bluff.
 
-**Q7. "Tell me about a time you disagreed with a designer." Shape?**
-Situation → your evidence (waveform, repro, counters) → escalation path (1:1 first, then data review, no email war) → outcome (root-cause confirmed on either side — both are valid) → process change afterwards.
+**D6. "Convert vague failure into one controlled signal" is the meta-method. Reason about what makes a signal "controlled."**
+*Constraints to weigh:* reproducibility, single-bit clarity, timestamped, attributable to one stage, falsifiable hypothesis. What's the difference between "controlled signal" and "anecdote," and why does the difference predict whether a fix will hold?
 
-**Q8. ADR story — one-line takeaway?**
-Opcode-level FW sequences need explicit handshakes, not implicit ordering.
-
-**Q9. NVMe CSTS.RDY hang — first 3 things to suspect on host?**
-AQA size, ASQ/ACQ physical addresses + contiguity (CAP.CQR), CC.MPS / CC.CSS configuration.
-
-**Q10. Core C6 wake-loss story — class of bug?**
-Two-clock-domain race on a power-gated block. "Works in unit sim, fails in full-die emul" pattern.
-
-**Q11. QNN page-fault — one-line takeaway?**
-Page faults alone are not the bug; correlate with VirtualAlloc and peak VM and version matrix.
-
-**Q12. Paint SR / Camera — one-line takeaway?**
-Single non-preemptive hardware scheduler is fine until two real-time tenants share it; the framework must expose priority.
+**D7. Imagine debug tooling improved 100× (perfect waveform capture, AI-assisted triage). Which steps of the 7-step framework still survive?**
+*Constraints to weigh:* observation becomes free, hypothesis still requires understanding, root-cause still requires mechanism, fix still requires designer knowledge. What's the irreducible human work, and what's automatable?
 
 ---
 
@@ -333,6 +320,75 @@ When the system has hidden state. Occam says: prefer the simpler explanation. Bu
 - **layered isolation** — *what:* HW vs FW vs driver vs OS vs app / *why:* the stack is tall and each layer can lie / *how:* swap one layer at a time / *connects:* cross-team handoff, who-owns-the-bug politics
 - **capture-and-replay** — *what:* trace + reproduce / *why:* flaky bugs need determinism / *how:* perf, ETW, ftrace, rr / *connects:* heisenbug, racy unit tests, recording the once-in-a-million
 - **bug-story shape** — *what:* symptom → hypothesis → bounding experiment → fix → regression test / *why:* shows method through a concrete artifact / *how:* always 5 beats, ≤ 90s spoken / *connects:* CFC, QNN cache, NVMe RDY — same shape, different domain
+
+---
+
+## Extension — JTAG / CoreSight, lab instruments, schematics, bring-up runbook
+
+The debug method above is the **meta**; this is the **toolset** the method relies on. Required for any first-silicon / MCU / SoC bring-up role (Renesas, NXP, TI, ST, Qualcomm).
+
+### JTAG fundamentals
+- 5 wires: **TCK, TMS, TDI, TDO, TRST** (TRST optional — TLR via TMS=1 for 5 cycles also works).
+- TAP state machine spine: **Capture → Shift → Exit1 → Update**, separately for IR (instruction) and DR (data).
+- Standard IR opcodes: **BYPASS** (all 1s, 1-bit DR), **IDCODE** (32-bit DR loaded with device ID), **SAMPLE/PRELOAD**, **EXTEST** (drive boundary scan reg onto pins — wiggle pins from JTAG), **INTEST**.
+- **IDCODE** = `version[31:28] | part_no[27:12] | mfg_id[11:1] | 1`. **First sanity check after POR.** If IDCODE = `0xFFFFFFFF` or `0x0`, do **not** debug JTAG — debug **power, clock, TRST, or strap**. JTAG is downstream.
+- Multi-chip chain: TDO → TDI; pad non-target chips with BYPASS in IR and DR.
+- Probes: ARM **Lauterbach TRACE32** (industry default), Segger J-Link, ARM DSTREAM/ULINK, **OpenOCD**. Renesas: **E2 / E2 Lite**, IECUBE for RH850. Intel: ITP/XDP, OpenIPC.
+
+### ARM CoreSight
+- **DAP** (Debug Access Port): **DP** (wire-level: JTAG or SWD) + **APs** (AHB-AP for memory, APB-AP for debug regs, JTAG-AP legacy).
+- **Per-core debug**: halt/step/run, HW + SW breakpoints, watchpoints (Cortex-M MMIO at `0xE000_xxxx`; Cortex-A via APB-AP).
+- **ETM/PTM** = instruction trace per core. Trace transports: **TPIU** (off-chip pins), **ETB** (on-chip buffer), **ETR** (trace into system DDR — modern default).
+- **CTI** (Cross-Trigger Interface) — halt all cores on one event; trigger scope on a debug event. Use to **freeze the world** so JTAG state and scope agree on the same edge.
+- **ITM/STM** — software-instrumented trace (printf-style).
+- **SWD** = 2-wire (SWDIO + SWCLK) variant; same DAP underneath; can't do boundary scan.
+
+### Scan, MBIST (forensic, not design)
+- **Stuck-at** vs **transition (at-speed)** scan. **Scan compression** (EDT/OPMISR) for fewer pins.
+- **Scan dump** = shift entire flop state out via JTAG when chip is hung. Massive (millions of bits). Design needs the dump **plus** trigger condition, last PC per core, suspect-IP CSRs, and PVT at fail.
+- **MBIST** for SRAM arrays at boot; failure points to row/column/bank.
+
+### Lab instruments
+- **Scope**: BW ≥ 5× signal fundamental (or ≥ 0.35 / rise-time); sample rate ≥ 2.5–5× BW. 10× passive probe ~10 pF — that capacitance changes the circuit. Long pigtail clip → ringing artefact you'll mistake for a bug. Use **active / diff probe** > 500 MHz. **Eye diagram**: persistence overlay of bit periods, mask defines pass region, jitter at mask crossing, BER extrapolated via bathtub.
+- **Logic analyzer**: state mode (sample on target clock, decoded bus state) vs timing mode (async at LA's clock, waveform). Threshold per pod. Deep memory matters for rare-trigger captures.
+- **Protocol analyzers / sniffers**:
+  - PCIe: Teledyne LeCroy Summit, Keysight U4301.
+  - USB: Beagle, Ellisys.
+  - I2C/SPI: Saleae, Beagle.
+  - CAN/LIN: Vector CANoe, PEAK PCAN.
+  - Ethernet: Wireshark + tap; Spirent / Ixia for traffic gen.
+
+### Schematics + pin-level signal tracing
+- Sheets you open first: **power tree** (every rail + sequencer + PGOOD chain), **clock tree** (XOs, PLL inputs, buffers), **reset tree** (POR source, reset chip, deassert order), **strap pins** (pull-up/down, default, DNI options), **bus topology** (DDR fly-by, PCIe lane map, USB redrivers/retimers), **connector / debug** (JTAG header, UART, test points).
+- The trace: BGA ball → via → trace → series-R / level-shifter / mux → endpoint pin. Note **stuffing options** (DNP), test points (TPxxx), and **rework history** for that board rev.
+- What you may do at the bench: probe TP — always OK; add/remove 0Ω or change pull — OK with EE sign-off + log BOM diff; cut trace / lift pin — last resort, photograph, mark unit as **modified** (don't return to golden pool); blow a fuse — only with fuse-plan approval (one-way).
+
+### Bench bring-up runbook (the answer to "walk me through first silicon")
+1. Visual + DC: board built per BOM, no rail shorts, DUT seated.
+2. Power up rails one-by-one (PSU current-limited), scope each rail for ramp + droop, confirm PGOOD chain.
+3. Reference clock present + correct freq at XO and at SoC ball.
+4. Resets in spec; cold/warm/wake/debug isolated.
+5. Straps latched correctly at PORESET de-assert (scope each strap pin if any doubt).
+6. **JTAG IDCODE** matches datasheet → silicon is alive.
+7. Boot ROM signs of life: UART banner, GPIO toggle, ROM error code; if no banner, halt via JTAG and read PC.
+8. Load minimal FW via JTAG: blink an LED, print `hello`, read a couple of CSRs. Now you have a controllable target.
+9. **DDR training** — run vendor training, capture margin, run a memory test (march, walking-1, random).
+10. Bring up peripherals in dependency order: UART → I2C → SPI/QSPI → high-speed → accelerators.
+11. Compliance + stress on top once functional bring-up is signed off.
+
+### Python automation (instrument control + framework)
+- **pyvisa** (SCPI to scope/PSU/DMM), **pyserial** (UART), **smbus**/**spidev** (Linux host probes), vendor SDKs (Saleae, Beagle, Lauterbach RCL, Vector XL).
+- **pytest** with per-DUT fixtures, parametrize across corners, **Allure / HTML reports**, JUnit XML for CI.
+- Result handling: **pandas + matplotlib** for shmoo and trend; **InfluxDB + Grafana** for soak runs.
+- Lab orchestration: relay boards for power cycle, **PDU** control (Raritan/APC SNMP), JTAG via OpenOCD scripts, golden-image flashing.
+- DUT abstraction pattern: one class per DUT with `power_on()`, `wait_console("U-Boot>")`, `jtag_halt()`, `read_reg(addr)`, `flash(image)`.
+
+### x86 assembly (read-only literacy the JD asks for)
+- Calling convention: **System V AMD64** (RDI/RSI/RDX/RCX/R8/R9 args, RAX return) vs **Microsoft x64** (RCX/RDX/R8/R9).
+- Recognise **MMIO access** patterns in disasm (`mov` with volatile semantics + MFENCE/SFENCE/LFENCE around it).
+- Recognise **WRMSR/RDMSR, CPUID, IN/OUT, RDTSC/RDTSCP, PAUSE in spinloop**.
+- Read a small ISR prologue/epilogue, stack frame, SIMD spill (XMM/YMM).
+- ARM symmetry (AAPCS64): X0–X7 args, X0 return, X29 FP, X30 LR; **MRS/MSR** for system regs; **DSB/DMB/ISB** barriers (already in Day 8/16).
 
 ---
 

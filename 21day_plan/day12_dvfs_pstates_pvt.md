@@ -164,37 +164,30 @@ Useful counters: `instructions`, `cycles`, `cache-misses`, `branches`, `branch-m
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why is V squared in dynamic power but F linear?**
-Energy per switch = $\frac{1}{2} C V^2$; switches per second ∝ $F$. Multiply: $P = \frac{1}{2} C V^2 F$.
+*Power is physics, DVFS is policy on top of it. Reason about why every choice (V-before-F, discrete P-states, per-cluster rails, speed binning) lands where it does. No answer key.*
 
-**Q2. Why raise V before F when speeding up?**
-F depends on transistors switching fast enough at supplied V. Raise F first → setup violation → data corruption. Raise V first → timing margin → safe to raise F.
+**D1. Why is dynamic power $\frac{1}{2}CV^2F$ — derive from first principles.**
+*Constraints to weigh:* energy per switching event ($\frac{1}{2}CV^2$), switches per second ∝ frequency, what charges and discharges (gate capacitance), why V is squared and F is linear. Where does the formula break down (near-threshold voltage, leakage-dominated regime)?
 
-**Q3. Where does Turbo's frequency budget come from?**
-Idle cores burn near zero dynamic and a fraction of leakage; freed thermal/current budget reallocates to active cores until DTS or Iccmax says stop.
+**D2. Raise V before F when speeding up. Imagine a future technology where V and F are decoupled (separate rails per IP). Does the rule still apply?**
+*Constraints to weigh:* setup-time slack as a function of V, what "F" even means without V (the PLL still locks), thermal lag vs electrical lag, glitch propagation across rail boundaries. Construct a workload where the rule reverses.
 
-**Q4. Why does leakage threaten thermal runaway?**
-Leakage rises exponentially with T → more heat → more leakage. Without throttle (PROCHOT, DTS), the chip self-heats to fault.
+**D3. Why a discrete P-state ladder and not continuous V/F control?**
+*Constraints to weigh:* characterisation matrix (each OPP needs validation), VRM transient response, OS predictability, common-OPP libraries reused across SKUs. What does Apple Silicon's near-continuous OPPs cost that Intel's discrete ladder saves — and what does it buy?
 
-**Q5. FF vs SS — which is worst for what?**
-FF: worst for power/thermal (high speed + high leakage). SS: worst for timing (slow → may miss target F at the rated V).
+**D4. Speed binning sorts post-fab silicon into SKUs. Imagine perfect process control (no spread). What would the industry have to redesign?**
+*Constraints to weigh:* yield economics of SKU mixing, datacenter procurement (fast vs slow bin pricing), power-perf curve as ensemble vs per-die. Where does binning create perverse incentives, and what would replace it?
 
-**Q6. Why can't pre-silicon cover all PVT corners?**
-200+ at advanced nodes; computationally infeasible. Pre-Si picks worst cases, post-Si finds what local mismatch / aging / real cooling exposes.
+**D5. Leakage is exponential in T and is now 30-40% of total at 7 nm. Reason about what's driving the curve toward 50%+.**
+*Constraints to weigh:* shorter channels, lower threshold voltages, more cores idle vs active, on-chip thermal hotspots, power-gating granularity. What architectural choice (chiplets, big.LITTLE, dedicated accelerators) is a *response* to the leakage trend?
 
-**Q7. What is speed binning and how does it shape the DVFS table?**
-Sort chips by max sustainable F; assign SKU; per-bin DVFS table is calibrated to the bin's actual silicon (an FF chip can hit P0 at lower V than an SS chip).
+**D6. Per-core voltage on DynamIQ shares a rail. Construct the workload where this design loses *more* power than it saves.**
+*Constraints to weigh:* one heavy core pulling rail to Vmax for the cluster, idle siblings still at high V (high leakage), heterogeneous workload mix. What does Apple's per-core LDO actually buy in P-core/E-core asymmetric workloads, and at what silicon cost?
 
-**Q8. On big.LITTLE DynamIQ, why is per-core voltage often a lie?**
-Cores in a cluster share a PMIC rail; rail V = max across that cluster's cores; per-core *F* is real, per-core *V* is not.
-
-**Q9. Linux: how does the OS request a P-state?**
-`cpufreq` governor (e.g., `schedutil`) sets target → driver (`intel_pstate`, `qcom-cpufreq-hw`) writes MSR/CSR → HW relocks PLL and ramps VRM.
-
-**Q10. IPC < 1 — what does that suggest?**
-Memory-bound or branch-bound. Investigate cache miss rate, branch mispredict, stalls.
+**D7. Aging-related Vth shift over 2 years degrades slow-OPP timing margin. Reason about what a "self-tuning" DVFS table would look like.**
+*Constraints to weigh:* in-field characterisation (PVT sensors, ring oscillators), telemetry storage in fuses/NVRAM, OS-visible vs FW-only adaptation, security of in-field re-tuning. What stops shipping this today — cost, validation, or trust?
 
 ---
 

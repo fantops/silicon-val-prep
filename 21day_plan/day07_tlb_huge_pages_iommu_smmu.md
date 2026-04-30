@@ -154,37 +154,30 @@ Every layer in this picture comes from Days 4-7.
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why does TLB coverage matter more than entry count?**
-Coverage = entries × page size. Huge pages multiply the second factor at zero hardware cost.
+*TLBs and IOMMUs are area/latency/policy compromises. Reason about why each landed where it did, and what changes when CXL or accelerators rewrite the constraints. No answer key.*
 
-**Q2. How does a 2 MB huge page skip a walk level?**
-PD entry has PS=1, points directly to a 2 MB-aligned frame; PT level skipped; bits [20:0] become offset.
+**D1. TLB coverage = entries × page size. Why hasn't anyone shipped a TLB with 100K entries to win on coverage that way?**
+*Constraints to weigh:* CAM access time scales with entries (linear on FA, log on associativity), per-entry area + leakage, fill bandwidth from page walker, real working-set distribution. What's the actual bottleneck — area, latency, or fill rate?
 
-**Q3. Walk a TLB shootdown.**
-PTE edited on core A → IPI to all relevant cores → each runs `INVLPG` → ack → originator waits for all acks. Hundreds of cycles plus pipeline disruption per receiver.
+**D2. Huge pages are the single biggest perf lever, yet THP is off by default in many distros. Reason why.**
+*Constraints to weigh:* coalescing latency variability, fragmentation under long uptime, tail-latency vs throughput, NUMA-locality cost of moving 2 MB, accidental write-amplification on COW. Construct the workload where THP is a net loss — and the one where you'd force `MAP_HUGETLB`.
 
-**Q4. What does an IOMMU fault tell you?**
-BDF, faulting IOVA, reason. Compare against the device's IOMMU domain to decide "OS forgot to map" vs "device sent unexpected address."
+**D3. Why does the device need a separate IOMMU when the host has an MMU — why not share the page tables?**
+*Constraints to weigh:* devices don't take page faults the way CPUs do (no pre-PRI), per-device isolation (one bad NIC), multiple address spaces (passthrough VMs), legacy 32-bit DMA windows, ATC semantics. What does ATS+PRI buy and what does it cost in latency and complexity?
 
-**Q5. What does ARM call the IOMMU? Intel? AMD?**
-SMMU; VT-d; AMD-Vi.
+**D4. SMMU/VT-d/AMD-Vi all solved the same problem differently. Pick two and reason about why each landed where it did.**
+*Constraints to weigh:* stream-ID vs requester-ID granularity, two-stage translation for virtualisation, fault-queue semantics, in-flight ATC invalidation. Why did ARM ship a stream table and Intel a domain table — what does the difference reveal about the design priors?
 
-**Q6. PCID / ASID — what do they avoid?**
-TLB flush on context switch by tagging entries with the process ID.
+**D5. Imagine ARM's hardware-broadcast TLBI lands on x86. What changes about kernel design — and what new bug class appears?**
+*Constraints to weigh:* serialisation cost on the originator, TLB coherence traffic on the interconnect, NUMA latency, kernel `flush_tlb_*` API surface area, lost-IPI debug stories. Why didn't x86 add it — area, ABI, or simply the constraint hadn't shifted?
 
-**Q7. TLB miss vs cache miss vs page fault?**
-TLB miss = HW page walk fills TLB silently. Cache miss = locality event at 64 B. Page fault = OS-visible translation/allocation event at page granularity.
+**D6. The QNN/ORT page-fault story looked like a TLB problem but wasn't. Construct the triage path that would identify it as virtual-memory rather than TLB.**
+*Constraints to weigh:* page-fault counter vs `dtlb_load_misses.walk_completed`, kernel-time spike, allocator call-site correlation, repro with hugepages forced on (does it disappear?). What single counter ratio decides the layer before you read any logs?
 
-**Q8. AI workload "got slower after weight matrix grew" — where do you look first?**
-TLB coverage. Try huge pages.
-
-**Q9. Why doesn't transparent huge pages always win?**
-Coalescing introduces unpredictability; tail-latency-sensitive workloads sometimes prefer explicit `MAP_HUGETLB` or no THP at all.
-
-**Q10. What stops a buggy PCIe NIC from reading kernel memory?**
-The IOMMU. Without it, nothing — bus mastering would have free rein.
+**D7. Imagine a future SoC with fully-coherent accelerators sharing the CPU page tables (CXL.mem + ATS). Which Day-7 artefacts survive?**
+*Constraints to weigh:* DMA-mapping API, bounce buffers, IOVA allocator, IOMMU fault register (still needed for device-side faults), TLB shootdown radius (now includes accelerators). What new shootdown class appears, and which IP becomes the new on-call problem?
 
 ---
 

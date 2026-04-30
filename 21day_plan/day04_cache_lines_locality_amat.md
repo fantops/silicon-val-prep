@@ -214,31 +214,30 @@ Likewise, **VTCM** in Hexagon HTP (Day 18) is **software-managed** local SRAM, n
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why is the cache line 64 bytes?**
-Trade-off between spatial locality and wasted bandwidth / false sharing. 64 B has been the sweet spot for x86/ARM for two decades.
+*Reason from constraints. Don't recall a textbook answer — derive why the design has to look this way given physics, area, power, and workload. No answer key. If you can't derive it in 5 min, that's the layer to re-read.*
 
-**Q2. Decode `0xCAFE_0040` for a 32 KB, 8-way, 64 B-line cache.**
-Lines=512, sets=64. Offset=6 bits → `0x0`. Set index=6 bits → `(0xCAFE0040 >> 6) & 0x3F = 0x01`. Tag = upper bits.
+**D1. Why a multi-level hierarchy (L1/L2/L3) and not one large cache?**
+*Constraints to weigh:* SRAM access time scales with $\sqrt{\text{capacity}}$; a 32 MB single-level cache would have L3-class latency on every hit. Per-port area cost. Hit-rate vs latency curve. What does the AMAT formula say if you collapse the levels? What would force a future SoC to add an L4?
 
-**Q3. AMAT for L1 1 ns, miss 5%, L2 4 ns, miss 10%, DRAM 100 ns?**
-$1 + 0.05(4 + 0.10 \times 100) = 1 + 0.05 \times 14 = 1.7\,\text{ns}$.
+**D2. Why is the line 64 B — and what would force a future SoC to 32 B or 128 B?**
+*Constraints to weigh:* spatial locality vs false-sharing penalty vs DRAM burst length vs tag-array overhead vs interconnect width. If DDR burst doubles, does the line follow? If cores go to 1024 and shared-data working sets shrink, which way does it move?
 
-**Q4. Why is fully associative used for TLBs but not L2/L3?**
-TLBs are tiny (64-1024 entries); a parallel comparator across all entries is feasible. L2/L3 have thousands to millions of lines — fully associative is infeasible.
+**D3. Why an associativity ladder (L1 8-way, L3 16-way) and not all fully associative?**
+*Constraints to weigh:* parallel tag comparator cost (energy + area) vs conflict-miss rate vs hit-time on critical path. Why can a TLB get away with FA but L3 cannot? What's the cost curve as ways double?
 
-**Q5. Write-back vs write-through — when do you actually pick write-through?**
-Write-through for caches that must stay coherent with non-coherent agents (some DMA paths, debug observation buffers) or where writes are rare and read latency matters most. Most CPU caches are write-back.
+**D4. Inclusive vs exclusive vs non-inclusive-non-exclusive — what workload makes each the right call?**
+*Constraints to weigh:* snoop-filter cost (inclusive lets L3 act as a directory), effective capacity (exclusive sums), back-invalidation traffic, multi-socket coherence. What does AMD vs Intel do, and why are they different?
 
-**Q6. Classify misses for `A, B, A, C, A` on a 2-line direct-mapped cache where B and C collide with A.**
-Compulsory(A), compulsory(B)+evict(A), conflict(A)+evict(B), compulsory(C)+evict(A), conflict(A). Three conflict misses on A.
+**D5. Imagine DRAM latency dropped 10× tomorrow. Does the cache hierarchy still earn its area?**
+*Constraints to weigh:* AMAT recomputation, energy-per-access (cache hit ≪ DRAM access even at parity latency), bandwidth wall, what "hit" means if DRAM is as fast as L3. Where does the hierarchy collapse, and where does it survive?
 
-**Q7. Why do write-back + write-allocate pair, and write-through + no-write-allocate?**
-Write-back already pays for line-fetch on read miss; allocating on write keeps subsequent writes hitting. Write-through gains nothing from caching writes; allocating would only pollute the cache.
+**D6. Caches are transparent to software but TLBs need explicit invalidation. Why the asymmetry?**
+*Constraints to weigh:* coherence protocol scope (caches snoop, TLBs don't), what the "truth" being cached is (data lives in DRAM and is owned by the coherence domain; translations live in page tables owned by the OS), cost of broadcasting page-table writes. What would a coherent-TLB system look like, and why don't we have one?
 
-**Q8. The page-fault regression in QNN/ORT — was it a cache problem?**
-No. Page faults are translation events at 4 KB; cache misses are locality events at 64 B. Different layer.
+**D7. Write-back + write-allocate is the default pairing. Construct a workload where write-through + no-write-allocate wins.**
+*Constraints to weigh:* streaming stores that won't be re-read, observation/debug buffers, coherence with non-snooping agents, DRAM write bandwidth headroom. Why does the GPU/NPU world use streaming-store hints?
 
 ---
 

@@ -234,35 +234,34 @@ Replaces large `switch` blocks; each state is self-contained.
 
 ## Interview Explanation (60-90 sec)
 
-> "Pointers are addresses with a type — the type only changes how the bytes are interpreted and how pointer arithmetic scales. A C program lives in five segments: stack, heap, BSS, data, text; in bare-metal firmware we usually static-allocate everything because heap fragmentation and ISR-context allocation are unsafe. Struct layout follows natural alignment plus tail padding, so you order fields largest-first to minimise padding — `__attribute__((packed))` is a footgun on ARM. For DMA, SIMD, or NPU tile buffers I use `aligned_alloc`, `posix_memalign`, or a manual wrapper that stashes the original pointer one slot before the aligned address. The kernel idiom `container_of` recovers a parent struct from a member pointer using `offsetof` — it's the foundation of Linux driver callbacks. Most layout bugs in silicon firmware come from struct-overlay over MMIO or from a DMA buffer that crosses a cache line; the fixes are explicit register accessors and 64-byte-aligned allocators."
+> "Pointers are addresses with a type — the type only changes how the bytes are interpreted and how pointer arithmetic scales. A C program lives in five segments: stack, heap, BSS, data, text; in bare-metal firmware we usually static-allocate everything because heap fragmentation and ISR-context allocation are unsafe. Struct layout follows natural alignment plus tail padding, so you order fields largest-first to minimise padding — `__attribute__((packed))` is a footgun on ARM. For DMA, SIMD, or NPU tile buffers I use `aligned_alloc`, `posix_memalign`, or a manual wrapper that stashes the original pointer one slot before the aligned address. The kernel idiom `container_of` recovers a parent struct from a member pointer using `offsetof` — it's the foundation of Linux driver callbacks. Most layout bugs in silicon firmware come from struct-overlay over MMIO or from a DMA buffer that crosses a cache line; the canonical tell is a descriptor allocated at offset 56 in a 64-byte line so the device's coherent fetch straddles two lines and the second half arrives stale — fix is a 64-byte-aligned allocator, and for MMIO, explicit `reg_read32`/`reg_write32` instead of struct overlay so the compiler can't pad or reorder the register map."
 
 ---
 
-## Practice Q&A
+## Architect Drills
 
-**Q1. Why is `sizeof(int *) == 8` regardless of pointee on a 64-bit machine?**
-Pointer width is set by the address bus, not the pointee type.
+*Reason from constraints. The right answer is whichever the hardware bus, compiler ABI, and workload force. No answer key.*
 
-**Q2. Predict `sizeof` for `struct { char a; int b; char c; }` and the reordered version `{ int b; char a; char c; }`.**
-12 vs 8. Reorder largest-first to save 4 bytes.
+**D1. Why is alignment a hardware requirement at all — why don't CPUs just rotate-and-mask any byte boundary?**
+*Constraints to weigh:* memory bus width, cache-line crossing penalty, atomic-access guarantees (lock-free needs naturally aligned), MMU page boundaries, vendor cost of a barrel-shifter in the load/store unit. ARMv7 trapped on unaligned, ARMv8 mostly allows it — why the change, and why does Apple Silicon still penalise it on hot paths?
 
-**Q3. Why do bare-metal firmwares ban `malloc`?**
-Fragmentation, non-deterministic latency, ISR-unsafe, no MMU recovery.
+**D2. Why does a 60-byte DMA buffer at a 16-byte-aligned address corrupt silently while a 64-byte buffer at the same address is fine?**
+*Constraints to weigh:* cache-line straddling, partial-line writeback semantics, who owns each line in MESI when the device fetches, the moment of "visible to device." Walk the timing diagram. What does a 4 KB DMA buffer at offset 60 in a page do that's *worse* than the 60-byte case?
 
-**Q4. Three ways to allocate a 64-byte aligned 4 KiB buffer?**
-`aligned_alloc(64, 4096)`, `posix_memalign(&p, 64, 4096)`, manual wrapper that over-allocates and rounds up.
+**D3. Struct field reordering can save 33% of memory. Why doesn't the C compiler reorder fields automatically?**
+*Constraints to weigh:* ABI stability across translation units, ordered initialisers `{a,b,c}`, struct-overlay onto MMIO/protocol headers (where order is a contract), `offsetof` predictability for `container_of`. Rust *does* reorder by default — what gives Rust permission that C doesn't have?
 
-**Q5. What does `container_of` do?**
-Subtracts `offsetof(type, member)` from the member pointer to get the parent struct pointer.
+**D4. `container_of` is the foundation of Linux callbacks. What would force a future kernel to drop it?**
+*Constraints to weigh:* C lacks generics, fat pointers cost a word, the alternative (parallel hash map from member→parent) costs a lookup per callback, intrusive lists vs allocated wrappers, debuggability under crash dumps. If C added zero-cost interfaces, where would `container_of` survive anyway?
 
-**Q6. Why is `__attribute__((packed))` dangerous on ARM?**
-It enables unaligned member accesses; some ARM cores trap, others incur a slow trap-and-emulate path.
+**D5. Bare-metal firmware bans `malloc`. Construct the workload where you'd genuinely need it back, and reason about what you'd accept losing.**
+*Constraints to weigh:* fragmentation, ISR context, deterministic latency budgets, slab/pool alternatives, OOM recovery without an MMU. What does Zephyr's `k_heap` actually buy that pure pools don't, and at what cost in worst-case latency?
 
-**Q7. Why is struct overlay over MMIO a bad idea?**
-Padding is compiler-dependent, struct assignment may touch W1C status bits, and field write ordering isn't guaranteed.
+**D6. `__attribute__((packed))` is a footgun on ARM. What architectural choice would make it safe — and at what cost?**
+*Constraints to weigh:* unaligned-access trap-and-emulate cost, per-load alignment check in the LSU, code-size cost (compiler emits byte-by-byte access for packed fields), wire-format pragmatism (network / disk headers want packed). Why is x86 "just fine" with packed and ARM punishes it — what's the silicon trade?
 
-**Q8. `const int *const *p` — what is `p`?**
-A pointer to a const pointer to a const int. (Right-to-left.)
+**D7. Five segments (text/data/bss/heap/stack) is the textbook layout. Imagine an MCU with one 64 KB SRAM and no MMU — does the segmentation still earn its keep?**
+*Constraints to weigh:* link-time symbol resolution, stack-overflow detection without an MPU, R/W/X permissions, ROM-constant savings (text in flash), zero-init guarantee for BSS. When does a hand-rolled "everything in one .data" win, and what defects does it invite?
 
 ---
 
