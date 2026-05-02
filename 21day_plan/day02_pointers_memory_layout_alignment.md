@@ -367,6 +367,336 @@ Because it must respect each member's natural alignment. `struct { char c; int i
 
 ---
 
+## Bare-Metal Boot Flow — From Power Rail to `main()`
+
+This is the runtime story behind the segments above. The `.data` and `.bss` regions only mean what C promises (initialized globals have their values, uninitialized globals are zero) **because startup code makes it true** before `main()` runs. On a hosted OS the loader does this; on bare metal the firmware does it itself.
+
+### 0. Before the Reset Vector — what the SoC does first
+
+Before the CPU ever fetches the reset vector, the silicon has to bring itself into a state where fetching from a memory address is even meaningful. Rough order on a typical Arm/Qualcomm-class SoC:
+
+1. **Power rails ramp.** PMIC sequences core, SRAM, PLL, and I/O rails in a defined order. Until rails are stable, nothing clocks.
+2. **PoR (Power-on Reset) asserted.** Holds every block in reset while rails settle and reference clocks (XO / 32 kHz) start.
+3. **Clock tree comes up.** XO stabilizes → PLLs lock → root clocks gate on. Some blocks stay clock-gated until later boot stages enable them.
+4. **PoR de-asserted on the boot core.** Only the designated boot CPU (often a small always-on core or a fixed application core) is released; the rest stay parked.
+5. **BootROM executes.** Mask-ROM code burned into the silicon. It is the first instruction the CPU ever fetches. Responsibilities:
+   - configure minimal SRAM / TCM,
+   - read straps / fuses to decide boot media (eMMC, UFS, SPI-NOR, USB, PCIe),
+   - load the next stage (often a signed first-stage bootloader / SBL) into on-chip SRAM,
+   - verify its signature against keys in eFUSE (secure boot root of trust).
+6. **First-stage bootloader (SBL / XBL).** Trains DDR, brings up more clocks/voltages, loads later stages (TZ/TF-A, hypervisor, second-stage bootloader).
+7. **Application image is loaded.** For a bare-metal MCU app this is your firmware ELF; for a richer SoC it is U-Boot / TF-A then a kernel. Either way, the loader places `.text`/`.data`/`.rodata` in their target regions and sets the program counter to the **reset vector** of the application image.
+
+Only after all of that does step 1 below ("CPU jumps to reset vector") happen. On a small MCU the picture collapses (no PMIC sequencing, no DDR training, no secure boot chain), but the *ordering* — rails → clocks → reset release → ROM → app — is the same shape.
+
+### 1. Reset vector
+
+- The CPU begins execution at a fixed, architecturally-defined address.
+- On Cortex-M that address holds two words: **initial stack pointer** and **address of the Reset Handler**.
+- On Cortex-A / classic Arm, the reset vector is an instruction (a branch to the Reset Handler).
+- The vector table lives in `.isr_vector` (or similar), placed at the start of Flash by the linker script.
+
+### 2. Reset Handler (startup code)
+
+Not `main()`. Usually `Reset_Handler` in `startup_*.S` or `startup_*.c`. Responsibilities, in order:
+
+1. Set the stack pointer (on Cortex-M this is done by hardware from the vector table; on others by the handler itself).
+2. Optionally configure clocks / FPU / MPU just enough to run C code.
+3. Copy `.data` from Flash → RAM.
+4. Zero `.bss` in RAM.
+5. Run C++ / C constructors (`__libc_init_array` on newlib).
+6. Call `main()`.
+7. If `main()` returns, drop into a safe loop.
+
+### 3. Memory initialization
+
+#### 3.1 `.data` — initialized globals
+
+```c
+int x = 5;   /* value 5 lives in Flash; x lives in RAM; startup must copy */
+```
+
+The linker emits two symbols: load address (in Flash) and run address (in RAM). Startup loops:
+
+```c
+extern uint32_t _sidata, _sdata, _edata;   /* from linker script */
+uint32_t *src = &_sidata;
+uint32_t *dst = &_sdata;
+while (dst < &_edata) *dst++ = *src++;
+```
+
+#### 3.2 `.bss` — uninitialized globals
+
+```c
+int y;   /* C guarantees y == 0 at program start */
+```
+
+Nothing is stored in Flash. Startup zero-fills:
+
+```c
+extern uint32_t _sbss, _ebss;
+uint32_t *p = &_sbss;
+while (p < &_ebss) *p++ = 0;
+```
+
+If you skip this loop, `y` is whatever was in SRAM at power-on — often non-zero, often *different on every reset*. That is the classic "works after warm reset, fails after cold reset" symptom.
+
+### 4. Linker script's role
+
+The linker script is the contract between the C program and the SoC's memory map:
+
+- declares **memory regions** (`FLASH`, `RAM`, `TCM`, `SRAM_AON`, …) with origin + length,
+- places **sections** (`.text`, `.rodata` in Flash; `.data`, `.bss`, `.heap`, `.stack` in RAM),
+- exports **symbols** the startup code needs: `_sidata`, `_sdata`, `_edata`, `_sbss`, `_ebss`, `_estack`, vector table base.
+
+If the linker script is wrong (RAM origin off, `.data` LMA not set, `_ebss` past the region), startup will silently corrupt memory or hang before the first C statement.
+
+### 5. Transition to application
+
+After memory init and constructors, startup calls `main()`. From this point every C guarantee is in force:
+
+- initialized globals have their declared values,
+- uninitialized globals are zero,
+- the stack pointer is valid,
+- `volatile` MMIO accessors (Day 01/03) work because the address map matches the linker script.
+
+### 6. `main()` runs
+
+Typical bare-metal `main()`: configure clocks → init peripherals → enable interrupts → enter the super-loop or RTOS scheduler.
+
+### 7. What if `main()` returns?
+
+There is no OS to return to. Control falls back into startup, usually into a stub like:
+
+```c
+void _exit(int status) { (void)status; for (;;) { __WFI(); } }
+```
+
+Without that stub the CPU keeps fetching past the end of startup — into whatever bytes follow — and behaviour is undefined. Symptoms: random hard faults, watchdog resets, "the board reboots after 3 seconds and we don't know why."
+
+### 8. Safe post-`main()` behaviour
+
+- Infinite `for(;;)` loop — simplest, always correct.
+- `WFI` / `WFE` loop — same shape, but parks the core in a low-power state until an interrupt.
+- Trigger a controlled reset (`NVIC_SystemReset()`) if returning from `main()` is itself a bug you want to surface.
+
+### 9. Why this flow exists
+
+C's abstract machine assumes someone has prepared `.data` and `.bss` before `main()`. On a hosted system that someone is the OS loader. On bare metal it is *you* (your startup code + linker script). Skip a step and you violate a C language guarantee — the bug then looks like "the language is broken," but it is the runtime contract that is broken.
+
+### 10. Debug insight
+
+| Symptom                                              | Likely cause                              |
+| ---------------------------------------------------- | ----------------------------------------- |
+| Global initialized to wrong value                    | `.data` copy loop wrong / LMA wrong       |
+| Global is garbage, varies across cold resets         | `.bss` zero loop skipped                  |
+| Hard fault on first function call                    | Stack pointer not set / stack outside RAM |
+| Static C++ object never constructed                  | `__libc_init_array` not called            |
+| Reboot loop after `main()` exits                     | No safe trap for `main()` return          |
+| Works in debugger, fails standalone                  | Debugger pre-zeroes RAM; startup does not |
+
+Debug strategy: set a breakpoint at the **first instruction of `main()`** and inspect a known-initialized global and a known-zero global. If either is wrong, the bug is in startup or the linker script — not in your application.
+
+### Summary flow
+
+```
+power rails → PoR → clocks → boot core released → BootROM → SBL → app image loaded
+   → reset vector → Reset_Handler → SP set → .data copied → .bss zeroed
+   → ctors run → main() → super-loop / RTOS → (if main returns) safe halt
+```
+
+### Worked Example — Same C program, two worlds
+
+Take the simplest program that exercises both `.data` and `.bss`:
+
+```c
+#include <stdio.h>
+
+int   x = 5;     /* .data — initialized global */
+int   y;         /* .bss  — uninitialized global, C says it must be 0 */
+char  buf[1024]; /* .bss  — 1 KiB of zeros */
+
+int main(void) {
+    y = x + 1;
+    printf("x=%d y=%d buf[0]=%d\n", x, y, buf[0]);
+    return 0;
+}
+```
+
+C promises the same thing in both worlds: when `main()` starts, `x == 5`, `y == 0`, `buf[0..1023] == 0`. What differs is **who** makes that true.
+
+#### Case A — Linux (hosted) on a laptop
+
+1. **Power / firmware:** PSU good → CPU reset → **UEFI/BIOS** runs → trains DRAM → enumerates devices → loads the bootloader (GRUB) from disk.
+2. **Bootloader:** GRUB loads the **Linux kernel** + initramfs into RAM and jumps to it.
+3. **Kernel:** brings up MMU, schedulers, drivers, mounts root FS, starts `init` (systemd).
+4. **You run `./a.out`:** shell calls `execve("./a.out", …)`.
+5. **Kernel ELF loader** (this is the key part):
+   - Parses the ELF program headers.
+   - **`mmap`s `.text`/`.rodata`** from the file (read-only, executable for `.text`).
+   - **`mmap`s `.data`** as a private writable mapping of the file → page-fault-on-write copies the initialized bytes from disk into RAM. *This is the OS doing your `.data` copy loop.*
+   - **`mmap`s `.bss`** as anonymous, zero-filled-on-demand pages. Linux hands out the global zero page COW; first write faults in a fresh zeroed page. *This is the OS doing your `.bss` zero loop — lazily.*
+   - Allocates a **stack** VMA, sets SP, pushes `argc/argv/envp/auxv`.
+   - Loads `ld.so` (dynamic linker), which resolves `libc`, runs `.init_array` (C++ ctors, `__attribute__((constructor))`).
+6. **`_start` → `__libc_start_main` → `main()`.** When you reach `main()`, every C guarantee is already satisfied — by the kernel and libc, not by you.
+7. **`return 0;`** unwinds to `__libc_start_main`, which calls `exit(0)` → `_exit` syscall → kernel reaps the process. There is *somewhere to return to*.
+
+You wrote zero startup code. Zero linker script. Zero reset handler. The OS is your runtime.
+
+#### Case B — Bare metal on a Cortex-M (e.g. STM32, or a small validation board)
+
+Same C source. Now compile with `arm-none-eabi-gcc -T link.ld -nostartfiles startup.c main.c`. There is no OS, no ELF loader, no `mmap`, no `printf` over a console unless you wrote the UART driver yourself.
+
+1. **Power / firmware:** PMIC ramps rails → PoR → XO/PLL stable → reset released on the boot core → **BootROM** runs → reads boot straps → loads your firmware image from internal Flash (or via SBL chain on a bigger SoC). The image is already at its final Flash address; no relocation of `.text` is needed.
+2. **Reset vector:** at address `0x0000_0000` (or wherever VTOR points), two words sit there: initial SP and `&Reset_Handler`. Hardware loads SP from word 0 and PC from word 1.
+3. **`Reset_Handler` (your startup.c):** *this is the code that replaces the OS loader.*
+
+   ```c
+   void Reset_Handler(void) {
+       /* .data: copy from Flash (LMA) to RAM (VMA) */
+       uint32_t *src = &_sidata, *dst = &_sdata;
+       while (dst < &_edata) *dst++ = *src++;
+
+       /* .bss: zero-fill in RAM */
+       for (uint32_t *p = &_sbss; p < &_ebss; ++p) *p = 0;
+
+       __libc_init_array();   /* run C/C++ ctors */
+       (void)main();
+       for (;;) __WFI();      /* main returned — there is nowhere to go */
+       }
+   ```
+
+4. **Linker script (link.ld)** declares `FLASH` and `RAM` regions and emits `_sidata`/`_sdata`/`_edata`/`_sbss`/`_ebss`. Without these symbols startup cannot find the bytes to copy or zero.
+5. **`main()` runs.** `x == 5` because *your* loop copied it. `y == 0` and `buf[0] == 0` because *your* loop zeroed them. `printf` only works if you retargeted `_write` to a UART you initialized.
+6. **`return 0;`** falls into the `for(;;) __WFI();` trap. There is no kernel to reap you. If you forget that trap, the CPU executes whatever bytes follow `Reset_Handler` in Flash → undefined behaviour, watchdog reset, mystery reboot.
+
+#### Side-by-side
+
+| Step                          | Linux (hosted)                                    | Bare metal MCU                                  |
+| ----------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| Pre-CPU bring-up              | UEFI/BIOS: DRAM train, device enum                | PMIC + BootROM: rails, clocks, boot media       |
+| First code on CPU             | UEFI firmware → GRUB → kernel                     | BootROM → (SBL) → your firmware                 |
+| Reset vector / entry          | Kernel `_start` set by ELF loader                 | Fixed address in Flash, hardware-defined        |
+| Stack pointer set by          | Kernel sets SP for new process                    | Hardware loads SP from vector table word 0      |
+| `.text` placement             | `mmap` from ELF (RX)                              | Already in Flash, executed in place             |
+| `.data` initialization        | Kernel `mmap` private file mapping → page-fault copies | Your loop: copy Flash LMA → RAM VMA         |
+| `.bss` zeroing                | Anonymous zero-fill-on-demand pages                | Your loop: write 0 across `_sbss`.._ebss`       |
+| C++ ctors / `__init_array`    | `ld.so` runs them before `main`                   | Your `__libc_init_array()` call                 |
+| Stdlib / syscalls             | glibc + kernel syscall table                      | newlib-nano + your `_write`/`_sbrk` stubs       |
+| `printf` works because        | Kernel has a tty driver                           | You wrote the UART driver and retargeted `_write` |
+| Heap                          | `brk`/`mmap` on demand, MMU-protected             | Fixed region in linker script, often forbidden  |
+| `main()` returns              | `exit()` → kernel reaps process                   | Falls into `for(;;) __WFI();` — nowhere to go   |
+| Crash containment             | Kernel kills process, others survive              | Whole system halts / watchdog resets            |
+| Who guarantees C semantics    | Kernel + dynamic linker + libc                    | Your startup.c + linker script + libc stubs     |
+
+#### The one-line takeaway
+
+> **An OS *is* the bare-metal startup code, generalized.** On Linux, the kernel + ELF loader + `ld.so` + libc do for every process what your `Reset_Handler` does once for the whole chip. Bare metal feels harder only because the work is visible — on a hosted system it is the same work, hidden behind `execve`.
+
+#### Symmetric deep-dive — the three pillars in both worlds
+
+The three pillars are **(1) memory initialization, (2) startup code, (3) linker script**. To make the comparison honest, here is each pillar for both cases at the same level of detail.
+
+##### Pillar 1 — Memory initialization (`.data`, `.bss`, stack, heap)
+
+**Linux:**
+- `.data` — kernel `mmap`s the ELF file as `MAP_PRIVATE | PROT_READ | PROT_WRITE`. The pages are not copied up front; on first **read** the page-cache page is mapped in, on first **write** the kernel does **copy-on-write** into a fresh anonymous page. Net effect: `.data` reaches RAM lazily but with the file's bytes, exactly mirroring a Flash→RAM copy.
+- `.bss` — kernel creates an **anonymous VMA** of the right length. Every page initially points to the global **zero page** (read-only). First write triggers a fault, allocator hands you a fresh zeroed page (`__GFP_ZERO`). C's "BSS is zero" promise is enforced by the MMU + page-fault handler, not a loop.
+- **Stack** — kernel allocates a stack VMA (with a guard page below). SP is set in the ELF auxiliary vector and loaded into the register before jumping to `_start`. Grows on demand via the page fault handler, up to `RLIMIT_STACK`.
+- **Heap** — does not exist at process start. `malloc` calls `brk` (extend data segment) or `mmap` (anonymous region) lazily. MMU enforces bounds.
+
+**Bare metal:**
+- `.data` — eager copy loop in `Reset_Handler`: `while (dst < &_edata) *dst++ = *src++;`. The bytes live in Flash at the LMA the linker assigned and are streamed into RAM at the VMA before `main()`. No page faults, no laziness — if the loop is wrong, every initialized global is wrong.
+- `.bss` — eager zero loop: `for (p = &_sbss; p < &_ebss; ++p) *p = 0;`. SRAM contents at power-on are *whatever the silicon left there* (often non-zero, often varying across cold/warm reset). Skip the loop and you violate C.
+- **Stack** — Cortex-M loads SP from word 0 of the vector table at hardware reset. Other cores set it explicitly in the handler. The stack region is carved out by the linker script (`. = ORIGIN(RAM) + LENGTH(RAM); _estack = .;`). No guard page unless you program the MPU.
+- **Heap** — only exists if your linker script reserves a region and your `_sbrk` stub bumps a pointer inside it. Most bare-metal projects forbid heap entirely; everything is statically allocated.
+
+##### Pillar 2 — Startup code (what runs before `main()`)
+
+**Linux** (you do not write this, but it exists and runs):
+- **Kernel side:** `do_execve` → `load_elf_binary` parses program headers, sets up VMAs (`.text` RX, `.rodata` R, `.data` RW, `.bss` RW anon, stack), pushes `argc/argv/envp/auxv`, sets entry PC to ELF `e_entry`.
+- **`_start`** — provided by `crt1.o` (glibc) or `Scrt1.o` (PIE). Pure asm. Sets up the frame, loads `argc/argv/envp`, calls `__libc_start_main`.
+- **`__libc_start_main`** (glibc) — the real "startup":
+  1. initializes thread-local storage,
+  2. registers `_dl_fini` with `atexit` so destructors run,
+  3. calls `_init` / iterates `.init_array` → runs C++ ctors and `__attribute__((constructor))` functions,
+  4. calls `main(argc, argv, envp)`,
+  5. on return, calls `exit(retval)` → flushes stdio, runs `.fini_array`, invokes `_exit` syscall.
+- **`ld.so`** (dynamic linker) ran *before* `_start` if the binary is dynamically linked: it mapped every `.so`, resolved relocations (`.rela.dyn`, `.rela.plt`), and ran each shared library's `.init_array`.
+- `crti.o` / `crtn.o` provide the prologue/epilogue of the `_init`/`_fini` sections; `crtbegin.o` / `crtend.o` (from gcc) bracket the `.ctors`/`.dtors` arrays.
+
+**Bare metal** (you write all of it):
+- **Vector table** in `.isr_vector` at the start of Flash. Word 0 = initial SP, word 1 = `&Reset_Handler`, then NMI, HardFault, … IRQs.
+- **`Reset_Handler`** — your code:
+  1. (optional) configure FPU / cache / MPU / clocks enough to run C,
+  2. copy `.data`,
+  3. zero `.bss`,
+  4. call `__libc_init_array()` (newlib provides it; iterates `.preinit_array` then `.init_array`),
+  5. call `main()`,
+  6. trap on return (`for(;;) __WFI();`).
+- **`_init` / `_fini`** — usually empty stubs from newlib's `crt0`. C++ ctors are picked up via `.init_array` instead.
+- **No dynamic linker.** Everything is statically linked at build time; relocations are resolved by `ld` into final addresses in the Flash image.
+
+##### Pillar 3 — Linker script
+
+**Linux** (you almost never write one, but the toolchain ships one):
+- Default script lives at `/usr/lib/ldscripts/elf_x86_64.x` (or `.xs` for shared, `.xu` for relocatable). View it with `ld --verbose`.
+- It defines:
+  - the **output format** (`elf64-x86-64`) and **entry symbol** (`ENTRY(_start)`),
+  - the standard **section ordering**: `.interp` → `.note.*` → `.text` → `.rodata` → `.eh_frame` → `.init_array` → `.data` → `.bss`,
+  - **PHDRS** (program headers) that group sections into LOAD segments — these are what the kernel actually `mmap`s,
+  - alignment to page boundaries (`. = ALIGN(CONSTANT(MAXPAGESIZE));`) so each segment can have its own MMU permissions.
+- You inherit it implicitly. Override only for kernels, embedded Linux loaders, or weird link-time tricks.
+
+**Bare metal** (you write it, or vendor ships a starting one):
+
+```ld
+MEMORY {
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 256K
+  RAM   (rwx): ORIGIN = 0x20000000, LENGTH = 64K
+}
+
+ENTRY(Reset_Handler)
+
+SECTIONS {
+  .isr_vector : { KEEP(*(.isr_vector)) } > FLASH
+  .text       : { *(.text*) *(.rodata*) } > FLASH
+  _sidata = LOADADDR(.data);
+  .data : {
+    _sdata = .; *(.data*) _edata = .;
+  } > RAM AT > FLASH                /* VMA in RAM, LMA in FLASH */
+  .bss (NOLOAD) : {
+    _sbss = .; *(.bss*) *(COMMON) _ebss = .;
+  } > RAM
+  _estack = ORIGIN(RAM) + LENGTH(RAM);
+}
+```
+
+What the script *must* deliver for startup to work:
+- **`MEMORY`** — physical map of Flash and RAM the SoC actually has,
+- **VMA vs LMA distinction for `.data`** (`> RAM AT > FLASH`) — without `LOADADDR`, the copy loop has no source address,
+- **Symbols** `_sidata`, `_sdata`, `_edata`, `_sbss`, `_ebss`, `_estack`, `Reset_Handler` — these are the API between linker and startup,
+- **`KEEP(.isr_vector)`** — otherwise `--gc-sections` deletes the vector table and the chip resets into nothing,
+- **`(NOLOAD)`** on `.bss` — tells the linker not to put zeros in the Flash image (Flash is finite; zeros are made by the startup loop).
+
+##### Coverage check
+
+| Pillar                  | Linux coverage in this section            | Bare-metal coverage in this section          |
+| ----------------------- | ----------------------------------------- | -------------------------------------------- |
+| Memory init (`.data`)   | mmap private + COW page faults            | Eager Flash→RAM copy loop                    |
+| Memory init (`.bss`)    | Anonymous VMA + zero page + ZFOD          | Eager zero loop                              |
+| Memory init (stack)     | Kernel VMA + guard page + auxv            | Hardware loads SP from vector table          |
+| Memory init (heap)      | `brk`/`mmap` lazy, MMU-bounded            | Optional region + `_sbrk` stub or forbidden  |
+| Startup code            | `_start` → `__libc_start_main` → ctors    | Vector table → `Reset_Handler` → ctors       |
+| Dynamic linking         | `ld.so` resolves `.rela.*`, runs `.so` ctors | None — fully static link                  |
+| Linker script           | Default `elf_x86_64.x` (rarely written)   | Hand-written `MEMORY` + `SECTIONS` + symbols |
+| Section→segment mapping | `PHDRS` → LOAD segments → `mmap`          | `> REGION AT > REGION` → Flash image layout  |
+| Return from `main()`    | `exit()` → `.fini_array` → `_exit` syscall| Trap loop (`for(;;) __WFI();`)               |
+
+So yes — memory init, startup, and linker are now covered for both worlds at the same depth.
+
+---
+
 ## Depth Drill — Pointer Triggers
 
 *Recall only. If a trigger goes blank, that's the layer to re-read.*
