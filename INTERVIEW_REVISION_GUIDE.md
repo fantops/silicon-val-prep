@@ -6,6 +6,7 @@
 >
 > Doc map:
 > - **Day-of prep** (5-min checklist + cultural notes per company type) — Section 0A
+> - **Interview intersections from the Apr cycle** — Section 0B
 > - **Reflex cheat sheet** (single-line answers to recurring probes) — Section 0
 > - **Career narrative** + 3 reusable current-work framings — Section 1
 > - **Behavioral / leadership** — Section 2
@@ -15,7 +16,7 @@
 > - **21-day architect-drill index** — **Section 4B** *(every concept boiled to its constraint-axes — derive the answer in the room, don't recall it)*
 > - **Pre-Si CPU core depth** — Section 6A
 > - **Post-Si NPU depth** — Section 6
-> - **Puzzles + quick reflexes + final checklist** — Sections 7, 9, 10
+> - **Puzzles + EE refresh + quick reflexes + final checklist** — Sections 7, 8, 9, 10
 >
 > **Strategy at the senior IC + lite-managerial bar:** be **clear, specific, calm**. One concrete example beats three textbook bullets. Always frame the *tradeoff* before the *fact*. If you don't know — say so cleanly and pivot to the closest thing you do know.
 
@@ -113,6 +114,41 @@ Pick the one that comes up — go deep, don't sprint. Cold rehearse 1, 2, 5.
    2. Programme-level: *"Where is this product/IP in its programme cycle?"*
    3. Org-level: *"How does this team interact with [the adjacent team — pre-Si↔post-Si, vendor↔OEM, IP↔SoC] when issues cross the boundary?"*
 - [ ] Camera on. Smile on first line.
+
+---
+
+## SECTION 0B - Current interview intersections
+
+> **Use this as the bridge from [INTERVIEW_LOG.md](INTERVIEW_LOG.md) to this revision guide.** These are not generic topics; these are the intersections that actually appeared in the Apr 2026 loop.
+
+| Interview signal | Where it appeared | What to rehearse now | Guide anchor | 21-day source |
+|---|---|---|---|---|
+| C under pressure | Intel PnP R2; general live coding | Type C cold: arrays, pointers, structs, linked list, `memcpy`/`memmove`, MMIO macros | Section 9 C reflexes | [Day 00](21day_plan/day00_c_basics.md), [Day 01](21day_plan/day01_c_address_fluency.md), [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) |
+| "Why" behind fundamentals | Qualcomm CPU Core R2 | Answer *what → why → how → adjacent concept* without notes | Section 4B | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) |
+| C-states, clock gating, leakage | Intel PnP; Qualcomm CPU Core R2 | Break-even residency; RTL enable → ICG cell → clock tree; dynamic vs leakage power | Sections 3, 5, 9 | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 15](21day_plan/day15_thermal_power_perf_counters.md) |
+| Cache hierarchy internals | Qualcomm CPU Core R2 | Why hierarchy exists; lookup walk; SRAM vs DRAM; miss classes | Section 4B cache rows | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) |
+| Generic boot flow vs vendor specifics | Qualcomm CPU Core R2 | POWER → ROM → PLATFORM INIT → BOOTLOADER → OS; then map to Snapdragon/Intel | Sections 0A, 9 | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) |
+| Thermal / PnP ownership | Qualcomm PnP/Thermal | Thermal as control loop; throttle reason; RAPL vs wall; leadership framing | Sections 2, 3, 10 | [Day 15](21day_plan/day15_thermal_power_perf_counters.md) |
+| NPU domain + tool story | Intel Ireland NPU | Six-layer stack; EP fallback; energy/inference; EdgeOptimizer impact | Sections 1, 4A, 6 | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md), [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) |
+| Bug story tangling under rapid fire | Intel Ireland NPU | Context → symptom → repro → root cause → fix → lesson, 90 sec max | Section 4A | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) |
+| EE fundamentals | Intel Ireland NPU | CMOS, setup/hold, metastability, CDC, signal integrity at PCIe rates | Section 8 | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md), [Day 20](21day_plan/day20_debug_method_bug_polish.md) |
+| Behavioural / ownership clarity | Qualcomm PnP; senior-bar rounds | STAR with explicit ownership, conflict handling, delegation, lesson | Sections 2, 10 | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) |
+
+### Current priority stack
+
+1. **Daily:** one C exercise + one architect drill spoken out loud.
+2. **Before any NPU/platform round:** Bug 2 and Bug 3 from Section 4A, strict 90 sec.
+3. **Before any CPU/pre-Si round:** Section 4B rows for cache, C-states, clock gating/leakage, pipeline/memory model.
+4. **Before any Intel Ireland-style round:** Section 8 EE fundamentals, then Section 6 NPU stack.
+5. **Before any manager/senior round:** Section 2 leadership answers with a real example, not a generic framework.
+
+### The probe-then-push answer pattern
+
+Use this when the interviewer keeps drilling after your first answer:
+
+> "At the first layer, **[what it is]**. The reason it exists is **[constraint/tradeoff]**. Implementation-wise, **[mechanism]**. The adjacent failure mode is **[bug/validation hook]**."
+
+Example: "Clock gating stops unnecessary toggles. The reason it exists is dynamic power: no clock edge, no switching. Implementation-wise, synthesis converts an enable into an ICG cell with a latch plus gate so the clock does not glitch, inserted at leaf/regional/root levels. The adjacent failure mode is leakage: clock gating does not fix it, so deeper idle states need power gating or retention."
 
 ---
 
@@ -813,13 +849,69 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 
 ---
 
+## SECTION 8 - EE fundamentals crash refresh
+
+> **Why this exists:** Intel Ireland exposed a small but real EE-basics gap. Keep this section crisp; it is a bridge, not a full EE course.
+
+### Setup / hold
+
+| Term | Reflex |
+|---|---|
+| **Setup time** | data must be stable before the active clock edge |
+| **Hold time** | data must remain stable after the active clock edge |
+| **Setup violation** | path too slow for the clock period; fix by reducing delay, pipelining, or lowering F |
+| **Hold violation** | path too fast after launch; fix with added delay/buffers or clock-skew adjustment |
+| **Validation hook** | if a fail only appears at high F / low V / high T, suspect setup margin; if it appears across F but around clock edges/reset release, suspect hold/CDC/reset sequencing |
+
+### Metastability and CDC
+
+Metastability happens when a flop samples data changing near the clock edge, so its output takes too long to resolve to 0 or 1. A 2-flop synchronizer reduces probability, not to zero, but to acceptable MTBF.
+
+| CDC case | Correct primitive | Why |
+|---|---|---|
+| Single-bit level | 2-flop synchronizer | gives metastability time to resolve |
+| Single-cycle pulse | pulse stretcher or toggle synchronizer | pulse may be missed by slower clock |
+| Multi-bit bus | async FIFO or handshake | individual bits can settle differently |
+| Reset crossing | reset synchronizer per clock domain | async assert is fine; deassert must be clean |
+
+Interview line: "CDC bugs are not logic bugs in one domain; they are contract bugs between two clocks. I look for missing synchronizers, pulse width assumptions, reset-deassert ordering, and async FIFO full/empty pointer handling."
+
+### Basic CMOS
+
+| Concept | Reflex |
+|---|---|
+| CMOS inverter | PMOS pulls up, NMOS pulls down; ideally only one conducts in steady state |
+| Dynamic power | charging/discharging capacitance: roughly `C V^2 F` |
+| Short-circuit power | brief current during switching when both devices partially conduct |
+| Leakage | current when "off"; rises strongly with temperature and process corner |
+| Clock gating | cuts dynamic clock-tree/register toggling; does not remove leakage |
+| Power gating | cuts leakage by shutting off the rail/domain; pays state-save and wake cost |
+
+### Signal integrity at PCIe rates
+
+At multi-GT/s rates the trace is a transmission line, not an ideal wire. The common failure modes are attenuation, reflection, crosstalk, jitter, skew, and eye closure.
+
+| Topic | Reflex |
+|---|---|
+| Impedance mismatch | causes reflection; fixed with controlled impedance and termination |
+| Eye diagram | open eye means timing/voltage margin; closed eye means bit errors |
+| Equalization | CTLE/DFE/FFE compensate channel loss |
+| Jitter | timing uncertainty; eats horizontal eye margin |
+| PCIe validation hook | LTSSM stuck in Polling/Recovery often points to channel, equalization, refclk, reset, or lane polarity issues before protocol debug |
+
+### 60-sec answer
+
+> "The EE basics I keep in mind for silicon validation are timing, CDC, and signal integrity. Setup means data arrives early enough before the clock edge; hold means it stays long enough after. Setup failures usually scale with frequency/voltage/temperature, while hold and CDC issues often show up around reset, clock switching, or rare alignment windows. For CDC I don't trust a raw signal crossing domains — single-bit levels need a 2-flop synchronizer, pulses need a toggle or stretcher, and multi-bit state needs a handshake or async FIFO. At PCIe rates the board trace is a channel: impedance mismatch, jitter, crosstalk, and equalization decide whether the receiver eye is open enough before the protocol can even matter."
+
+---
+
 ## SECTION 9 - Quick technical reflexes
 
 ### One-liner reflexes
 
 | Topic | Reflex |
 |---|---|
-| Why volatile for MMIO | tells compiler not to cache/elide/reorder; doesn't give CPU memory ordering |
+| Why volatile for MMIO | makes the access compiler-observable; doesn't give CPU/device memory ordering |
 | MMIO read | `*(volatile uint32_t*)addr` |
 | Set bit n | `reg \|=  (1u << n)` |
 | Clear bit n | `reg &= ~(1u << n)` |
@@ -834,6 +926,9 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 | AVX-512 license | F drops 25% under sustained AVX-512 |
 | RAPL caveat | VR-input estimate, 20-30% off wall power |
 | C-state break-even | enter only if idle > 2x wake latency |
+| Setup / hold | setup = stable before edge; hold = stable after edge |
+| CDC | single bit needs synchronizer; multi-bit needs handshake or async FIFO |
+| PCIe signal integrity | closed eye before protocol: check channel, refclk, equalization, reset, polarity |
 
 ### "What would you do if..." frameworks
 
@@ -905,6 +1000,7 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 - [ ] SRAM vs DRAM (6T vs 1T1C, refresh) — Day 4 one-liner
 - [ ] Static vs dynamic power (CV²F vs leakage) — Day 13 one-liner
 - [ ] Clock gating (RTL→synth→ICG→tiers) — Day 13 one-liner
+- [ ] EE fundamentals (setup/hold, CDC, CMOS, PCIe SI) — Section 8
 
 ### Behavioural backups
 
@@ -922,4 +1018,3 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 ---
 
 > **Senior-bar reminder:** at this level they're checking judgment more than knowledge. Tech question → **structured answer + tradeoff + what you'd actually do.** Behavioural → **framework + real example + lesson.** Puzzle → **think aloud.** Always lead with the *tradeoff* — that's what separates a senior validator from someone who memorised the spec.
-
