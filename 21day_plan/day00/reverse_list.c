@@ -1,64 +1,78 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-typedef struct Node{
+typedef struct Node {
     int value;
-    struct Node* next;
-}Node;
+    struct Node *next;
+} Node;
 
-Node* build_list(int *arr, int n){
-    if (sizeof(arr)==0)
-        return NULL;
+static Node *build_list(const int *arr, int n)
+{
+    Node *head = NULL;
+    Node *tail = NULL;
 
-    Node* tmp = NULL;
-    Node* curr = NULL;
-
-    for (int i=0;i<n;i++){
-        Node* node = malloc(sizeof(Node));
+    for (int i = 0; i < n; i++) {
+        Node *node = malloc(sizeof(*node));
+        if (node == NULL) {
+            return head;
+        }
 
         node->value = arr[i];
         node->next = NULL;
 
-        if (tmp == NULL){
-            tmp = node;
-            curr = node;
+        if (head == NULL) {
+            head = node;
+            tail = node;
         } else {
-            curr->next = node;
-            curr= node;
+            tail->next = node;
+            tail = node;
         }
     }
-    return tmp;
+    return head;
 }
 
-Node* reverse_list(Node* head){
-    Node *prev = head;
-    Node *curr = NULL;
+static Node *reverse_list(Node *head)
+{
+    Node *prev = NULL;
+    Node *curr = head;
     
-    while (prev != NULL){
-        Node * tmp = prev->next;
-        prev->next = curr;
-        curr = prev;
-        prev = tmp;
+    while (curr != NULL) {
+        Node *next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
     }
-    return curr;
+    return prev;
 }
 
-void print_list(Node* head){
-    while(head!=NULL){
-        printf("%d ",head->value);
+static void print_list(const Node *head)
+{
+    while (head != NULL) {
+        printf("%d ", head->value);
         head = head->next;
     }
     printf("\n");
 }
 
-int main(){
-    int arr[] ={10,8,17,13,19};
-    int n = sizeof(arr)/sizeof(arr[0]);
-    Node* head = build_list(arr,n);
+static void free_list(Node *head)
+{
+    while (head != NULL) {
+        Node *next = head->next;
+        free(head);
+        head = next;
+    }
+}
+
+int main(void)
+{
+    int arr[] = {10, 8, 17, 13, 19};
+    int n = (int)(sizeof(arr) / sizeof(arr[0]));
+    Node *head = build_list(arr, n);
 
     print_list(head);
 
-    Node *rev= reverse_list(head);
+    Node *rev = reverse_list(head);
     print_list(rev);
+    free_list(rev);
     return 0;
 }

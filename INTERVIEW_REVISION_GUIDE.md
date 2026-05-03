@@ -565,7 +565,7 @@ P_leak ~ exp(T) approximately
 
 ## SECTION 4B - 21-day architect-drill index
 
-> **The shift in posture.** The 21-day plan no longer ends each day with a Q&A list. It ends with **Architect Drills** — first-principles questions that cannot be answered by recall. Each drill names the *constraint axes* you must reason across (physics, area, power, workload, cost, validation matrix). The interviewer is testing whether you can derive the design when one constraint shifts — not whether you memorised the textbook.
+> **The shift in posture.** The 21-day plan does not stop at a Q&A list. Each technical day adds **Architect Drills** — first-principles questions that cannot be answered by recall. Each drill names the *constraint axes* you must reason across (physics, area, power, workload, cost, validation matrix) and deliberately avoids an answer key. The interviewer is testing whether you can derive the design when one constraint shifts — not whether you memorised the textbook.
 >
 > **How to use this index in an interview.** When asked "explain X" or "why does Y exist":
 > 1. **Name the constraint axes** (the *italic* hint per row). 15 sec.
@@ -575,10 +575,11 @@ P_leak ~ exp(T) approximately
 >
 > Each row: **concept** → **constraints to weigh** → **future-shift twist** → **day source**.
 
-### Foundations (C, memory, hardware access) — Days 1, 2, 3
+### Foundations (C, memory, hardware access) — Day 0 + Days 1, 2, 3
 
 | Concept | Constraints to weigh | Future-shift twist | Source |
 |---|---|---|---|
+| **Why C does not carry array length** | Zero-cost ABI, old hardware, compile-time vs runtime knowledge, who owns length, why pointer+length is explicit | What would a bounds-carrying C ABI cost in every function call? | [Day 00](21day_plan/day00_c_basics.md) |
 | **Why C exposes addresses** | What the compiler may do under `-O3` (hoisting, dead-store elimination, narrowing); where you'd inject a barrier; debug/trace hooks; test-double substitution; portability vs per-arch barriers | If C added an `mmio_t` qualifier, what would it specify and why doesn't one exist? | [Day 01](21day_plan/day01_c_address_fluency.md) |
 | **Why alignment is a HW requirement** | Memory-bus width, cache-line crossing, atomic-access guarantees, MMU page boundaries, barrel-shifter cost in the LSU | ARMv7 trapped, ARMv8 mostly allows; why the change, why does Apple Silicon still penalise it on hot paths? | [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) |
 | **Why W1C status bits exist** | Lost-event race between HW set and SW clear, atomic event capture without a SW lock, what RW would create when the IP sets a bit between SW read and SW write | When is W1S the right primitive instead, and what bug class does it invite? | [Day 03](21day_plan/day03_bits_mmio_volatile_polling.md) |
@@ -921,5 +922,4 @@ Fetch → Decode → Rename → Dispatch → Issue (scheduler/RS) → Execute (A
 ---
 
 > **Senior-bar reminder:** at this level they're checking judgment more than knowledge. Tech question → **structured answer + tradeoff + what you'd actually do.** Behavioural → **framework + real example + lesson.** Puzzle → **think aloud.** Always lead with the *tradeoff* — that's what separates a senior validator from someone who memorised the spec.
-
 

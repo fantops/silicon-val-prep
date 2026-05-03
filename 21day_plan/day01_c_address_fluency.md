@@ -73,16 +73,16 @@ MMIO addresses are not regular memory. Every load and store has a hardware side 
 
 - cache the read in a CPU register and never re-read,
 - elide a "redundant" store,
-- reorder MMIO accesses with respect to one another or to plain memory.
+- reorder ordinary non-volatile memory around the access.
 
-All three are catastrophic. `volatile` says: do exactly what I wrote, in this order, every time.
+All three are catastrophic. `volatile` says the access itself is observable and must happen as written; CPU/device ordering still belongs to barriers and memory attributes.
 
 ```c
 static inline uint32_t reg_read32(volatile uint32_t *reg) { return *reg; }
 static inline void     reg_write32(volatile uint32_t *reg, uint32_t v) { *reg = v; }
 ```
 
-**`volatile` is not a memory barrier.** On weakly ordered ISAs (ARM, RISC-V) you still need `dmb`/`dsb` (or `__sync_synchronize`, `atomic_thread_fence`) to order MMIO against normal memory, especially the descriptor-then-doorbell pattern (covered Day 8). On x86 the hardware gives you Total Store Order, so for single-core MMIO `volatile` alone is usually enough.
+**`volatile` is not a memory barrier.** On weakly ordered ISAs (ARM, RISC-V) you still need `dmb`/`dsb` (or `atomic_thread_fence`) to order MMIO against normal memory, especially the descriptor-then-doorbell pattern (covered Day 8). On x86 the hardware gives you stronger ordering for many common paths, but device mappings and posted writes still need to be reasoned about from the platform rules, not from C `volatile`.
 
 ### 4. Read-modify-write a register field
 

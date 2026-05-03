@@ -1,6 +1,8 @@
 # 21-Day Silicon Validation Prep Plan
 
-This is the primary study plan. 21 sequential days following the **system flow** — from the smallest fluency (pointers, bits, MMIO) up through caches, memory, buses, storage, power/thermal, CPU microarch, concurrency, NPU, and finally debug and mock.
+This is the primary study plan. It has one technical ramp day plus **21 sequential interview-prep days** following the system flow — from embedded-C basics, pointers, bits, and MMIO up through caches, memory, buses, storage, power/thermal, CPU microarch, concurrency, NPU, and finally debug and mock.
+
+The operating principle is **learn by doing**: every day has reading, spoken interview rehearsal, systems-C coding, DS&A coding, and architect drills. Do not treat the files as notes to memorise. Treat them as prompts to type, explain, debug, and derive.
 
 Each day is one self-contained study file with this structure:
 
@@ -9,7 +11,7 @@ Each day is one self-contained study file with this structure:
 - **Deep Study Notes** — the real explanation, with diagrams, register/code patterns, and tables.
 - **Bugs in this Topic** — bug stories inlined alongside the concept so the topic and the failure mode are learned together.
 - **Interview Explanation** — a 60-90 sec spoken answer.
-- **Practice Q&A** — short questions that test understanding.
+- **Architect Drills** — first-principles questions with constraint hints only; no answer key.
 - **Coding A** — systems-C code tied to the day's concept.
 - **Coding B** — interview-style DS&A code (LeetCode-class) for the round.
 - **Bug Anchor** — cross-links to the days where this concept's bugs are referenced.
@@ -20,13 +22,25 @@ Each day is one self-contained study file with this structure:
 Plan for ~2-3 hours per day:
 
 ```text
-30 min   Read the day file end-to-end; speak the Interview Explanation out loud.
-60 min   Coding A (systems C) — type from scratch, no copy-paste.
-30 min   Coding B (DS&A) — pattern recognition + clean implementation.
-30 min   Practice Q&A out loud + close with the Exit Check.
+25 min   Read the day file end-to-end; speak the Interview Explanation out loud.
+55 min   Coding A (systems C) — type from scratch, compile, run, and fix warnings.
+35 min   Coding B (DS&A) — pattern recognition + clean implementation.
+25 min   Architect Drills — derive from constraint hints, no answer key.
+20 min   Speak one drill answer out loud + close with the Exit Check.
 ```
 
-## Day 0 — Daily Skim Guide (do this every day)
+## Day 0 — Embedded-C basics ramp (do before Day 1)
+
+[Day 0 — Embedded-C basics ramp](day00_c_basics.md) is the one pure C-basics day before the 21-day system flow starts. It covers compile/run discipline, functions, arrays, strings, pointers, structs, linked lists, `memcpy`/`memmove`, and size/alignment checks. The goal is not mastery of all C; the goal is to arrive at Day 1 ready to type and debug MMIO-style C without freezing on syntax.
+
+The matching hands-on exercises live in [`day00/`](day00/). Build them with:
+
+```sh
+cd day00
+make
+```
+
+## Daily Skim Guide (do this every study day)
 
 [Day 0 — Career narrative + revision skim guide](day00_revision_guide.md) — 5-minute daily skim covering Introduction, current Microsoft work, Intel work, L&T work, why-I-left-Intel, per-company tailoring (Qualcomm CPU sysval / Intel NPU post-Si / Microsoft lateral), the 60-sec NPU explanation, and a 10-question Q&A bank. **Read this before every study block.** Use the 30-sec / 60-sec / 2-min versions in section 10 as warm-up.
 
@@ -34,12 +48,13 @@ Plan for ~2-3 hours per day:
 
 The 21 days walk the platform from the bottom up.
 
-### Layer 1 — C, pointers, bits, MMIO fluency (Days 1-3)
+### Layer 1 — C, pointers, bits, MMIO fluency (Day 0 + Days 1-3)
 
 The address-space and register-access fluency every silicon role is built on.
 
 | Day | Topic |
 |---|---|
+| [Day 0 — Embedded-C basics ramp](day00_c_basics.md) | compile/run, functions, arrays, strings, pointers, structs, linked lists, `memcpy`/`memmove` |
 | [Day 1 — C address fluency](day01_c_address_fluency.md) | macros, MMIO accessors, CSR walk |
 | [Day 2 — Pointers, memory layout, alignment](day02_pointers_memory_layout_alignment.md) | 5 segments, padding, `container_of` |
 | [Day 3 — Bits, MMIO, volatile, polling, endianness](day03_bits_mmio_volatile_polling.md) | RMW, `volatile`, LE/BE, timeouts |

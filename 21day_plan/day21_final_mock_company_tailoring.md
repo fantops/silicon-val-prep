@@ -95,7 +95,7 @@ Hardware C:
 
 | Front | Back |
 |---|---|
-| Why `volatile`? | prevents compiler caching/reordering/eliminating MMIO accesses; *not* a CPU barrier |
+| Why `volatile`? | makes the access compiler-observable so it is not cached/elided; *not* a CPU/device-ordering barrier |
 | RMW pattern | read, clear bits (`& ~mask`), set bits (`| val`), write back |
 | LE layout of `0xDEADBEEF` | `EF BE AD DE` (LSB low addr) |
 | Why not struct overlay for MMIO? | padding is implementation-defined; struct copy is `memcpy`; no order guarantee |
