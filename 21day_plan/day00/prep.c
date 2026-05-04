@@ -1,8 +1,8 @@
 #include<stdio.h>
 #include<stdint.h>
 
-#define BIT(n) (1U<<(n))
-#define MASK(msb,lsb) (((1U<<(msb+lsb-1))-1) << (lsb))
+#define BIT(n) (UINT32_C(1) << (n))
+#define MASK(msb,lsb) ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
 #define FIELD_GET(r,msb,lsb) (((r) & MASK(msb,lsb)) >> (lsb))
 #define FIELD_PREP(val,msb,lsb) (((val)<<lsb) & (MASK(msb,lsb)))
 
@@ -41,10 +41,11 @@ static inline uint8_t poll_ready(volatile uint32_t *reg,uint32_t mask, uint32_t 
     return 0;
 }
 
-int main(){
+int main(void){
     CTRL *ctrl = CTRL_REG;
     
     reg_write32(&ctrl->EN, CTRL_EN);
+    reg_rmw32(&ctrl->STATUS, 2, 2, 1);
     if(poll_ready(&ctrl->READY, CTRL_READY, 10000)){
         printf("Device Ready");
     } else {

@@ -119,8 +119,8 @@ NPU:
 | 6-layer NPU stack | framework → ONNX → ORT → EP → vendor runtime → silicon |
 | EP fallback | one unsupported op → CPU EP → 10× perf cliff |
 | QDQ fusion | `Quantize → Op → Dequantize` collapsed to single INT8 op |
-| VTCM (HTP v79) | 8 MB on-chip SRAM, software-managed, not in CPU coherence |
-| HTP execute pipeline | DMA(N+1) + HMX(N) + HVX(N-1) — 3 engines, ~45 TOPS |
+| VTCM / local SRAM | software-managed local store, not in CPU coherence; quote exact size only from internal platform docs |
+| HTP execute pipeline | DMA + matrix/vector engines pipelined; Snapdragon X Elite-class NPU has publicly advertised peak TOPS |
 | Context cache | serialised compiled artifact; second launch skips compile |
 | Page-fault story takeaway | correlate with VirtualAlloc + peak VM + version matrix |
 
@@ -134,9 +134,9 @@ Same core narrative; emphasis adjusted to the team's product.
 
 **Anchor sentences:**
 
-- "I do post-Si platform validation on **Hexagon HTP v79 / Snapdragon X Elite**, **8 MB VTCM**, ONNX Runtime QNN EP path."
+- "I do post-Si platform validation on **Hexagon HTP v79 / Snapdragon X Elite**, ONNX Runtime QNN EP path, including software-managed VTCM/local-SRAM tiling behaviour."
 - "I'm comfortable with the ARM platform: EL0-3, GIC interrupt routing, SMMU stream IDs, RPMh / PMIC, and PSCI for power state coordination."
-- "Hexagon's 3-engine pipeline — HMX matmul, HVX vector, DMA — is how you actually hit ~45 TOPS; one stalled engine and the pipeline degrades to serial."
+- "Hexagon's compute/vector/DMA pipeline is how Snapdragon X Elite-class NPUs reach their advertised peak TOPS; one stalled engine and the pipeline degrades toward serial execution."
 
 **Bug stories to lead with:** QNN page-fault (4) → Paint SR vs Camera (4b) → NVMe CSTS.RDY (2). Save ADR (1) and Core C6 (3) for if Intel-side comes up.
 
@@ -193,7 +193,7 @@ This is a **specialisation** of the generic Intel framing above for the Ireland 
 
 **Why Ireland specifically (sentence 4 of the "why this company" template):**
 
-- "Intel Ireland's Leixlip campus is one of two global Intel sites doing leading-edge NPU silicon validation. The team sits inside the design centre, which means validation findings feed directly back into the next stepping — that close-the-loop is the missing piece in my current OEM-side post-Si role."
+- "Intel Ireland has an active NPU validation charter in Leixlip, and the role sits close enough to design and silicon validation that findings can feed back into future steppings — that close-the-loop is the missing piece in my current OEM-side post-Si role."
 - "Ireland is also a deliberate personal step — English-speaking, EU base, strong engineering culture, and Intel's biggest non-US site. I'm relocating with intent, not just for a role."
 
 **Day-anchors to revise night-before (Intel Ireland order):**

@@ -1,10 +1,11 @@
-#include<stdio.h>
-#include<stdint.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <unistd.h>
 
-#define BIT(n) ((1U)<<(n))
-#define MASK(msb,lsb) (((1U<<(msb+lsb-1))-1)<<lsb)
-#define FIELD_GET(r,msb,lsb) ((MASK(msb,lsb)&(r))>>lsb)
-#define FIELD_PREP(val,msb,lsb) ((val<<lsb)&(MASK(msb,lsb)))
+#define BIT(n) (UINT32_C(1) << (n))
+#define MASK(msb,lsb) ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
+#define FIELD_GET(r,msb,lsb) (((r) & MASK(msb,lsb)) >> (lsb))
+#define FIELD_PREP(val,msb,lsb) (((val) << (lsb)) & MASK(msb,lsb))
 
 
 struct csr_block{
@@ -12,7 +13,7 @@ struct csr_block{
     volatile uint32_t STATUS;
     volatile uint32_t DATA_LO;
     volatile uint32_t DATA_HI;
-}__attribute__((packed));
+};
 
 #define CTRL_EN BIT(0)
 #define CTRL_MODE MASK(3,1)
@@ -28,7 +29,7 @@ static inline void reg_field_write32(volatile uint32_t *reg, uint32_t mask, uint
 }
 
 static inline int wait_for_bit_set(volatile uint32_t *reg, uint32_t mask, int timeout_us){
-    while(timeout_us-- >>0){
+    while(timeout_us-- > 0){
         if (*reg & mask) return 0;
         usleep(1); 
         if (timeout_us == 7){
@@ -62,5 +63,3 @@ int pm_step(int state, int event)
     default:        return PM_IDLE;
     }
 }
-
-

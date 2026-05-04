@@ -39,6 +39,6 @@ sizes: $(BIN_DIR)/struct_sizes
 	./$<
 
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR) a.out
 
 .PHONY: all clean reverse cycle memcpy memmove sizes

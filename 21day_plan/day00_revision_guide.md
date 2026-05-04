@@ -98,11 +98,11 @@ Sentences 1-3 stay the same. Customise sentence 4 per company.
 
 ### A. Qualcomm — CPU System Validation (Oryon / Snapdragon)
 
-**Lead with:** post-Si platform validation on **three vendors including Qualcomm**; strong on **ARM/Snapdragon vocabulary** (EL0-3, GIC, SMMU, RPMh, PSCI, LPDDR training, DynamIQ); NVMe post-Si background; **Hexagon HTP v79 / 8 MB VTCM** familiarity from current job.
+**Lead with:** post-Si platform validation on **three vendors including Qualcomm**; strong on **ARM/Snapdragon vocabulary** (EL0-3, GIC, SMMU, RPMh, PSCI, LPDDR training, DynamIQ); NVMe post-Si background; **Hexagon HTP v79 / VTCM-local-store** familiarity from current job.
 
 **Anchor sentences:**
 
-- "On the current Microsoft platform side I validate workloads against **Snapdragon X Elite** with Hexagon HTP v79 — that's the ORT/QNN EP/HTP path with 8 MB VTCM."
+- "On the current Microsoft platform side I validate workloads against **Snapdragon X Elite** with Hexagon HTP v79 — that's the ORT/QNN EP/HTP path with software-managed VTCM/local-SRAM tiling."
 - "I'm comfortable with the ARM platform stack: EL0-3 with TrustZone, GIC interrupt routing with ITS for MSIs, SMMU stream IDs, **RPMh** as the power-state coordinator over the **SPMI** bus to the PMIC, and **PSCI** for CPU-level power state requests."
 - "On the CPU system side specifically — TSO vs ARM weak memory model, `dmb st` between data and doorbell, big.LITTLE / DynamIQ topology and per-core DVFS, LPDDR5X training and refresh."
 - "On the validation method side — pre-Si Cambria PCU work on Zebu at Intel taught me opcode-level FW tracing and ordering, which transfers directly to RPMh and PSCI flows."
@@ -125,7 +125,7 @@ Sentences 1-3 stay the same. Customise sentence 4 per company.
 
 - "I already do post-Si NPU validation across three vendors — including the Intel **Lunar Lake NPU through OpenVINO EP**. So the workload mechanics — graph partition, EP fallback, context cache, energy-per-inference, Modern Standby — are my current daily work, just generalised across vendors."
 - "I have prior Intel pre-Si experience on Cambria — C-state validation, ADR, PCIe Gen6 transactor on Zebu. I know the Intel debug-tool stack: MSR_CORE_PERF_LIMIT_REASONS, RAPL, ETL/WPA, Perspec scenario content, and HSD."
-- "On the NPU Intel side specifically — the OpenVINO EP path lowers ONNX → IR → MYRIAD/NPU plugin; the LNL NPU has ~2 MB on-chip SRAM (vs Hexagon 8 MB), so tile-size discipline is even more critical, and energy-per-inference is the figure of merit, not raw TOPS."
+- "On the NPU Intel side specifically — the OpenVINO EP path lowers ONNX → IR → NPU plugin; local SRAM / scratchpad size is platform-specific, so tile-size discipline and energy-per-inference matter more than raw TOPS."
 - "Honest framing — at Microsoft I'm OEM-side platform validation; what I want at Intel is to **own the silicon at the vendor side**, take the inference path from EVT through PV with the design and FW teams in the same room."
 
 **Bug stories to lead with for Intel NPU post-Si:**
@@ -146,7 +146,7 @@ See [Day 21 section 3 Microsoft](day21_final_mock_company_tailoring.md) — the 
 
 ## 7. NPU Execution — the 60-sec spoken explanation
 
-> "An AI workload on an NPU runs through six layers — framework, ONNX, ONNX Runtime, Execution Provider, vendor runtime/compiler, silicon. ORT partitions the graph: contiguous subgraphs go to the chosen EP — QNN for Qualcomm Hexagon, OpenVINO for Intel, DirectML for any DX12 device — and CPU EP is always present as the fallback. The fallback is the silent perf cliff — one unsupported op forces a per-op partition and you spend most of your time copying tensors. The vendor compiler does **QDQ fusion** to collapse Quantize-Conv-Dequantize into a single INT8 op, then tiles activations so each tile fits in on-chip SRAM — Qualcomm calls it VTCM, 8 MB on HTP v79; Intel ~2 MB; AMD ~4 MB. The compiled artifact is serialised as a context cache so the second launch skips compile. At inference the CPU writes a doorbell, the NPU DMAs input from DDR to VTCM, and **HMX, HVX, DMA run as a 3-engine pipeline** — DMA on tile N+1, HMX on tile N, HVX on tile N-1 — that's how you hit ~45 TOPS on v79. On Windows I observe all of this with **ETW + WPA**, which is the equivalent of `perf` on Linux."
+> "An AI workload on an NPU runs through six layers — framework, ONNX, ONNX Runtime, Execution Provider, vendor runtime/compiler, silicon. ORT partitions the graph: contiguous subgraphs go to the chosen EP — QNN for Qualcomm Hexagon, OpenVINO for Intel, DirectML for any DX12 device — and CPU EP is always present as the fallback. The fallback is the silent perf cliff — one unsupported op forces a per-op partition and you spend most of your time copying tensors. The vendor compiler does **QDQ fusion** to collapse Quantize-Conv-Dequantize into a single INT8 op, then tiles activations so each tile fits in software-managed local SRAM — Qualcomm calls it VTCM. The compiled artifact is serialised as a context cache so the second launch skips compile. At inference the CPU writes a doorbell, the NPU DMAs input from DDR to local SRAM, and compute/vector/DMA engines run as a pipeline. On Windows I observe all of this with **ETW + WPA**, which is the equivalent of `perf` on Linux."
 
 Long form and bug surface: [Day 18](day18_npu_ort_ep_hexagon_htp.md) + [Day 19](day19_npu_memory_runtime_bugs.md).
 

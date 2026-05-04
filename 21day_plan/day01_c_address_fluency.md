@@ -40,8 +40,8 @@ That scaling is exactly how you walk a PCIe config space, NVMe register block, o
 ```c
 #include <stdint.h>
 
-#define BIT(n)                  (1U << (n))
-#define MASK(msb, lsb)          (((1U << ((msb) - (lsb) + 1)) - 1) << (lsb))
+#define BIT(n)                  (UINT32_C(1) << (n))
+#define MASK(msb, lsb)          ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
 #define FIELD_GET(reg, msb, lsb)    (((reg) & MASK(msb, lsb)) >> (lsb))
 #define FIELD_PREP(val, msb, lsb)   (((val) << (lsb)) & MASK(msb, lsb))
 #define ARRAY_SIZE(a)           (sizeof(a) / sizeof((a)[0]))
@@ -49,13 +49,13 @@ That scaling is exactly how you walk a PCIe config space, NVMe register block, o
 
 One sentence each:
 
-- `BIT(n)` — single-bit mask, `1U` (unsigned) so `1 << 31` is well-defined.
-- `MASK(msb, lsb)` — width = `msb-lsb+1`; build the low-mask, shift up by `lsb`.
+- `BIT(n)` — single-bit mask, `UINT32_C(1)` (unsigned 32-bit constant) so bit 31 is well-defined.
+- `MASK(msb, lsb)` — width = `msb-lsb+1`; build the low-mask, shift up by `lsb`; the `UINT32_MAX >> ...` shape avoids the `1U << 32` bug for `MASK(31, 0)`.
 - `FIELD_GET` — mask the field, shift down to bit 0.
 - `FIELD_PREP` — shift the value up, mask to drop overflow bits (defensive).
 - `ARRAY_SIZE` — only valid on a real array, not a pointer.
 
-**Why `1U`, not `1`** — `1` is a signed `int`; `1 << 31` is undefined behaviour because it shifts into the sign bit. `1U` is unsigned and well-defined modulo $2^{32}$. Interviewers love this trap.
+**Why `UINT32_C(1)`, not `1`** — `1` is a signed `int`; `1 << 31` is undefined behaviour because it shifts into the sign bit. `UINT32_C(1)` is an unsigned 32-bit constant and is well-defined modulo $2^{32}$. Interviewers love this trap.
 
 **Why `MASK` shifts left by `lsb` after building the low mask** — that ordering is the whole insight. Build a mask of `width` ones at the bottom, then slide it up to the field's position.
 
@@ -218,8 +218,8 @@ If your `reg_field_write` and `wait_for_bit_set` are sloppy, every later bug sto
 #include <stdint.h>
 #include <stdbool.h>
 
-#define BIT(n)               (1U << (n))
-#define MASK(msb, lsb)       (((1U << ((msb) - (lsb) + 1)) - 1) << (lsb))
+#define BIT(n)               (UINT32_C(1) << (n))
+#define MASK(msb, lsb)       ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
 #define FIELD_GET(r, msb, lsb)  (((r) & MASK(msb, lsb)) >> (lsb))
 #define FIELD_PREP(v, msb, lsb) (((v) << (lsb)) & MASK(msb, lsb))
 

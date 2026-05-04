@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#define BIT(n) (1U<<(n))
-#define MASK(msb,lsb) (((BIT(msb-lsb+1)) - 1) << lsb)
+#define BIT(n) (UINT32_C(1) << (n))
+#define MASK(msb,lsb) ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
 #define FIELD_READ(r,msb,lsb) (((r) & (MASK(msb,lsb))) >> lsb)
 #define FIELD_PREP(val, msb, lsb) (MASK(msb,lsb) & (val << lsb))
 #define FIELD_RESET(r,msb,lsb) (((r) & ~(MASK(msb,lsb))))

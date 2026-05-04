@@ -88,7 +88,7 @@ LEARNING   Page faults and virtual memory must be interpreted together.
 
 ```
 SITUATION   Two AI workloads share the NPU on Copilot+ PC (Snapdragon X Elite,
-            HTP v79, 8 MB VTCM). Paint Super-Resolution submits ~36 inference
+            HTP v79, software-managed VTCM/local SRAM). Paint Super-Resolution submits ~36 inference
             tiles back-to-back to upscale a still; Camera preview submits a
             fresh inference at 30 fps (~33 ms budget). Both run via QNN EP
             on the same NPU.
@@ -159,7 +159,7 @@ LEARNING    Silent fallback presents as a silicon perf issue; it is almost
 ### 5. Bug 4 — VTCM tile-size cliff
 
 ```
-SITUATION   New larger model variant deployed on HTP v79 (8 MB VTCM).
+SITUATION   New larger model variant deployed on HTP v79 (software-managed VTCM/local SRAM).
 
 BUG         Per-tile latency doubled from ~3 ms to ~6 ms; throughput
             collapsed by ~2×.
@@ -170,7 +170,7 @@ APPROACH    1. QNN profile dump showed each tile now took 2 DMA round-trips
                budget for this layer's working set; previous variant fit.
 
 ROOT CAUSE  Compiler picked tile geometry that overflowed VTCM by a small
-            margin; activations + weights + halo no longer fit in 8 MB.
+            margin; activations + weights + halo no longer fit in the available local SRAM.
 
 FIX         Hint the compiler with a smaller tile shape; or split the layer.
 
@@ -223,7 +223,7 @@ For any "NPU bug" report:
 | 1 | QNN/ORT page-fault spike | host runtime context-loading regression | matrix isolates ORT version |
 | 2 | Paint SR starves Camera | single HTP queue, no preempt | GPUView shows 108 ms wait |
 | 3 | Silent EP fallback | QDQ fusion broke after rebuild | EP-assignment log shows CPU |
-| 4 | VTCM tile-size cliff | tile barely overflowed 8 MB | per-tile latency doubled |
+| 4 | VTCM tile-size cliff | tile barely overflowed local SRAM | per-tile latency doubled |
 | 5 | NPU blocks S0ix | runtime keep-alive policy | PkgC10 residency low |
 
 ---

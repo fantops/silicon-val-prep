@@ -133,6 +133,8 @@ Use the files in [`day00/`](day00/):
 - `my_memmove.c` — overlap-safe copy.
 - `struct_sizes.c` — inspect padding, alignment, and array decay.
 
+For the Day 0 pass, the canonical exercise set is exactly the five files above plus `Makefile`. Other C files in `day00/` are older scratch/reference drills for MMIO and CSR practice; ignore them unless a later day explicitly points you there.
+
 Type each exercise again from memory after one pass. The second pass is where the learning lands.
 
 ## Coding B — Interview DS&A warm-up

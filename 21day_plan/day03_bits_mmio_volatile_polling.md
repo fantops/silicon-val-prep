@@ -240,8 +240,8 @@ The byte-by-byte version generates the same code on a modern compiler with optim
 #include <stdbool.h>
 #include <string.h>
 
-#define BIT(n)               (1U << (n))
-#define MASK(msb, lsb)       (((1U << ((msb)-(lsb)+1)) - 1) << (lsb))
+#define BIT(n)               (UINT32_C(1) << (n))
+#define MASK(msb, lsb)       ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
 
 static uint8_t mmio[256];
 

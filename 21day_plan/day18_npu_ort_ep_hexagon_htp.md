@@ -2,7 +2,7 @@
 
 ## Concept
 
-A trained model runs on an NPU through a **6-layer software stack**: Model framework → ONNX export → ONNX Runtime → Execution Provider (QNN / OpenVINO / DirectML / CPU) → vendor runtime/compiler → silicon (Hexagon HTP, Intel NPU, AMD XDNA). ORT **partitions** the graph: contiguous subgraphs go to the chosen EP; unsupported ops fall back to **CPU EP**. The vendor compiler runs **QDQ fusion** (Quantize → Conv → Dequantize collapses to a single INT8 op), tiles the activation to fit on-chip SRAM (Qualcomm **VTCM** 8 MB on v79; Intel ~2 MB; AMD ~4 MB), and serialises the artifact as a **context cache**. At inference the CPU writes a doorbell; the NPU **DMAs** input from DDR into VTCM; **HMX** runs INT8 matmul (4096 MACs/instr), **HVX** does vector/requant, **DMA** streams the next tile — three engines pipelined.
+A trained model runs on an NPU through a **6-layer software stack**: Model framework → ONNX export → ONNX Runtime → Execution Provider (QNN / OpenVINO / DirectML / CPU) → vendor runtime/compiler → silicon (Hexagon HTP, Intel NPU, AMD XDNA). ORT **partitions** the graph: contiguous subgraphs go to the chosen EP; unsupported ops fall back to **CPU EP**. The vendor compiler runs **QDQ fusion** (Quantize → Conv → Dequantize collapses to a single INT8 op), tiles the activation to fit on-chip SRAM / local-store memory, and serialises the artifact as a **context cache**. At inference the CPU writes a doorbell; the NPU **DMAs** input from DDR into local SRAM; **HMX** runs INT8 matmul, **HVX** does vector/requant, and **DMA** streams the next tile — multiple engines pipelined.
 
 ## Why this day in the flow
 
@@ -85,15 +85,15 @@ If QDQ fusion fails (e.g., model rebuilt without `keep_quantized_weights=true`, 
 
 Activations rarely fit in NPU SRAM. The compiler **tiles** them (e.g., 256×256 with halo padding) so each tile fits in VTCM.
 
-| NPU | On-chip SRAM |
+| NPU | On-chip SRAM / local store |
 |---|---|
-| Qualcomm Hexagon HTP v79 (Snapdragon X Elite) | **8 MB VTCM** |
-| Intel NPU (LNL) | ~2 MB |
-| AMD XDNA | ~4 MB |
+| Qualcomm Hexagon HTP v79 (Snapdragon X Elite) | VTCM / local SRAM; exact size should be quoted only from internal platform docs |
+| Intel NPU (LNL) | local SRAM / scratchpad; quote exact size only from the relevant platform doc |
+| AMD XDNA | local SRAM / scratchpad; quote exact size only from the relevant platform doc |
 
 VTCM is **software-managed, not in the CPU coherence domain**. The compiler/runtime owns DMA scheduling. Trade-off: deterministic latency vs more code complexity.
 
-**VTCM tile-size cliff:** if the compiler picks a tile that doesn't fit, multiple DMA round-trips per tile happen and per-tile latency doubles. Real numbers on v79: 256×256 burst-mode tile ≈ 2-5 ms.
+**VTCM tile-size cliff:** if the compiler picks a tile that doesn't fit, multiple DMA round-trips per tile happen and per-tile latency can jump sharply instead of degrading smoothly.
 
 ### 6. Context cache
 
@@ -122,19 +122,19 @@ Skipping the cache (debug build, missing file, version mismatch) means you re-pa
 7. ORT returns the output tensor
 ```
 
-The 3-engine pipeline is **how you hit ~45 TOPS on v79**. If any engine stalls (tile cliff, OOM, host starvation), the pipeline degrades to serial and latency multiplies.
+The multi-engine pipeline is how Snapdragon X Elite-class NPUs reach their publicly advertised peak TOPS. If any engine stalls (tile cliff, OOM, host starvation), the pipeline degrades toward serial execution and latency multiplies.
 
 ### 8. Hexagon HTP family — interview numbers
 
-| HTP version | SoC | Peak TOPS | VTCM |
+| HTP version | SoC | Peak TOPS | VTCM / local-store note |
 |---|---|---|---|
-| v68 | Snapdragon 888 | ~15 | 4 MB |
-| v69 | SD 8 Gen 1 | ~18 | 4 MB |
-| **v73** | SD 8 Gen 2 | ~26 | **8 MB** ← VTCM doubling |
-| v75 | SD 8 Gen 3 | ~36 | 8 MB |
-| **v79** | Snapdragon X Elite (laptop) | **~45** | **8 MB** |
+| v68 | Snapdragon 888 | ~15 | quote exact VTCM only from platform docs |
+| v69 | SD 8 Gen 1 | ~18 | quote exact VTCM only from platform docs |
+| **v73** | SD 8 Gen 2 | ~26 | quote exact VTCM only from platform docs |
+| v75 | SD 8 Gen 3 | ~36 | quote exact VTCM only from platform docs |
+| **v79** | Snapdragon X Elite (laptop) | **~45** | quote exact VTCM only from platform docs |
 
-Other anchors: HMX = 4096 MACs/instruction; FastRPC wake ~100 µs; real bottleneck is shared DDR (~60 GB/s on X Elite).
+Other anchors to verify against internal docs before quoting: HMX instruction shape, FastRPC wake latency, and effective shared-DDR bandwidth.
 
 DLL chain on Windows (Copilot+ PC):
 
@@ -185,7 +185,7 @@ This is what you reach for during NPU validation, the same way you'd reach for `
 
 ## Interview Explanation (60-90 sec)
 
-> "An AI workload on an NPU runs through six layers — framework, ONNX, ONNX Runtime, Execution Provider, vendor runtime/compiler, silicon. ORT partitions the graph: contiguous subgraphs go to QNN EP for Qualcomm Hexagon, OpenVINO EP for Intel, DirectML for any DX12 device, and CPU EP is always present as the fallback. The fallback is the silent perf cliff — one unsupported op forces a per-op partition and you spend most of your time copying tensors between NPU and host memory. The vendor compiler does QDQ fusion to collapse Quantize-Conv-Dequantize triples into a single INT8 op, then tiles activations so each tile fits in on-chip SRAM — Qualcomm calls it VTCM, 8 MB on HTP v79, vs Intel about 2 MB and AMD about 4. The compiled artifact is serialised as a context cache so the second launch skips compile. At inference the CPU writes a doorbell, the NPU DMAs input from DDR to VTCM, and HMX, HVX, DMA run as a 3-engine pipeline — that's how you hit roughly 45 TOPS on v79. On Windows I observe all of this with ETW and WPA, the equivalent of `perf` on Linux."
+> "An AI workload on an NPU runs through six layers — framework, ONNX, ONNX Runtime, Execution Provider, vendor runtime/compiler, silicon. ORT partitions the graph: contiguous subgraphs go to QNN EP for Qualcomm Hexagon, OpenVINO EP for Intel, DirectML for any DX12 device, and CPU EP is always present as the fallback. The fallback is the silent perf cliff — one unsupported op forces a per-op partition and you spend most of your time copying tensors between NPU and host memory. The vendor compiler does QDQ fusion to collapse Quantize-Conv-Dequantize triples into a single INT8 op, then tiles activations so each tile fits in software-managed local SRAM — Qualcomm calls that VTCM. The compiled artifact is serialised as a context cache so the second launch skips compile. At inference the CPU writes a doorbell, the NPU DMAs input from DDR to local SRAM, and compute/vector/DMA engines run as a pipeline — that's how Snapdragon X Elite-class NPUs reach their publicly advertised peak TOPS. On Windows I observe all of this with ETW and WPA, the equivalent of `perf` on Linux."
 
 ---
 
@@ -381,5 +381,5 @@ This isolation is *what makes it efficient* (no coherence overhead, no shared L1
 - [ ] Defined VTCM, its size on v79, and the tile-size cliff.
 - [ ] Defined QDQ fusion and what fails when it doesn't.
 - [ ] Walked the NPU execute hot loop with HMX/HVX/DMA pipelining.
-- [ ] Stated the HTP family numbers (v73 doubled VTCM; v79 ≈ 45 TOPS / 8 MB).
+- [ ] Stated only public HTP TOPS numbers publicly; quoted VTCM/local-SRAM sizes only when backed by internal platform docs.
 - [ ] Named ETW + WPA as the Windows observation tool chain.

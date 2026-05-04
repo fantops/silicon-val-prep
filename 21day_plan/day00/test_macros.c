@@ -15,6 +15,7 @@ int main(void) {
     assert(MASK(8, 4)   == 0x000001F0U);   /* bits [8:4]  */
     assert(MASK(15, 8)  == 0x0000FF00U);   /* bits [15:8] */
     assert(MASK(7, 7)   == 0x00000080U);   /* single bit  */
+    assert(MASK(31, 0)  == 0xFFFFFFFFU);   /* full word, no 1U << 32 */
 
     /* ---------- FIELD_READ ---------- */
     /* r = 0xDEADBEEF; bits [8:4]:

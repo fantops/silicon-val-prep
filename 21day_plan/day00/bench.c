@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define BIT(n)              (1U << (n))
-#define MASK(msb, lsb)      (((1U << ((msb) - (lsb) + 1)) - 1U) << (lsb))
+#define BIT(n)              (UINT32_C(1) << (n))
+#define MASK(msb, lsb)      ((UINT32_MAX >> (31 - ((msb) - (lsb)))) << (lsb))
 #define FIELD_GET(reg, msb, lsb)   (((reg) & MASK(msb, lsb)) >> (lsb))
 
 struct csr_block {
