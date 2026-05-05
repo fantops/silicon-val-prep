@@ -1,44 +1,49 @@
-# Day 0 — C Ramp-up exercises
-# Usage:
-#   make            # build everything
-#   make reverse    # build + run reverse_list
-#   make cycle      # build + run cycle_detect
-#   make memcpy     # build + run my_memcpy
-#   make memmove    # build + run my_memmove
-#   make sizes      # build + run struct_sizes
+# Day 0 — C Ramp-up
+#
+# Layout:
+#   exercises/   YOU write code here (stubs provided)
+#   solutions/   reference implementations (peek only after attempting)
+#
+# Targets:
+#   make ex-<name>    build + run YOUR exercise (e.g. make ex-my_memcpy)
+#   make sol-<name>   build + run the reference solution
+#   make all-ex       build every exercise stub (will fail until you fill TODOs)
+#   make all-sol      build every reference solution
 #   make clean
 
 CC      = clang
-CFLAGS  = -Wall -Wextra -Wpedantic -std=c11 -g -O0
-BIN_DIR = bin
+CFLAGS  = -Wall -Wextra -Wpedantic -std=c11 -g -O0 -I.
+BIN     = bin
 
-SRCS = reverse_list.c cycle_detect.c my_memcpy.c my_memmove.c struct_sizes.c
-BINS = $(SRCS:%.c=$(BIN_DIR)/%)
+EX_SRCS  = $(wildcard exercises/*.c)
+SOL_SRCS = $(filter-out solutions/bench.c solutions/helper.c solutions/csr_init.c solutions/csr_model.c,$(wildcard solutions/*.c))
 
-all: $(BINS)
+EX_BINS  = $(patsubst exercises/%.c,$(BIN)/ex-%,$(EX_SRCS))
+SOL_BINS = $(patsubst solutions/%.c,$(BIN)/sol-%,$(SOL_SRCS))
 
-$(BIN_DIR)/%: %.c | $(BIN_DIR)
+all-sol: $(SOL_BINS)
+all-ex:  $(EX_BINS)
+
+$(BIN):
+	mkdir -p $(BIN)
+
+$(BIN)/ex-%: exercises/%.c | $(BIN)
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+# bench.c references csr_init + pm_step which live (with their own main()) in
+# csr_init.c / csr_model.c. Build it explicitly by stubbing those externs;
+# until then `make sol-bench` is opt-in and excluded from `all-sol`.
 
-reverse: $(BIN_DIR)/reverse_list
+$(BIN)/sol-%: solutions/%.c | $(BIN)
+	$(CC) $(CFLAGS) -o $@ $<
+
+ex-%: $(BIN)/ex-%
 	./$<
 
-cycle: $(BIN_DIR)/cycle_detect
-	./$<
-
-memcpy: $(BIN_DIR)/my_memcpy
-	./$<
-
-memmove: $(BIN_DIR)/my_memmove
-	./$<
-
-sizes: $(BIN_DIR)/struct_sizes
+sol-%: $(BIN)/sol-%
 	./$<
 
 clean:
-	rm -rf $(BIN_DIR) a.out
+	rm -rf $(BIN)
 
-.PHONY: all clean reverse cycle memcpy memmove sizes
+.PHONY: all-sol all-ex clean
