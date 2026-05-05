@@ -67,6 +67,59 @@
 2. **SLC write cache** — host writes land at SLC speed; CQE returned; background **fold** later moves them to TLC and updates L2P.
 3. **Composite Temperature ≥ WCTEMP** triggers controller's internal throttle FSM.
 
+### 3.1.1 NVMe DMA working model (host ↔ controller ↔ NAND)
+
+NVMe is a **pure DMA / shared-memory** protocol over PCIe. The host never moves payload bytes; it only rings a doorbell and the controller pulls/pushes everything across the PCIe link as TLPs.
+
+**Memory regions (who owns, who DMAs):**
+
+| Region | Resides in | Producer | Consumer | DMA direction |
+|---|---|---|---|---|
+| Submission Queue (SQE, 64 B) | Host DRAM | Host driver | SSD controller | SSD **reads** (MemRd TLP) |
+| Completion Queue (CQE, 16 B) | Host DRAM | SSD controller | Host driver | SSD **writes** (MemWr TLP) |
+| SQ tail / CQ head doorbells | Controller BAR0 (MMIO) | Host driver | SSD controller | Host MMIO write (posted) |
+| PRP list / SGL | Host DRAM | Host driver | SSD controller | SSD **reads** to learn buffer addrs |
+| Data buffer (user payload) | Host DRAM | Host (write) / SSD (read) | opposite side | SSD **reads** for writes, **writes** for reads |
+| HMB (L2P, scratch) | Host DRAM, granted to SSD | SSD controller | SSD controller | SSD R/W; host must not touch |
+| MSI-X table / completion IRQ | Host DRAM addr in MSI-X cap | SSD controller | Host CPU (LAPIC) | SSD **writes** (MemWr TLP to MSI addr) |
+
+**End-to-end I/O timeline (single 4 KiB read, IOMMU/SMMU on):**
+
+```
+ 1. Host driver builds SQE in SQ[tail]; SQE carries opcode=Read, NSID, SLBA,
+    NLB, and PRP1/PRP2 (or SGL) pointing to host data buffer.
+ 2. Host MMIO-writes new tail to SQyTDBL  ── posted PCIe Write to BAR0.
+ 3. SSD front-end issues PCIe MemRd  ── DMA-fetches the 64 B SQE.
+       (IOMMU translates ReqID+IOVA → PA; ATS/PRI optional.)
+ 4. SSD parses SQE, MemRd's PRP list if needed, then resolves LBA→PBA via
+    L2P (in HMB → MemRd from host DRAM, or in on-die SRAM cache).
+ 5. NAND read: controller schedules plane reads, ECC-corrects into internal
+    SRAM buffers (this is the only non-DMA hop — internal SoC fabric).
+ 6. SSD MemWr's payload to host data buffer  ── one or more TLPs, each ≤
+    MPS, address-translated by IOMMU.  Relaxed-Ordering / ID-Ordering bits
+    allow data to bypass earlier writes for throughput.
+ 7. SSD MemWr's the 16 B CQE into CQ[head]  ── the CQE write is *strongly
+    ordered after* the data writes (producer-consumer rule); on PCIe this
+    is guaranteed by Posted-after-Posted ordering on the same TC/VC.
+ 8. SSD MemWr's the MSI-X message  ── another posted write to the host
+    interrupt address. Ordering after CQE is again Posted-after-Posted.
+ 9. Host ISR reads CQE phase bit, processes completion, MMIO-writes new
+    CQyHDBL head to BAR0 to free the slot.
+```
+
+**Why each ordering rule exists (this is what gets asked):**
+- **Data-then-CQE**: if CQE arrives before payload, host reads stale buffer → silent corruption. PCIe **PCI-ordering** (no Posted passes Posted on same path) enforces it; both must be on the same TC. Setting Relaxed-Ordering on the **CQE** would break this — only data may be RO.
+- **CQE-then-MSI**: if MSI lands before CQE, ISR scans CQ, sees old phase bit, exits → missed completion → command timeout. Same Posted-after-Posted rule.
+- **Doorbell is MMIO write, not DMA**: it's a *host→device* posted write to BAR space; ordered with the host's prior writes by the host's write-combining rules (use `writel` / `iowrite32` with a barrier, never WC).
+
+**Where IOMMU/SMMU sits in this path:**
+- Every SSD-initiated TLP carries `RequesterID`; SMMU looks up Stream Table → CD → page table → PA.
+- Misses cause ATS/PRI traffic or PCIe AER `Unsupported Request` if untranslated.
+- Post-Si TLB-pressure stress (Day 7) targets exactly this path: many queues × many PRP lists × HMB churn → high SMMU TLB miss rate → latency tail.
+
+**Where this bug class lives (ties back to §3.3):**
+The corruption is **not** a PCIe ordering violation — TLPs are perfectly ordered. It's a **controller-internal** ordering violation between the *L2P-writeback DMA* (step 4's update path) and the *SLC-reuse bookkeeping*. The PCIe link looks clean because it is clean; the lie is in what address step 6 ends up DMA-ing from.
+
 ### 3.2 Symptom
 
 ```
