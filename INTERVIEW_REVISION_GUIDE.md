@@ -6,6 +6,47 @@
 
 ---
 
+## 0. Post-Silicon Validation Narrative (the spine)
+
+> **Default lead frame for every interview.** Pre-Si / emulation is a *supporting* skill, not a headline. The story is a clean post-Si arc with one hero bug per act.
+
+### One-line opener
+
+> *"8 years in post-silicon validation across three domains — NVMe SSD SoC bring-up at L&T/SanDisk, Power/Performance/Thermal at Intel, and now NPU platform validation at Microsoft across Intel, AMD, and Qualcomm silicon."*
+
+### Three-act story
+
+| Act | Domain | Role | Hero bug | What it proves |
+|---|---|---|---|---|
+| **1** | **NVMe SSD SoC bring-up** (L&T @ SanDisk) | Post-Si bring-up | Bug 4 — **CSTS.RDY hang on fast V-ramp** (PHY cal raced power-good, FW added 2 ms guard, rail-ramp variance into bring-up matrix) | I can take silicon from first power-on to a stable boot |
+| **2** | **x86 Power / Performance / Thermal** (Intel Cambria Xeon) | Pre-Si emulation + post-Si characterisation | Bug 1 — **Core C6 wake-loss** (1-deep CFC FIFO dropped a wake-ack; would-have-been-respin) | I can debug at the silicon-µarch seam under deep-state conditions |
+| **3** | **NPU platform validation across vendors** (Microsoft, Copilot+ PCs) | Post-Si system / cross-stack | Bug 2 — **QNN context-cache over-invalidation** (200 ms first-launch hit; cold-launch latency now first-class metric) ⟂ Bug 3 — **silent EP fallback** (8× latency; built detector in EdgeOptimizer) | I own end-to-end stack debug + build the tooling that scales it |
+
+### Why this framing wins
+- **Three distinct silicon domains** (storage SoC → x86 CPU/platform → AI accelerator) — few candidates have this breadth.
+- **One hero bug per act** — every "hardest bug" / "most impactful" / "walk me through your work" question lands inside the spine.
+- **Tooling thread** — EdgeOptimizer / ETW pipelines show I scale my own work.
+- **Vendor-agnostic** — Intel, AMD, Qualcomm, plus prior SanDisk; defuses any "only-knows-vendor-X" doubt.
+
+### Default answer pattern (any opening question)
+
+1. One-line opener (above) — sets the spine in 10 sec.
+2. Anchor on the act that matches the JD lens (Section 6 audience table).
+3. Drop the hero bug for that act in 90 sec, STAR-shaped.
+4. Bridge to current work + one tooling artefact.
+
+### Things to STOP volunteering
+- Pre-Si SV/UVM authoring depth (read-only is enough — see Section 5 weakness).
+- Emulation tool fluency as a headline (it's a *supporting* skill in Act 2).
+- Apologetic framing of NPU work as "just system-level" — it's the most current and most cross-vendor act.
+
+### Things to ALWAYS land
+- The three-domain breadth in the first 30 seconds.
+- One hero bug, end-to-end, before they have to dig for it.
+- The tooling artefact (EdgeOptimizer) — proves leverage, not just IC throughput.
+
+---
+
 ## 1. Pre-call 5-min checklist
 
 - [ ] Water, DND, notebook.
@@ -107,14 +148,18 @@ If mixed → ask: *"Pre-Si in emulation, post-Si on a board, or end-to-end on a 
 
 ## 5. Career narrative
 
-### 30-second version
-> "8 years silicon validation. Microsoft now — NPU platform validation Copilot+ PCs (Intel/AMD/QC), built EdgeOptimizer (per-inference attribution via ETW+WPA+RAPL). Intel before — Cambria Xeon pre-Si emulation (C-states, ADR, PCIe Gen6) on Zebu, Star of the Month for a CXL FW bug. L&T@SanDisk before — NVMe post-Si bring-up. M.Tech NIT Durgapur."
+> Default frame is the **3-act post-Si arc** in [Section 0](#0-post-silicon-validation-narrative-the-spine). Use the variants below only when the JD pulls a specific lens.
 
-### Three current-work framings (pick to match audience)
+### 30-second version (post-Si spine)
+> "8 years post-silicon validation across three domains. Started in **NVMe SSD SoC bring-up at L&T/SanDisk** — first power-on to stable boot. Moved to **Intel Cambria Xeon power/performance/thermal** — emulation + post-Si characterisation, Star of the Month for a CXL FW ordering bug. Now at **Microsoft on NPU platform validation** for Copilot+ PCs across Intel/AMD/Qualcomm — built EdgeOptimizer (per-inference attribution via ETW + WPA + RAPL). M.Tech NIT Durgapur."
 
-1. **Silicon-side (pre-Si CPU/SoC):** "I run platform-level NPU validation across three vendors. I find the behaviours that only show up at platform level — graph-partitioning escapes, driver/FW/HW interaction bugs, perf regressions across DVFS/C-states — and feed them back to silicon teams as actionable bugs with reproducers."
-2. **System / cross-stack:** "I own NPU validation across the full stack — app → ORT → EP → driver → FW → silicon — on Intel/AMD/QC. The interesting bugs live at layer boundaries. Built EdgeOptimizer to attribute energy/utilisation per-inference."
-3. **Tooling / lead:** "I lead the platform NPU charter for Copilot+ PCs. Beyond regression and bring-up, I built the tooling — EdgeOptimizer, ETW pipelines — that the team and OEMs now use. Recent leverage = turning one-off debug into reusable infra."
+### Audience-tuned framings (pick to match JD lens)
+
+1. **Post-Si bring-up / characterisation:** "My career started in NVMe SSD SoC bring-up — taking silicon from first power-on through stable boot. I've carried that bring-up discipline through every role since: platform init, fast-ramp PHY issues, JTAG/serial first-light, gating each step on the next."
+2. **Power / performance / thermal:** "Owned PnP/thermal on Intel Cambria Xeon — C-states, ADR, PCIe Gen6 — across pre-Si emulation on Zebu and post-Si characterisation. Comfortable with throttle-reason MSRs, RAPL caveats, break-even residency framing for the C-state ladder."
+3. **NPU / system / cross-stack:** "I own NPU platform validation across Intel/AMD/Qualcomm — app → ORT → EP → driver → FW → silicon. The interesting bugs live at layer boundaries; built EdgeOptimizer to attribute energy/utilisation per-inference."
+4. **Tooling / lead:** "Beyond IC validation, I build the infra the team scales on — EdgeOptimizer, ETW pipelines, silent-fallback detection. Leverage = turning one-off debug into reusable infrastructure."
+5. **Pre-Si (only if explicitly asked):** "Pre-Si exposure is from the Cambria Xeon era — emulation runs on Zebu, debug with FSDB/Verdi, working alongside DV. I read RTL fluently for debug; I wouldn't claim production SV/UVM authoring."
 
 ### Honest framing
 - IC + small-team tech lead today (4-6); growing into 10-15 person mgr.
