@@ -147,7 +147,7 @@ Symptom  →  Hypothesis  →  How I narrowed it  →  Root cause  →  Fix  →
 
 ## Bugs in this Topic
 
-This day **is** the bugs. They are sized to interview delivery. The full template entries with raw evidence are under `day29_debug_bugs.md`; the polished 90-sec versions are above.
+This day **is** the bugs. The sections above contain the polished 90-sec versions, sized for interview delivery.
 
 ---
 
