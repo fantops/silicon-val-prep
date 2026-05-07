@@ -46,7 +46,7 @@ Cost-of-finding rises ~10×/stage. A bug found in sim is "free"; one found post-
 
 ### 5a. Coverage plan — Power Management across pre-Si and post-Si (the one I lived)
 
-> *Why this matrix exists alongside §5a:* every role I've owned reduces to a power-management surface — **L&T/SanDisk NVMe SSD** (APST / ASPM / HMB / WCTEMP / throttle), **Intel pre-Si Cambria Xeon** (PCU opcode flow, Core C6, PkgC, ADR, S0ix gating), **Microsoft NPU on Copilot+ PC** (HTP power islands, modem-style duty-cycling, thermal headroom shared with CPU/GPU). When an interviewer asks "how do you build coverage for PM," I answer with this matrix because I've actually filled cells in it.
+> *Why this matrix exists alongside Section 5a:* every role I've owned reduces to a power-management surface — **L&T/SanDisk NVMe SSD** (APST / ASPM / HMB / WCTEMP / throttle), **Intel pre-Si Cambria Xeon** (PCU opcode flow, Core C6, PkgC, ADR, S0ix gating), **Microsoft NPU on Copilot+ PC** (HTP power islands, modem-style duty-cycling, thermal headroom shared with CPU/GPU). When an interviewer asks "how do you build coverage for PM," I answer with this matrix because I've actually filled cells in it.
 
 **The PM coverage frame — three orthogonal axes:**
 
@@ -173,7 +173,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **5. Test.** Re-ran with `ASQS=ACQS=3` and a properly contiguous AQ buffer. `CSTS.RDY=1` came up well within `CAP.TO` on every boot.
 >
-> **6. Root cause.** Host-side spec misuse against a controller that didn't fail loud. NVMe 1.3 §4.1 is explicit; the script wasn't.
+> **6. Root cause.** Host-side spec misuse against a controller that didn't fail loud. NVMe 1.3 Section 4.1 is explicit; the script wasn't.
 >
 > **7. Fix & verify.** Host script corrected. Filed an FW ask: ROM should set `CSTS.CFS` when it sees `CC.EN=1` with `AQA=0`, so the next person debugs in seconds, not hours. Boot regression added.
 >

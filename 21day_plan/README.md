@@ -45,7 +45,7 @@ Read [coding/EXERCISES.md](../coding/EXERCISES.md) — every problem statement, 
 
 ## Daily Skim Guide (do this every study day)
 
-**Generic 30-min pre-interview skim** — repo root: [INTERVIEW_REVISION_GUIDE.md](../INTERVIEW_REVISION_GUIDE.md). Topic pointers, ARM↔x86 mapping, methodology reflexes — no personal narrative. The personal pitch + per-company tailoring (Qualcomm / Intel NPU / Intel Ireland / Microsoft) lives in [Day 21 §3 + §Personal Narrative](day21_final_mock_company_tailoring.md). **Read the revision guide before every study block.**
+**Generic 30-min pre-interview skim** — repo root: [INTERVIEW_REVISION_GUIDE.md](../INTERVIEW_REVISION_GUIDE.md). Topic pointers, ARM↔x86 mapping, methodology reflexes — no personal narrative. The personal pitch + per-company tailoring (Qualcomm / Intel NPU / Intel Ireland / Microsoft) lives in [Day 21 Section 3 + Section Personal Narrative](day21_final_mock_company_tailoring.md). **Read the revision guide before every study block.**
 
 ## The Sequence — System-Flow Layers
 
@@ -149,10 +149,10 @@ Bug stories are deliberately woven across the days so the same root mechanism ap
 
 If your loop is in <14 days, follow the **Tier-1 path** in [Day 21 section 3](day21_final_mock_company_tailoring.md). The night-before re-read order is also there.
 
-**Per-company tailoring lives in [Day 21 §3](day21_final_mock_company_tailoring.md):**
+**Per-company tailoring lives in [Day 21 Section 3](day21_final_mock_company_tailoring.md):**
 - Qualcomm — Snapdragon / Hexagon HTP / NVMe.
 - Intel (generic) — Cambria / PCIe Gen6 / ADR / CXL.
-- **Intel Ireland (NPU validation, Leixlip / Shannon)** — pre-Si + post-Si seam, JD line-by-line mapping, country/culture framing. Pair with [INTERVIEW_REVISION_GUIDE.md §0B / §4A / §6 / §8 / §10](../INTERVIEW_REVISION_GUIDE.md) for the active interview intersections, bug stories, NPU depth, EE refresh, and final checklist.
+- **Intel Ireland (NPU validation, Leixlip / Shannon)** — pre-Si + post-Si seam, JD line-by-line mapping, country/culture framing. Pair with [INTERVIEW_REVISION_GUIDE.md Section 0B / Section 4A / Section 6 / Section 8 / Section 10](../INTERVIEW_REVISION_GUIDE.md) for the active interview intersections, bug stories, NPU depth, EE refresh, and final checklist.
 - Microsoft — Copilot+ PC / EdgeOptimizer / multi-vendor breadth.
 
 ## A Note on the Bug Stories

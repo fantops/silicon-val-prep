@@ -198,7 +198,7 @@ This is a **specialisation** of the generic Intel framing above for the Ireland 
 
 **Day-anchors to revise night-before (Intel Ireland order):**
 
-1. Day 21 §3 (this section).
+1. Day 21 Section 3 (this section).
 2. Day 18-19 (NPU stack + bugs) — the AI-silicon angle the JD leads with.
 3. Day 14 (ADR + Core C6) — pre-Si Intel credibility.
 4. Day 12-13 (DVFS + C-states) — the power/perf charter.
@@ -395,7 +395,7 @@ Every question in every silicon interview maps to one of these four. Practice th
 
 ## Personal Narrative — Long-Form Reference
 
-> Single source for the long spoken pitches, anchor numbers, prior-role detail, NPU 60-sec explanation, agentic-CLI talking points, and the Q&A bank. §3 above (per-company tailoring) is the night-before card; this section is the underlying material.
+> Single source for the long spoken pitches, anchor numbers, prior-role detail, NPU 60-sec explanation, agentic-CLI talking points, and the Q&A bank. Section 3 above (per-company tailoring) is the night-before card; this section is the underlying material.
 
 ### N1. Introduction (90 sec — version you say first)
 
@@ -454,8 +454,8 @@ Long form + bug surface: [Day 18](day18_npu_ort_ep_hexagon_htp.md) + [Day 19](da
 ### N7. 30 / 60 / 120-sec versions
 
 - **30 sec:** "I'm a silicon validation engineer. Currently at Microsoft doing post-Si platform validation of NPUs across Intel, AMD, Qualcomm Copilot+ PC silicon. Before that I was at Intel on Cambria pre-Si emulation — C-states, ADR, PCIe Gen6. Before that L&T doing NVMe post-Si bring-up for SanDisk. M.Tech CSE NIT Durgapur. I want to own silicon end-to-end at the vendor side."
-- **60 sec:** §N1 above.
-- **2 min:** §N1 + §N2 first paragraph + one sentence each from §N3 and §N4 + closing line about vendor-side ownership.
+- **60 sec:** Section N1 above.
+- **2 min:** Section N1 + Section N2 first paragraph + one sentence each from Section N3 and Section N4 + closing line about vendor-side ownership.
 
 Practice each version once per skim. Should feel **natural**, not recited.
 
@@ -493,9 +493,9 @@ Days 1-30: shadow current validation flow, read recent bug postmortems, build my
 
 ### N9. Daily skim order (5 min flat)
 
-1. Read §N1 once aloud.
-2. Read §N2 first paragraph aloud.
-3. Pick one Q from §N8 and answer aloud without looking.
+1. Read Section N1 once aloud.
+2. Read Section N2 first paragraph aloud.
+3. Pick one Q from Section N8 and answer aloud without looking.
 4. Pick one bug story from [Day 20](day20_debug_method_bug_polish.md) and tell it in 90 sec.
 5. Move to today's technical day file.
 

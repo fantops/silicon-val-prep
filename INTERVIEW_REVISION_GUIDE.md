@@ -1,6 +1,6 @@
 # Silicon Validation — 30-Minute Pre-Interview Skim
 
-> Generic reflex sheet. Read once in the 30 minutes before any silicon validation / SoC / pre-Si / post-Si / NPU interview. Topic pointers and one-liners only — depth lives in the [21-day plan](21day_plan/README.md). Personal narrative + per-company tailoring lives in [day21_final_mock_company_tailoring.md](21day_plan/day21_final_mock_company_tailoring.md) (§3 + §"Personal Narrative").
+> Generic reflex sheet. Read once in the 30 minutes before any silicon validation / SoC / pre-Si / post-Si / NPU interview. Topic pointers and one-liners only — depth lives in the [21-day plan](21day_plan/README.md). Personal narrative + per-company tailoring lives in [day21_final_mock_company_tailoring.md](21day_plan/day21_final_mock_company_tailoring.md) (Section 3 + Section "Personal Narrative").
 >
 > Rule: **lead with the tradeoff, then the mechanism, then the validation hook.** One concrete example beats three textbook bullets. Don't know? Say so cleanly and pivot to the closest thing you do know.
 
@@ -205,7 +205,7 @@ Four sentences, then stop. Let them drill.
 | Leakage | Sub-Vth + gate + junction; strong with T and process corner |
 | Clock gating | Cuts dynamic; not leakage |
 | Power gating | Cuts leakage; pays state-save + wake cost |
-| Setup / hold | See §3 |
+| Setup / hold | See Section 3 |
 | Metastability | 2-FF sync reduces probability, never to zero — MTBF math |
 | PCIe SI | LTSSM stuck Polling/Recovery → channel, refclk, equalisation, reset, lane polarity *before* protocol debug |
 | Eye diagram | Open eye = margin; closed = bit errors. Width = jitter, height = noise |
@@ -233,9 +233,9 @@ Four sentences, then stop. Let them drill.
 
 - [ ] Water, DND, notebook, pen.
 - [ ] 30-sec career narrative said out loud once.
-- [ ] One bug story rehearsed (matched to the lens — §1 table).
+- [ ] One bug story rehearsed (matched to the lens — Section 1 table).
 - [ ] One coverage-plan / triage answer rehearsed.
-- [ ] ARM↔x86 mapping (§3) re-skimmed if ARM shop / vice versa.
+- [ ] ARM↔x86 mapping (Section 3) re-skimmed if ARM shop / vice versa.
 - [ ] 3 questions for them on a sticky:
   1. Sprint split between infra / test content / debug?
   2. Where is this product / IP in its programme cycle?
