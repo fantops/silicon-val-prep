@@ -66,16 +66,16 @@
 
 | Intersection | Seen in | Anchor | Source | Rehearsal |
 |---|---|---|---|---|
-| C under pressure | Intel PnP R2 | [Section 0B](INTERVIEW_REVISION_GUIDE.md#section-0b---current-interview-intersections), [Section 9](INTERVIEW_REVISION_GUIDE.md#section-9---quick-technical-reflexes) | [Day 00](21day_plan/day00_c_basics.md), [Day 01](21day_plan/day01_c_address_fluency.md), [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) | One Day 0 C exercise daily |
-| The *why* behind concepts | Qualcomm CPU R2 | [Section 0B](INTERVIEW_REVISION_GUIDE.md#section-0b---current-interview-intersections), [Section 4B](INTERVIEW_REVISION_GUIDE.md#section-4b---21-day-architect-drill-index) | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) | One what/why/how/bug-hook chain daily |
-| C-states, clock gating, leakage | Intel PnP, Qualcomm CPU R2 | [Sections 3-5](INTERVIEW_REVISION_GUIDE.md#section-3---thermal--power-behavior-backup-if-asked) | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 15](21day_plan/day15_thermal_power_perf_counters.md) | Draw entry/exit + clock-gating path from memory |
+| C under pressure | Intel PnP R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md), [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 00](21day_plan/day00_c_basics.md), [Day 01](21day_plan/day01_c_address_fluency.md), [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) | One Day 0 C exercise daily |
+| The *why* behind concepts | Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md), [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) | One what/why/how/bug-hook chain daily |
+| C-states, clock gating, leakage | Intel PnP, Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 15](21day_plan/day15_thermal_power_perf_counters.md) | Draw entry/exit + clock-gating path from memory |
 | PM coverage matrix (the one I lived) | Intel PnP, Qualcomm PnP, NVMe-SSD-flavoured roles | [Day 20 §5a](21day_plan/day20_debug_method_bug_polish.md#5a-coverage-plan--power-management-across-pre-si-and-post-si-the-one-i-lived) | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md), [Day 15](21day_plan/day15_thermal_power_perf_counters.md) | Recite three axes (state / transition / residency) + name one owned cell per axis |
-| Cache hierarchy internals | Qualcomm CPU R2 | [Section 4B](INTERVIEW_REVISION_GUIDE.md#section-4b---21-day-architect-drill-index) | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) | Derive hierarchy from latency/capacity/area |
-| Generic boot flow | Qualcomm CPU R2 | [Section 0A](INTERVIEW_REVISION_GUIDE.md#section-0a---day-of-interview-prep) | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) | POWER → ROM → PLATFORM INIT → BOOTLOADER → OS, then vendor map |
-| NPU + EdgeOptimizer | Intel Ireland, Qualcomm probes | [Section 1](INTERVIEW_REVISION_GUIDE.md#section-1---career-narrative-own-this-cold), [Section 6](INTERVIEW_REVISION_GUIDE.md#section-6---npu-post-silicon-validation-your-current-ms-work--only-if-pivoted) | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md), [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) | Lead with six-layer stack + per-inference attribution |
-| Bug story under rapid-fire | Intel Ireland | [Section 4A](INTERVIEW_REVISION_GUIDE.md#section-4a---bug-story-bank-pick-by-lens-rehearse-the-top-3) | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) | 90-sec STAR timer |
-| EE fundamentals | Intel Ireland | [Section 8](INTERVIEW_REVISION_GUIDE.md#section-8---ee-fundamentals-crash-refresh) | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) | Setup/hold, CDC, CMOS, PCIe SI one-liners |
-| Leadership / ownership | Qualcomm PnP | [Section 2](INTERVIEW_REVISION_GUIDE.md#section-2---behavioral--leadership-questions-senior-bar) | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) | One real example per framework |
+| Cache hierarchy internals | Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) | Derive hierarchy from latency/capacity/area |
+| Generic boot flow | Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) | POWER → ROM → PLATFORM INIT → BOOTLOADER → OS, then vendor map |
+| NPU + EdgeOptimizer | Intel Ireland, Qualcomm probes | [Revision Guide](INTERVIEW_REVISION_GUIDE.md), [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md), [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) | Lead with six-layer stack + per-inference attribution |
+| Bug story under rapid-fire | Intel Ireland | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) | 90-sec STAR timer |
+| EE fundamentals | Intel Ireland | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) | Setup/hold, CDC, CMOS, PCIe SI one-liners |
+| Leadership / ownership | Qualcomm PnP | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) | One real example per framework |
 
 ---
 
@@ -98,7 +98,7 @@
 1. **Same day:** add row to timeline above — what happened, learning, status, suggestion.
 2. **Within 24h:** map each "didn't land" to a Day file Architect Drill — add one if missing.
 3. **Within 48h:** ensure [Revision Guide](INTERVIEW_REVISION_GUIDE.md) Section 0B / 4B / 8 covers the gap.
-4. **Before next interview:** run [Section 0A](INTERVIEW_REVISION_GUIDE.md#section-0a---day-of-interview-prep) with the new gap-fill in rotation.
+4. **Before next interview:** run [Revision Guide](INTERVIEW_REVISION_GUIDE.md) with the new gap-fill in rotation.
 
 ---
 

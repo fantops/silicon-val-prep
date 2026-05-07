@@ -45,7 +45,7 @@ Read [coding/EXERCISES.md](../coding/EXERCISES.md) — every problem statement, 
 
 ## Daily Skim Guide (do this every study day)
 
-**Career narrative + daily revision skim** — moved to repo root: [INTERVIEW_REVISION_GUIDE.md → Appendix A](../INTERVIEW_REVISION_GUIDE.md#appendix-a--career-narrative-long-form-daily-skim). 5-minute daily skim covering Introduction, current Microsoft work, Intel work, L&T work, why-I-left-Intel, per-company tailoring (Qualcomm CPU sysval / Intel NPU post-Si / Microsoft lateral), the 60-sec NPU explanation, and a 10-question Q&A bank. **Read before every study block.**
+**Generic 30-min pre-interview skim** — repo root: [INTERVIEW_REVISION_GUIDE.md](../INTERVIEW_REVISION_GUIDE.md). Topic pointers, ARM↔x86 mapping, methodology reflexes — no personal narrative. The personal pitch + per-company tailoring (Qualcomm / Intel NPU / Intel Ireland / Microsoft) lives in [Day 21 §3 + §Personal Narrative](day21_final_mock_company_tailoring.md). **Read the revision guide before every study block.**
 
 ## The Sequence — System-Flow Layers
 

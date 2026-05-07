@@ -16,7 +16,7 @@ This is still learn-by-doing:
 - fix every warning you understand,
 - explain the pointer movement out loud.
 
-Do this once before starting Day 1. Keep the daily career skim in [INTERVIEW_REVISION_GUIDE.md → Appendix A](../INTERVIEW_REVISION_GUIDE.md#appendix-a--career-narrative-long-form-daily-skim) separate; that file is for interview narrative, not C practice.
+Do this once before starting Day 1. The personal career narrative + per-company tailoring lives in [day21_final_mock_company_tailoring.md](day21_final_mock_company_tailoring.md); the 30-min generic pre-interview skim is [INTERVIEW_REVISION_GUIDE.md](../INTERVIEW_REVISION_GUIDE.md). This file is for C practice, not interview narrative.
 
 ---
 
