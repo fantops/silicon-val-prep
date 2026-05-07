@@ -43,7 +43,7 @@
 ### 07 May — Renesas · R1 — ❌ Rejected (role-fit miss)
 - **What happened:** L&T PCIe/NVMe + MS NPU walkthrough flowed; PCIe/NVMe protocol depth rusty (5-6 yrs since daily use). Bug story itself landed.
 - **Learning:** Role likely wanted automotive protocol fluency (CAN/LIN/FlexRay/AVB/SOME-IP) + live PCIe/NVMe — neither is current stack.
-- **Suggestion:** Do **not** add automotive track. Filter Renesas-shape roles upstream. Keep PCIe/NVMe at bug-story + first-principles depth (Day 10/11, [pcie_nvme_soc_test_plan.md](21day_plan/pcie_nvme_soc_test_plan.md)).
+- **Suggestion:** Do **not** add automotive track. Filter Renesas-shape roles upstream. Keep PCIe/NVMe at bug-story + first-principles depth ([Day 10 enumeration / boot-flow placement](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 09 §12a PCIe in boot flow](21day_plan/day09_arm_qualcomm_platform_vocabulary.md), [Day 11 NVMe bring-up + HMB-throttle bug](21day_plan/day11_nvme_queues_bringup.md), [Day 20 §5a CPU+PCIe coverage matrix + Stories 6/7](21day_plan/day20_debug_method_bug_polish.md)).
 
 ---
 

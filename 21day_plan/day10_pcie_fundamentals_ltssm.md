@@ -123,6 +123,85 @@ BAR encoding: bit 0 = (1 = I/O, 0 = memory). For memory, bits [2:1] = 00 → 32-
 
 Linked list at offset 0x34: each entry has `[ID, Next, body]`. Walk until `Next == 0`. Common entries: PCIe Capability (link width/speed), Power Management, MSI / MSI-X, vendor-specific. Linked list (vs fixed table) means devices only allocate space for what they implement.
 
+### 8a. Enumeration — how the host discovers the topology
+
+Enumeration is the **depth-first walk of the PCIe tree** that BIOS/UEFI (and again the OS) does at boot. The host owns the bus-number assignment; the fabric is silent until it's asked.
+
+**Algorithm (recursive, root → leaves):**
+
+```
+enumerate(bus):
+  for dev in 0..31:
+    for fn in 0..7:
+      vid = cfg_read16(bus, dev, fn, 0x00)
+      if vid == 0xFFFF: continue            # no device
+      hdr = cfg_read8 (bus, dev, fn, 0x0E)  # Header Type
+      if (hdr & 0x7F) == 0x01:              # Type 1 = bridge
+         secondary = next_free_bus++
+         cfg_write8(bus,dev,fn, 0x19, secondary)   # Secondary Bus #
+         cfg_write8(bus,dev,fn, 0x1A, 0xFF)        # Subordinate (temp)
+         enumerate(secondary)                       # recurse
+         cfg_write8(bus,dev,fn, 0x1A, last_bus)    # tighten Subordinate
+      else:                                  # Type 0 = endpoint
+         size_and_assign_BARs(bus,dev,fn)
+      if fn == 0 and !(hdr & 0x80): break    # not multi-function
+```
+
+**Three things the host is doing in one pass:**
+1. **Probe** every (bus, dev, fn) by reading Vendor ID. `0xFFFF` = nothing there.
+2. **Number the buses** — each bridge gets `Primary / Secondary / Subordinate` written so config TLPs can be routed (a Type 1 forwards a CfgRd whose target bus is in `[Secondary, Subordinate]`).
+3. **Size and place BARs** — write all-1s, read back, compute size, allocate from the platform's MMIO pool, write the assigned base.
+
+**OS re-enumeration** repeats the walk but usually **trusts BIOS bus numbers** unless `pci=assign-busses` / `pci=realloc` is set. Hot-plug runs the same code on a single sub-tree.
+
+### 8b. "What's connected?" — the four fields a validator reads first
+
+The host has **no out-of-band knowledge** of what sits behind a port. Everything it knows comes from four config-space fields:
+
+| Off | Field | Width | What it tells you |
+|---|---|---|---|
+| 0x0E | **Header Type** | 1 B | bit[6:0] = `0x00` Endpoint / `0x01` PCI-PCI Bridge / `0x02` CardBus.  bit[7] = multi-function |
+| 0x0B | **Class Code** | 1 B | top-level class (Storage, Network, Display, Bridge, …) |
+| 0x0A | **Sub-Class** | 1 B | within-class kind (NVMe vs SATA vs SCSI) |
+| 0x09 | **Programming IF** | 1 B | register-level interface (NVMe vs AHCI vs IDE legacy) |
+| 0x00 / 0x02 | **Vendor / Device ID** | 2 B + 2 B | exact silicon — looked up in `pci.ids` |
+
+**Worked examples (the ones that come up in interviews):**
+
+| Class : Sub : ProgIF | Means | Driver picks |
+|---|---|---|
+| `01 : 08 : 02` | **NVMe** controller | `nvme.ko` |
+| `01 : 06 : 01` | SATA / AHCI | `ahci.ko` |
+| `02 : 00 : 00` | Ethernet NIC | vendor NIC driver (e.g. `ixgbe`) |
+| `03 : 00 : 00` | VGA-compatible GPU | `i915` / `amdgpu` / `nouveau` |
+| `06 : 04 : 00` | **PCI-to-PCI Bridge** (also Header Type 0x01) | `pcieport` |
+| `0C : 03 : 30` | xHCI USB 3 controller | `xhci_hcd` |
+| `12 : 00 : 00` | Processing accelerator (NPU class) | vendor EP driver |
+
+**Routing follow-on (validator angle):**
+- A **Type 1** header also exposes `Memory Base / Limit` and `Prefetchable Memory Base / Limit` (offsets 0x20–0x2C). Those windows are how a bridge knows which downstream MMIO addresses to forward. **Mis-sized bridge windows = endpoint enumerates fine but its BAR is unreachable** — a classic post-Si bring-up surprise.
+- An **Endpoint** with `Multi-Function = 1` may expose unrelated functions (e.g. NIC fn0 + management-controller fn1). The host must walk all 8 functions, not stop at fn0.
+- The **PCIe Capability** structure (cap ID 0x10) carries `Device/Port Type` (RC-Endpoint, Root-Port, Upstream-Switch, Downstream-Switch, RC-Integrated-Endpoint). Two devices can both be Class `01:08:02` but one is an **Integrated EP** (no link to train) and the other is a real link — LTSSM bugs apply only to the second.
+
+### 8c. Where enumeration fails (validator's lens)
+
+Things to instrument in a pre-Si or post-Si enumeration test:
+
+| Symptom | Most-likely root cause | First field to inspect |
+|---|---|---|
+| EP missing from `lspci` | Link not at L0; or LTSSM stuck Polling/Config | LTSSM state CSR; Vendor ID = `0xFFFF` confirms |
+| EP visible, BAR reads `0xFFFFFFFF` | BAR not assigned, or bridge window doesn't cover it | Bridge `Memory Base/Limit` vs EP BAR |
+| Bridge Subordinate < real depth | Recursive walk truncated; downstream EPs invisible | Bridge `Subordinate Bus Number` (0x1A) |
+| Class code reads as `00:00:00` | EP firmware not done initialising at probe time — racey reset/PERST# de-assert | Read again after a known delay; check PERST# timing vs `Trhfa` |
+| Multi-function EP only fn0 visible | Header Type bit[7] not set; host short-circuits the fn-loop | `cfg_read8(0x0E)` bit 7 |
+| `0xFFFF` on a function the spec says exists | Function-Level Reset still in progress, or strap pin wrong | Status reg + reset-status capability |
+| Wrong driver binds | Class/Sub/ProgIF wrong in EP fuse/strap | `lspci -nn` Vendor:Device + class triplet |
+| Enumeration takes 30 s | CfgRd burst per probe pass; no caching of capability walk | `dmesg` time-stamps between PCI prints |
+| Hot-plug add: EP appears but drivers don't load | uevent fires before BAR assignment finishes | `udevadm monitor` + bridge window programming |
+| AER `Unsupported Request` during walk | CfgRd to a function that returns UR instead of all-1s on absent fn (spec violation) | AER log + which BDF |
+
+**The line that lands:** "Enumeration is just a depth-first config-read walk that uses Vendor ID = `0xFFFF` as the absent-marker, Header Type to split bridge vs endpoint, and Class:Sub:ProgIF to pick the driver. Most enumeration bugs are not in the walk — they're in **what the EP exposes too early or too late** relative to PERST#, FLR, or BAR assignment."
+
 ### 9. LTSSM — the link-bring-up state machine
 
 ```
@@ -198,6 +277,10 @@ If your endpoint doesn't advertise L1.2 in the L1 PM Substates capability, PkgC6
 - **PkgC6 never entered:** endpoint missing L1.2 in L1 PM Substates; or platform CLKREQ# routing wrong; or LTR setting too tight. Day 13 anchor.
 - **`DSTRD` miscomputed on NVMe (forward link to Day 11):** doorbell goes to wrong offset; controller never sees the kick.
 - **CfgRd burst dominates boot time:** every probe pass re-reads config; cache it once.
+- **Bridge `Memory Base/Limit` mis-sized during enumeration:** EP enumerates fine, but its BAR sits outside the bridge window — every MMIO load from the host returns `0xFFFFFFFF` even though `lspci` shows the device. Validator hook: read bridge window after enum and verify it contains every downstream BAR.
+- **Class code reads `00:00:00` at probe time:** EP firmware still initialising when host issues first CfgRd — PERST# de-assert too close to first config access (`Trhfa` violated). Re-probe after spec delay.
+- **L0p re-scaling races a TLP in flight (transactor bug story — see Day 20 Story 6):** lane-count change committed mid-FLIT; receiver de-skewed against the old width and dropped the partial FLIT. Symptom: link stays in L0 but FEC error counter spikes coincident with every L0p transition.
+- **Multi-function EP — host stops at fn0:** Header Type bit[7] (multi-function) not set in EP straps; fn1…fn7 invisible to OS even though present.
 
 ---
 

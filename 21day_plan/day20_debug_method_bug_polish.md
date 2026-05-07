@@ -80,6 +80,69 @@ Design ── Sim (Hz-kHz) ── Emul (MHz) ── FPGA (10-100 MHz) ── Pos
 
 Cost-of-finding rises ~10×/stage. A bug found in sim is "free"; one found post-tape-out can delay a product cycle.
 
+### 5a. Coverage plan — CPU + PCIe across pre-Si and post-Si
+
+> The two interconnect-and-compute axes a platform validator owns. Same template the rest of the SoC follows.
+
+**Pre-Si owns the protocol-state space; post-Si owns the analog-and-time space.** The trick is knowing which findings should never escape pre-Si vs which fundamentally cannot be found there.
+
+```
+                  PRE-Si                                POST-Si
+              (sim → emul → FPGA)                  (A0 silicon on EVM)
+              ────────────────────                 ────────────────────
+   CPU       FSMs, ISA, MESI, TLB walks,           PVT corners, V-droop, thermal,
+             pipeline hazards, MMU page-walk,      C-state wake real timing,
+             coherence ordering, AMBA              long-soak data integrity,
+             interconnect protocol, FW             real DDR margining,
+             handshakes (PCU, ADR, RPMh)           clock-domain races at silicon SI
+
+   PCIe      LTSSM transitions, TLP types,         LTSSM stuck states under SI,
+             credit FSM, AER injection,            ASPM L1.2 entry/exit timing,
+             enumeration walk, IOMMU walk,         PERST# de-bounce, PMIC droop,
+             config-space layout, MSI-X            FEC error rate at temperature,
+             dispatch                              hot-plug surprise during DMA
+```
+
+**Coverage matrix (build this once, fill it for every project):**
+
+| Axis | Pre-Si (RTL / emul / virtual platform) | Post-Si (A0 on EVM) | Gate that says "you're done" |
+|---|---|---|---|
+| **CPU — functional / ISA** | UVM directed + random opcode streams, ISA conformance suite (riscv-arch-test / Arm AVS), pipeline hazard sequences, exception/IRQ vector tests | Real Linux + LTP + stress-ng × all CPU modes; SMP + irq-affinity stress | 100% ISA coverage pre-Si; LTP zero-fail post-Si |
+| **CPU — coherence / MMU** | MESI directed (M→I, S→M, false-sharing), TLB walk + ASID, page-fault FSM, SMMU stream-table | Real `perf c2c` on multi-thread workloads; TLB-pressure stress with PMU; large-page + transparent-hugepage churn | MESI state coverage 100% pre-Si; cache PMU clean post-Si |
+| **CPU — power (DVFS / C-states)** | Directed P-state transitions, C-state entry/exit FSM, PCU/RPMh opcode trace, clock-gating enable matrix | Real workload P-state residency, C-state wake latency at PVT corners, idle-injection sweeps, S0ix/S3 × 1000 cycles | C-state FSM 100% pre-Si; residency targets met at corners |
+| **CPU — thermal** | **None at PHY level — RTL is isothermal**; throttle FSM modelled as perf knob only | -40 / +25 / +85 / +105 °C chamber; 72 h soak; throttle entry/exit + data-path correctness under throttle; PROCHOT# behaviour | Throttle FSM coverage pre-Si; 72 h soak zero corruption post-Si |
+| **PCIe — protocol / TLP** | UVM directed + random TLPs, posted/non-posted ordering, ECRC, AER inject, TLP-tag matching | `lspci`, AER inject, real driver TLPs, multi-EP topologies, PCIe-SIG compliance on silicon | TLP coverage 100% pre-Si; UNH-IOL plug-fest pass post-Si |
+| **PCIe — LTSSM** | Every Detect→Polling→Config→L0→Recovery→L0s/L1/L1.x/L2 path; speed change at every supported gen; lane downgrade | Stuck-state debug under real SI; ASPM L1.2 exit < 200 µs at PVT; FEC error rate vs temperature (Gen6) | LTSSM state + transition coverage pre-Si; SI margin met post-Si |
+| **PCIe — enumeration** | Bridge / EP / multi-function topologies; cap-list walk; BAR sizing; bridge memory window assignment | Real BIOS + Linux enum across multiple boots; hot-plug add/remove; FLR + re-enum | Enumeration finishes < target time; zero AER UR during walk |
+| **PCIe — power** | Directed L0s / L1.x entry/exit; modelled PLL lock; PkgC6 → L1.2 dependency walk | ASPM under load × 24 h; per-rail current; PMIC droop; S0ix with PCIe in L1.2; surprise removal | Pre-Si: every PM cap covered. Post-Si: residency + wake-latency targets met |
+| **PCIe — IOMMU / SMMU** | Stream-table walk; PRI/ATS UVM; fault inject; ATC fill + invalidate | TLB-pressure stress (many queues × many PRP lists); PMU SMMU TLB-miss telemetry; ATS race vs invalidate | Walk + fault paths 100% pre-Si; TLB miss rate within budget post-Si |
+
+**Phasing — what to run, in what order, post-Si:**
+
+| # | Phase | What runs | Owns |
+|---|---|---|---|
+| 0 | Smoke | Rails up, ROM → Linux, `lspci` enumerates RP, CPU brings all cores online, basic IRQ | CPU + PCIe shared |
+| 1 | Functional / conformance | LTP, AER inject, FLR, hot-plug, MSI-X, NVMe Admin/IO if attached | CPU (LTP) + PCIe (AER/FLR) |
+| 2 | Performance | SPEC-CPU + STREAM (CPU); IOPS/QD sweep + BW vs blk-size + latency CDF (PCIe) | both, separate matrices |
+| 3 | Power | C-state residency at idle / busy idle; ASPM L0s/L1/L1.1/L1.2; APST PS0..PS4; S0ix/S3/S4 × 1000 | CPU (C-states) + PCIe (ASPM) |
+| 4 | Thermal / soak | -40 / +25 / +85 / +105 °C × 72 h; `fio --verify` (PCIe path); LTP stress (CPU); throttle entry/exit | both — interaction surface |
+| 5 | Interop | Multi-OS boot (Win + Linux); 5+ EP-vendor combos for any PCIe slot | PCIe-led, CPU as host |
+
+**Pre-Si exit gates:**
+- CPU FSM coverage 100% (pipeline, MMU, MESI, C-state, P-state, PCU)
+- PCIe LTSSM 100%, TLP/AER classes 100%, enumeration walk verified ≥ 3 topologies, IOMMU walk verified ≥ 3 Stream IDs
+- Linux boots on virtual platform with both CPU and PCIe-EP models active; 30-min stress passes
+- Closed-form perf model within ±10% of spec floor
+
+**Post-Si exit gates (PRQ):**
+- Functional + Conformance: 100% pass at all 4 temp corners
+- Perf: within ±10% of pre-Si model AND ≥ spec floor
+- Power: PkgC10 / S0ix idle current in spec; ASPM L1.2 exit < 200 µs; 1000× S3/S4 zero data loss
+- Thermal: 72 h @ +85 °C zero corruption, zero panic, throttle clean
+- 0 P0/P1 escapes; ≤ 3 P2 with documented workaround
+
+**The line that lands the offer:** "Pre-Si owns the FSM and protocol-state space — if a bug class lives in a state machine you can enumerate, it should never escape pre-Si. Post-Si owns analog, time, and temperature — anything that depends on PVT, SI, real PMIC droop, or 72-hour cumulative effects is fundamentally a post-Si discovery, and pre-Si's job is to *narrow* the search space, not eliminate it. The hard bugs sit at the seam — protocol FSMs that look clean in isothermal RTL but couple to a thermal-throttle path on silicon. That's the cell I instrument first."
+
 ### 6. The 5 + 1 polished bug stories
 
 These are the stories you carry into a loop. Each is a Day 1-19 fundamental put in narrative form.
@@ -92,6 +155,8 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 | 4 | **QNN/ORT page-fault + VM regression** (Microsoft + QC, platform) | host runtime memory lifecycle | Day 19 |
 | 4b | **Paint SR starves Camera preview** (Microsoft, platform) | single-queue NPU scheduler | Day 19 |
 | 5 | (back-pocket) **Silent EP fallback after model rebuild** | QDQ fusion, EP assignment | Day 19 |
+| 6 | **PCIe Gen6 L0p re-scaling races a TLP in flight** (transactor enhancement, pre-Si) | new-feature spec literacy + transactor design + ordering at FLIT boundary | Day 10 |
+| 7 | **NVMe HMB silent read corruption above WCTEMP** (post-Si only) | thermal × data-path coupling that pre-Si cannot see | Day 11 |
 
 ### 7. Story 1 — PCU / ADR opcode-ordering hang (90 sec)
 
@@ -114,6 +179,32 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 ### 11. Story 4b — Paint SR starves Camera (60 sec)
 
 > "Two AI workloads sharing the NPU on Copilot+ PC. Paint Super-Resolution submits ~36 inference tiles back-to-back; Camera preview submits a fresh inference at 30 fps. When SR runs, Camera drops frames. Built a deterministic repro with two semaphore-fired threads and QPC timestamps. GPUView showed Camera frame 0 queued at t=3 ms but not starting on the NPU until t=108 ms — about 3.2 frame periods at 30 fps — sitting behind SR's 36 tiles in the queue. Cross-checked with the IHV: HTP exposes a single hardware scheduler with no preemption; once a tile dispatches it runs to completion. Root cause was a structural limitation, not a defect: single non-preemptive queue plus no priority hint from the framework. Fix path: framework-side priority lanes so high-priority frames interleave; until then, gate concurrent NPU workloads. Lesson: a single hardware scheduler is fine until you have two real-time tenants on it; the framework must expose priority."
+
+### 11a. Story 6 — PCIe Gen6 L0p re-scaling races TLP in flight (90 sec)
+
+> *Pre-Si transactor enhancement. New feature, no prior reference model.*
+
+> "Pre-silicon, I was extending an in-house PCIe transactor to support Gen6 **L0p** — the new feature that lets a link drop from x16 down to x8 or x4 (and back up) on the fly without leaving L0, so workloads with low-but-steady traffic don't pay L1 entry/exit cost. The transactor already supported L0s/L1/L1.1/L1.2; L0p was net new because it changes lane count *while TLPs are flowing*, which L0s/L1 never do. First pass passed all the directed L0p enter/exit tests but a randomised mixed-traffic regression hit intermittent FEC error bursts on the DUT — the link stayed in L0, so AER was clean, but per-FLIT FEC counters spiked exactly at every L0p transition. The TLP itself was correct; the problem was the seam.
+
+> Pulled the FLIT-level trace. Gen6 packs TLPs into 256-byte FLITs with FEC over the FLIT — not over the TLP. The transactor was applying the new lane-count to the **next FLIT after the negotiation completed**, but the *current* FLIT was already half-serialised across the old wider lane set. The DUT receiver de-skewed the second half against the new (narrower) lane map and FEC failed on every transition.
+
+> Spec-walked the L0p section: lane reconfiguration must align to a **FLIT boundary** — the negotiation handshake commits, but the actual lane-count change must be deferred until the in-flight FLIT has fully drained. I added a one-FLIT delay state to the transactor's L0p FSM, gated lane reconfig on `flit_drain_done`, and added an SVA `assert always (lane_cfg_change |-> flit_in_flight == 0)`. FEC bursts went to zero; randomised regression clean over a million transitions.
+
+> Lesson: when you build a transactor for a brand-new spec feature, the directed tests cover the FSM but the *boundary conditions between the old and new feature* are where transactor bugs live. L0p plus pre-existing TLP flow created an ordering surface that didn't exist before — spec literacy at the *FLIT* layer, not the TLP layer, was the unlock. And because this was caught pre-Si, post-Si never saw the bug class at all."
+
+### 11b. Story 7 — NVMe HMB silent read corruption above WCTEMP (90 sec)
+
+> *Post-Si only. Pre-Si could not see this class.*
+
+> "Post-silicon characterisation of a Gen4 x4 NVMe SSD on our SoC EVM. `fio --rw=randrw --rwmixread=70 --bs=4k --iodepth=64 --verify=crc32c` running 72 hours at ambient 85 °C with the fan off. About once every 6–9 hours, verify failed — and the wrong data was *another LBA's bytes*, not random garbage. NVMe completion `SC=0`, PCIe AER clean, link Gen4 x4 the entire run. Composite Temperature was 84 °C, just above WCTEMP 82 °C; vendor counter `HMB_L2P_WRITEBACK_DEFERRED` was rising in lockstep with the failures. Never reproduced at 25 °C. Never reproduced pure-read or pure-write. Never reproduced on a DRAM-equipped SSD — only on the DRAM-less HMB SSD.
+
+> Walked the hypothesis ladder. HMB DRAM bit-flip ruled out — the wrong data was coherent, an LBA's worth of bytes, not random. Host PRP confusion ruled out — AER clean and the pattern correlated to LBA, not to host buffer address. FTL-bug-independent-of-temp ruled out — doesn't repro at 25 °C. ECC scrub disabled by throttle ruled out — SMART media-error counter zero. The vendor counter was the smoking gun.
+
+> Root cause was inside the SSD data path, not on the link. Above WCTEMP the throttle FSM defers HMB L2P writebacks to save controller power. But the SLC-reuse allocator clears its in-controller ‘SLC dirty’ bit on **fold completion**, not on **L2P writeback completion**. Sequence: write LBA L lands at SLC page P_slc, CQE returned. Fold P_slc to TLC completes, dirty bit cleared. Throttle engages — L2P writeback for L → P_tlc deferred, so HMB still maps L to P_slc. SLC allocator sees P_slc ‘clean’ and reuses it for a new write of LBA L'. Host now reads L; controller follows stale L2P, DMAs from P_slc which now holds L''s bytes. Two NVMe invariants violated — L2P update plus SLC reuse must be atomic w.r.t. subsequent reads, and Composite-Temperature throttle must affect performance only, never consistency.
+
+> Fix on SSD FW: clear SLC-dirty only after the L2P HMB writeback DMA completes; never defer writeback for a page eligible for reuse. Host-side workaround: lower HCTM thresholds via `nvme set-feature 0x10` so the host throttles before the SSD's internal defer kicks in — about 10–15 % sustained perf cost, but zero-corruption while we waited for FW.
+
+> Pre-Si gap: RTL is isothermal — Composite Temp doesn't exist in simulation — and throttle was modelled as a perf knob with no coupling to the L2P data path. Coverage fix: a UVM `throttle_during_mixed_rw_l2p_consistency` test that asserts thermal throttle during mixed RW and shadow-checks read-after-write, plus an SVA ‘SLC dirty bit clear implies L2P entry has been written to HMB.’ Lesson: silent data corruption with `SC=0` and clean AER means the link is honest; the lie is in the data path. Always pull vendor counters before blaming the visible layer."
 
 ### 12. Delivery discipline
 
