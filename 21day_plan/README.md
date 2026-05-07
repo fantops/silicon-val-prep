@@ -123,20 +123,8 @@ Turning the technical material into hire-no-hire signal.
 
 | Day | Topic |
 |---|---|
-| [Day 20 — Debug methodology + polished bug stories](day20_debug_method_bug_polish.md) | 7-step framework, bug-cost ladder, 5 polished 90-sec stories, **+ Extension**: JTAG/CoreSight, lab instruments (scope/LA/protocol-analyzer), schematics + pin tracing, bench bring-up runbook, Python automation, x86 asm read-only literacy |
+| [Day 20 — Debug methodology + polished bug stories](day20_debug_method_bug_polish.md) | 7-step framework, bug-cost ladder, 5 polished 90-sec stories |
 | [Day 21 — Final mock + per-company tailoring](day21_final_mock_company_tailoring.md) | timed mock loop, flashcard sweep, Qualcomm/Intel/Microsoft anchor sentences |
-
-### MCU / SoC / Automotive bring-up extensions (folded into existing days)
-
-Added for **MCU/SoC bring-up roles** (Renesas, NXP, TI, ST, Infineon, Microchip, Tier-1 automotive). The material is inlined as `## Extension` sections inside Days 3, 9, 10, 15, 20 — so the plan still completes in 21 days. Master cross-ref: [mcu_soc_post_silicon_revision.md](mcu_soc_post_silicon_revision.md).
-
-| Existing day | Extension topic |
-|---|---|
-| [Day 3 — Extension](day03_bits_mmio_volatile_polling.md#extension--low-speed-buses-uart--i2c--spi--qspi-flash) | UART, I2C (pull sizing, 9-clock SDA recovery), SPI (CPOL/CPHA), QSPI/OSPI flash + XIP, bring-up dependency order |
-| [Day 9 — Extension](day09_arm_qualcomm_platform_vocabulary.md#extension--por-reset-clocksplls-straps-fuses-boot-rom-secure-boot-mcusoc-bring-up) | POR sequencing, reset domains, PLL knobs + glitch-free MUX, straps, fuse lifecycle (CM→DM→SE→RMA), boot ROM error codes, secure boot chain of trust, DDR/LPDDR training step list, SRAM, bring-up failure tree |
-| [Day 10 — Extension](day10_pcie_fundamentals_ltssm.md#extension--automotive-buses-lin--can--can-fd--auto-ethernet--tsn--flexray) | LIN, CAN/CAN-FD (arbitration, error states, termination), Automotive Ethernet (100/1000BASE-T1), TSN (gPTP/TAS/CBS/preemption), FlexRay, vendor MCU/SoC family map (Renesas / NXP / TI / ST / Infineon worked example), compliance + corner + stress + margining |
-| [Day 15 — Extension](day15_thermal_power_perf_counters.md#extension--mixed-signal-adc-pvt-corner-sweeps-lab-power-instruments) | ADC topologies + INL/DNL/ENOB + Vref-LSB, PVT corner sweeps + Vmin/shmoo, bench power instruments (SMU/CT/Kelvin), bench discipline |
-| [Day 20 — Extension](day20_debug_method_bug_polish.md#extension--jtag--coresight-lab-instruments-schematics-bring-up-runbook) | JTAG TAP + IDCODE, CoreSight (DAP/ETM/CTI), scan + MBIST, scope/LA/protocol-analyzer, schematics + pin tracing, 11-step bring-up runbook, Python automation, x86 asm literacy |
 
 ## How Each Day's Bugs Connect
 
@@ -163,7 +151,6 @@ If your loop is in <14 days, follow the **Tier-1 path** in [Day 21 section 3](da
 - Intel (generic) — Cambria / PCIe Gen6 / ADR / CXL.
 - **Intel Ireland (NPU validation, Leixlip / Shannon)** — pre-Si + post-Si seam, JD line-by-line mapping, country/culture framing. Pair with [INTERVIEW_REVISION_GUIDE.md §0B / §4A / §6 / §8 / §10](../INTERVIEW_REVISION_GUIDE.md) for the active interview intersections, bug stories, NPU depth, EE refresh, and final checklist.
 - Microsoft — Copilot+ PC / EdgeOptimizer / multi-vendor breadth.
-- **MCU / SoC post-Si bring-up (Renesas, NXP, TI, ST, Infineon, Tier-1 automotive)** — see [mcu_soc_post_silicon_revision.md](mcu_soc_post_silicon_revision.md). Gap content is folded into Days 3, 9, 10, 15, 20 as `Extension` sections so the plan still completes in 21 days. 7-day acceleration path is in §7 of the master file.
 
 ## A Note on the Bug Stories
 

@@ -187,6 +187,37 @@ This wasn't "I don't know the material" — it was **"I haven't trained the musc
 
 ---
 
+### 🟥 07 May 2026 — Renesas · Round 1
+
+| Field | Detail |
+|---|---|
+| **Format** | 1 technical round |
+| **Role** | Validation (automotive-leaning, in hindsight) |
+
+**Flow:**
+- Intro → walkthrough of L&T work (PCIe / NVMe) → Microsoft NPU work → wrap.
+
+**What went well:**
+- ✅ Intel/Microsoft NPU portion explained in good flow — current-work narrative is solid
+- ✅ The L&T **PCIe/NVMe bug** itself was explained properly end-to-end (still own the story)
+
+**What didn't land:**
+- ⚠️ PCIe/NVMe **fundamentals** rusty — flagged honestly that it's been 5-6 years since I worked on them daily
+- ⚠️ Interviewer kept digging deeper into PCIe/NVMe protocol depth that I no longer carry at reflex level
+
+**Outcome:** ❌ Rejected within ~2 hrs of the round.
+**Signal:** Likely role wanted **automotive protocol** depth (CAN/LIN/FlexRay/Ethernet-AVB/SOME-IP) plus live PCIe/NVMe protocol fluency — neither is in my current stack. This is a **role-fit miss**, not a fundamentals collapse: the bug story landed, the surrounding protocol depth didn't.
+
+**Strategic read (the important one):**
+Chasing automotive protocol fluency from cold would take months and dilutes the NPU + PnP + platform-validation arc that is *already* landing in other loops (Intel Ireland NPU, Qualcomm PnP). **Better to deepen what I already own** (NPU validation, post-Si platform, power/perf, system debug) than to grow a new protocol limb for a role family that isn't my centre of gravity.
+
+**Decision:**
+- ❌ Do **not** add an automotive-protocol track to the 21-day plan.
+- ✅ Filter Renesas-shape (automotive-protocol-heavy) roles out earlier in the funnel — same way Arm/Qualcomm pre-Si DV got filtered after 15/20 Apr.
+- ✅ Keep PCIe/NVMe at *bug-story + first-principles* depth (already covered by [pcie_nvme_soc_test_plan.md](21day_plan/pcie_nvme_soc_test_plan.md) and Day 10/11) — enough to defend the L&T work, not enough to compete with someone doing it daily. That's the right level for my profile.
+
+---
+
 ## 📊 Snapshot
 
 | Date | Company | Role | Outcome | Status |
@@ -198,6 +229,7 @@ This wasn't "I don't know the material" — it was **"I haven't trained the musc
 | 28 Apr | Qualcomm | PnP Thermal | 🟢 Good | Feedback pending |
 | 29 Apr | Intel Ireland | NPU | 🟢 Strong | Feedback pending |
 | 30 Apr | Qualcomm | CPU Core (R2) | 🔴 Weak fundamentals | Outcome pending |
+| 07 May | Renesas | Validation (automotive-leaning) | ❌ Rejected | Closed — role-fit miss |
 
 ---
 
@@ -315,9 +347,12 @@ This wasn't "I don't know the material" — it was **"I haven't trained the musc
 - The CFC bug worked under the same push because I've told it 30+ times. Every fundamentals topic needs that same repetition to reach reflex depth.
 
 ### What's improving (visible across the cycle)
-- Role-fit filtering: 13 Apr → forced misfit; 15/20 Apr → recognised early; 28 Apr → only pursuing aligned roles
-- Domain-fit recognition: PnP/NPU/system rounds now landing; pure DV/CPU-micro-arch rounds revealing the boundary
+- Role-fit filtering: 13 Apr → forced misfit; 15/20 Apr → recognised early; 28 Apr → only pursuing aligned roles; 07 May Renesas → confirms automotive-protocol-heavy roles should be filtered upstream too
+- Domain-fit recognition: PnP/NPU/system rounds now landing; pure DV/CPU-micro-arch rounds revealing the boundary; automotive-protocol roles now identified as another out-of-arc family
 - Self-diagnosis sharpness: every weak round now produces specific action items (visible in this log)
+
+### Strategic principle (reinforced by Renesas 07 May)
+**Build on what I already own; don't grow new limbs for adjacent role families.** My centre of gravity is NPU validation + post-Si platform + power/perf + system debug. PCIe/NVMe and automotive protocols are *defendable at story depth* (the L&T bug still lands), but chasing reflex-level fluency in them would dilute the arc that's actually converting in NPU/PnP loops. Filter rather than retrain.
 
 ---
 

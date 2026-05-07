@@ -362,39 +362,6 @@ Without intervention, this is a runaway. The control loop must (a) detect $T_j$ 
 - **Tj / TjMax** — *what:* junction temperature, max safe junction / *why:* reliability spec / *how:* on-die DTS reports / *connects:* throttle threshold, why Pmax shifts down with rising T
 - **leakage-temperature runaway** — *what:* hotter → more leakage → hotter / *why:* $I_{leak}$ exponential in T / *how:* throttle breaks the loop / *connects:* why deep C-states matter, why cooling matters even at idle
 
----
-
-## Extension — Mixed-signal (ADC), PVT corner sweeps, lab power instruments
-
-Thermal/perf counters are one PVT axis. The mixed-signal block and power instruments are the rest of the validator's quantitative toolkit.
-
-### ADC
-- Topologies: **SAR** (Msps, 8–16 bit, most MCU ADCs), **sigma-delta** (24 bit, low speed, sensor/audio), **pipelined** (high-speed video / SerDes monitor), **flash** (very high speed, low res).
-- Specs to speak: **resolution** (bits) vs **ENOB** (effective bits after noise); **SNR, SINAD, THD, SFDR**; **INL / DNL** (linearity); **sample-and-hold** aperture, settling vs source impedance.
-- **Vref quality directly limits LSB**: 1 LSB at 12-bit, 3.3 V Vref ≈ **800 µV** — Vref noise eats accuracy first.
-- Validation: DC sweep with precision source → INL/DNL plot; AC pure tone → FFT → SNR/SINAD/SFDR/THD; Vref noise (analog rail PSRR); temp drift across -40/+125 °C; cross-talk by driving adjacent channels.
-
-### PVT corner sweeps (the V and T part of "PVT")
-- **Vmin search**: binary-search V at fixed F until the first fail; plot Vmin vs F (shmoo).
-- **Temp**: -40 / 25 / 85 / 125 °C for automotive; -10 / 25 / 85 for client.
-- **Process**: characterise across **FF / TT / SS** sample lots; FF parts hit thermal walls first, SS parts hit Vmin walls first.
-- **Frequency**: Fmin (often gated by retention/refresh) and Fmax (timing closure + thermal).
-- **Silicon revision**: A0/A1/B0 — repeat full sweep each spin; characterise margin shrink/grow.
-
-### Power instruments (bench)
-- **Bench DC source/load** (Keysight N6705, Chroma) — sweep V, log µA at high sample rate.
-- **Current probe (CT)** — non-invasive but BW-limited.
-- **Shunt + DMM / SMU** with **Kelvin sense** — best DC accuracy for low IR drop.
-- **µA-class S0ix / sleep** measurement: filtered shunt + low-noise sense + long average; differentiate **leakage** vs **periodic wake**.
-- Pair with the perf-counter / RAPL stack already covered above to reconcile **HW-reported** vs **wall-measured** power (the gap is real, especially for off-die rails RAPL can't see).
-
-### Bench discipline (applies to every capture)
-- Save `.wfm`/`.csv` with timestamp + DUT serial + silicon rev in filename.
-- Label channels in-file (CH1=PORESET#, CH2=DDR_VDD…).
-- Reproduce twice before filing — once is noise, twice is signal, three is publishable.
-
----
-
 ## Bug Anchor
 
 - **Day 12 (DVFS):** Turbo / V-droop / license-level interactions live there.
