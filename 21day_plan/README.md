@@ -33,15 +33,15 @@ Plan for ~2-3 hours per day:
 
 [Day 0 — Embedded-C basics ramp](day00_c_basics.md) is the one pure C-basics day before the 21-day system flow starts. It covers compile/run discipline, functions, arrays, strings, pointers, structs, linked lists, `memcpy`/`memmove`, and size/alignment checks. The goal is not mastery of all C; the goal is to arrive at Day 1 ready to type and debug MMIO-style C without freezing on syntax.
 
-All hands-on exercises — for Day 0 *and* Days 1–20 — live in a single folder: [`coding/`](coding/). One document, one source tree:
+All hands-on exercises — for Day 0 *and* Days 1–20 — live in the sibling [`coding/`](../coding/) folder (moved out of `21day_plan/` so the source tree is independent of the daily reading). One document, one source tree:
 
 ```sh
-cd coding
+cd ../coding
 make sol-d00_my_memcpy   # build + run a reference solution
 make ex-d00_my_memcpy    # build + run YOUR attempt
 ```
 
-Read [coding/EXERCISES.md](coding/EXERCISES.md) — every problem statement, signature, driver, architect drill, and bug anchor is there in one place.
+Read [coding/EXERCISES.md](../coding/EXERCISES.md) — every problem statement, signature, and driver is there in one place. (Architect drills and bug anchors live in each day file.)
 
 ## Daily Skim Guide (do this every study day)
 
