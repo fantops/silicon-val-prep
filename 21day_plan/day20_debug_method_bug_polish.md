@@ -80,68 +80,85 @@ Design ── Sim (Hz-kHz) ── Emul (MHz) ── FPGA (10-100 MHz) ── Pos
 
 Cost-of-finding rises ~10×/stage. A bug found in sim is "free"; one found post-tape-out can delay a product cycle.
 
-### 5a. Coverage plan — CPU + PCIe across pre-Si and post-Si
+### 5a. Coverage plan — Power Management across pre-Si and post-Si (the one I lived)
 
-> The two interconnect-and-compute axes a platform validator owns. Same template the rest of the SoC follows.
+> *Why this matrix exists alongside §5a:* every role I've owned reduces to a power-management surface — **L&T/SanDisk NVMe SSD** (APST / ASPM / HMB / WCTEMP / throttle), **Intel pre-Si Cambria Xeon** (PCU opcode flow, Core C6, PkgC, ADR, S0ix gating), **Microsoft NPU on Copilot+ PC** (HTP power islands, modem-style duty-cycling, thermal headroom shared with CPU/GPU). When an interviewer asks "how do you build coverage for PM," I answer with this matrix because I've actually filled cells in it.
 
-**Pre-Si owns the protocol-state space; post-Si owns the analog-and-time space.** The trick is knowing which findings should never escape pre-Si vs which fundamentally cannot be found there.
+**The PM coverage frame — three orthogonal axes:**
 
 ```
-                  PRE-Si                                POST-Si
-              (sim → emul → FPGA)                  (A0 silicon on EVM)
-              ────────────────────                 ────────────────────
-   CPU       FSMs, ISA, MESI, TLB walks,           PVT corners, V-droop, thermal,
-             pipeline hazards, MMU page-walk,      C-state wake real timing,
-             coherence ordering, AMBA              long-soak data integrity,
-             interconnect protocol, FW             real DDR margining,
-             handshakes (PCU, ADR, RPMh)           clock-domain races at silicon SI
+                  STATE SPACE                          TIME / TRANSITION                    ENERGY / RESIDENCY
+              (where can we be?)                  (how do we get between states?)        (does it pay back?)
+              ────────────────────                 ──────────────────────────────         ──────────────────────
+   Pre-Si    enumerate every P/C/D/L state,        every entry/exit FSM,                 modelled wake cost vs
+             every PkgC + per-core C combo,        every voltage/freq transition,         residency budget,
+             every ASPM/APST level,                handshakes (PCU↔core, PCU↔PMIC,        break-even check is
+             every PMIC rail collapse order        RPMh↔CPRSS, host↔NVMe APST)            a coverage cell
 
-   PCIe      LTSSM transitions, TLP types,         LTSSM stuck states under SI,
-             credit FSM, AER injection,            ASPM L1.2 entry/exit timing,
-             enumeration walk, IOMMU walk,         PERST# de-bounce, PMIC droop,
-             config-space layout, MSI-X            FEC error rate at temperature,
-             dispatch                              hot-plug surprise during DMA
+   Post-Si   real silicon residency at PVT,        wake latency at -40/+25/+85/+105 °C,   battery-life under
+             rail current at every state,          droop at every transition,             real workload mix,
+             leakage variance lot-to-lot,          1000× S0ix/S3/S4 cycles,              perf-per-watt vs
+             thermal-coupled state shifts          throttle entry/exit timing             previous gen
 ```
 
-**Coverage matrix (build this once, fill it for every project):**
+**Coverage matrix — fill every cell, per project:**
 
-| Axis | Pre-Si (RTL / emul / virtual platform) | Post-Si (A0 on EVM) | Gate that says "you're done" |
+| PM axis | Pre-Si (RTL / emul / virtual platform) | Post-Si (A0 on EVM / reference platform) | Gate that says "you're done" | Where I've owned it |
+|---|---|---|---|---|
+| **CPU P-states (DVFS)** | Directed P0…Pn ladder; every Δf transition; PCU opcode trace; voltage-rail handshake with PMIC model; turbo entry on multi-core load | Real workload P-state residency; turbo headroom at PVT; V-f curve characterisation; PROCHOT# on droop | All P-state transitions covered pre-Si; perf/W within ±5% of model post-Si | Intel Cambria pre-Si (PCU flow); MS NPU DVFS-equivalent (HTP voltage corners) |
+| **CPU C-states (per-core)** | C0/C1/C1E/C6/C7/C10 entry/exit FSM; LAPIC ARAT wake; cross-core dependency (last-core-out → PkgC eligible); CFC FIFO clock-domain crossings | C-state wake latency at PVT corners; idle-injection sweeps; C6 wake under back-to-back ARAT (my Story 3); residency at idle vs busy-idle | Every per-core FSM transition covered pre-Si; wake latency in spec at all 4 corners post-Si | Intel Cambria pre-Si (Core C6 / CFC FIFO bug — Story 3) |
+| **Package C-states (PkgC)** | PkgC2/C6/C10 entry conditions; PCU last-level coordination; uncore/LLC flush ordering; PCIe L1.2 dependency walk; PCU opcode log per entry | PkgC10 idle current in spec; S0ix entry with PCIe in L1.2 + USB suspended; 1000× cycles; wake from any of N sources | PCU opcode coverage pre-Si; idle current + wake-latency targets post-Si | Intel Cambria pre-Si (PkgC entry, ADR coupling) |
+| **System sleep (S0ix / S3 / S4)** | S0ix LPI counters; constraint walk (every block must be in low-power); S3 register save/restore; S4 hibernate page-out path | S0ix residency under realistic idle (browser idle, screen-on idle, modem-connected); 1000× S3/S4 cycles zero data loss; resume time | All entry constraints covered pre-Si; residency + zero-loss post-Si | Intel pre-Si (S0ix gating); MS Copilot+ PC platform validation |
+| **Clock gating (CG)** | Per-block CG enable matrix; CG-on / CG-off functional equivalence; glitch-free clock OR; reset-domain interactions | Real CG residency telemetry; perf delta CG-on vs CG-off; no functional regression at PVT | CG matrix 100% covered pre-Si; zero functional delta post-Si | Intel pre-Si (PCU clock-gating opcode sequencing) |
+| **Power gating (PG) / power islands** | Per-island PG entry/exit FSM; isolation cell coverage; retention vs cold-start; wake-up sequencer; rail collapse + restore order | Real leakage savings at +85 °C; wake latency from PG; data integrity across PG cycles | PG FSM + isolation 100% pre-Si; leakage targets met at corners post-Si | Intel pre-Si (PG islands); MS NPU (HTP power islands per inference) |
+| **Voltage / rail management (PMIC)** | PMIC handshake model (RPMh / SVID / PCU↔PMIC); rail-up/down ordering; droop response model; AVS/adaptive voltage scaling FSM | Real rail current per state; V-droop at transitions; PMIC firmware regression; lot-to-lot variance | Handshake protocol 100% pre-Si; rail current within spec post-Si | Intel pre-Si (PCU↔PMIC opcode sequencing — anchor for ADR Story 1) |
+| **Thermal control loop** | **Pre-Si is isothermal — coverage is throttle-FSM only:** every throttle level, hysteresis FSM, sensor-to-throttle path, PROCHOT#/HOT# assertion | Real -40/+25/+85/+105 °C chamber; throttle entry/exit timing; perf-under-throttle correctness; 72 h soak; control-loop oscillation check; per-zone sensor calibration | Throttle FSM 100% pre-Si; control loop stable + zero corruption at all corners post-Si | NVMe SSD WCTEMP/CCTEMP (L&T/SanDisk); Intel PROCHOT path; MS NPU shared thermal budget with CPU/GPU |
+| **PCIe link power (ASPM L0s/L1/L1.1/L1.2)** | Every ASPM entry/exit FSM; LTSSM × ASPM cross-product; PkgC↔L1.2 dependency walk; CLKREQ# handshake | ASPM under load × 24 h; L1.2 exit < 200 µs at PVT; per-rail current in each state; PMIC droop on exit; surprise removal in low-power | Every ASPM cap covered pre-Si; residency + wake-latency targets post-Si | Intel pre-Si (PCIe transactor — Story 6 anchor); NVMe SSD ASPM × APST cross-product (L&T/SanDisk) |
+| **NVMe device power (APST / PS0…PS4)** | APST autonomous transition FSM; host-driven power-state set; idle-timer coverage; PS-transition mid-IO; latency vs power table sanity | APST residency under real fio mix; PS0↔PS4 wake latency; data integrity across transitions; ASPM × APST interaction; battery-impact under filesystem idle | All PS transitions + APST FSM covered pre-Si; per-state current + zero data loss post-Si | **L&T/SanDisk NVMe SSD validation — owned cell** |
+| **NVMe HMB power-coupling** | HMB allocation / release FSM; HMB present vs absent equivalence; L2P writeback ordering when HMB throttled | HMB behaviour above WCTEMP (my Story 7); HMB integrity across S3/S4; HMB after surprise PERST# | FSM coverage pre-Si; thermal-coupled corruption check post-Si | **L&T/SanDisk DRAM-less NVMe SSD (my Story 7)** |
+| **ADR / power-loss flow** | PLI assertion → PCU opcode sequence → IO quiesce → WPQ flush → DDR self-refresh; opcode-ordering assertions; ack-handshake check | Real PSU collapse on EVM; persistence verify across N power cycles; capacitor sizing margin | Opcode-sequence FSM + ordering 100% pre-Si; persistence verify post-Si | **Intel Cambria pre-Si — owned cell (my Story 1)** |
+| **NPU / accelerator power** | Per-tile PG FSM; voltage corner coverage; DMA-quiesce before island collapse; runtime↔FW power handshake | HTP residency across inference mix; thermal-throttle entry under sustained AI workload; battery impact of always-on NPU features; shared thermal budget with CPU/GPU | FSM coverage pre-Si; residency + thermal-share targets post-Si | **MS Copilot+ PC NPU (QNN/ORT/HTP power) — owned cell** |
+| **Wake sources / latency budget** | Every wake source × every sleep state matrix; latency budget per source; wake-coalescing FSM | Real wake latency per source at PVT; wake-storm under modem/Wi-Fi traffic; spurious-wake telemetry | All sources × states pre-Si; latency targets post-Si | Intel pre-Si (wake fabric); MS Copilot+ PC modem-standby |
+
+**Phasing — PM-only, post-Si, in the order I'd actually run it:**
+
+| # | Phase | What runs | What it catches |
 |---|---|---|---|
-| **CPU — functional / ISA** | UVM directed + random opcode streams, ISA conformance suite (riscv-arch-test / Arm AVS), pipeline hazard sequences, exception/IRQ vector tests | Real Linux + LTP + stress-ng × all CPU modes; SMP + irq-affinity stress | 100% ISA coverage pre-Si; LTP zero-fail post-Si |
-| **CPU — coherence / MMU** | MESI directed (M→I, S→M, false-sharing), TLB walk + ASID, page-fault FSM, SMMU stream-table | Real `perf c2c` on multi-thread workloads; TLB-pressure stress with PMU; large-page + transparent-hugepage churn | MESI state coverage 100% pre-Si; cache PMU clean post-Si |
-| **CPU — power (DVFS / C-states)** | Directed P-state transitions, C-state entry/exit FSM, PCU/RPMh opcode trace, clock-gating enable matrix | Real workload P-state residency, C-state wake latency at PVT corners, idle-injection sweeps, S0ix/S3 × 1000 cycles | C-state FSM 100% pre-Si; residency targets met at corners |
-| **CPU — thermal** | **None at PHY level — RTL is isothermal**; throttle FSM modelled as perf knob only | -40 / +25 / +85 / +105 °C chamber; 72 h soak; throttle entry/exit + data-path correctness under throttle; PROCHOT# behaviour | Throttle FSM coverage pre-Si; 72 h soak zero corruption post-Si |
-| **PCIe — protocol / TLP** | UVM directed + random TLPs, posted/non-posted ordering, ECRC, AER inject, TLP-tag matching | `lspci`, AER inject, real driver TLPs, multi-EP topologies, PCIe-SIG compliance on silicon | TLP coverage 100% pre-Si; UNH-IOL plug-fest pass post-Si |
-| **PCIe — LTSSM** | Every Detect→Polling→Config→L0→Recovery→L0s/L1/L1.x/L2 path; speed change at every supported gen; lane downgrade | Stuck-state debug under real SI; ASPM L1.2 exit < 200 µs at PVT; FEC error rate vs temperature (Gen6) | LTSSM state + transition coverage pre-Si; SI margin met post-Si |
-| **PCIe — enumeration** | Bridge / EP / multi-function topologies; cap-list walk; BAR sizing; bridge memory window assignment | Real BIOS + Linux enum across multiple boots; hot-plug add/remove; FLR + re-enum | Enumeration finishes < target time; zero AER UR during walk |
-| **PCIe — power** | Directed L0s / L1.x entry/exit; modelled PLL lock; PkgC6 → L1.2 dependency walk | ASPM under load × 24 h; per-rail current; PMIC droop; S0ix with PCIe in L1.2; surprise removal | Pre-Si: every PM cap covered. Post-Si: residency + wake-latency targets met |
-| **PCIe — IOMMU / SMMU** | Stream-table walk; PRI/ATS UVM; fault inject; ATC fill + invalidate | TLB-pressure stress (many queues × many PRP lists); PMU SMMU TLB-miss telemetry; ATS race vs invalidate | Walk + fault paths 100% pre-Si; TLB miss rate within budget post-Si |
+| 0 | Smoke | Boot to OS, all rails up, CPU offlines/onlines clean, basic suspend/resume | Gross PM bringup breaks |
+| 1 | Per-state functional | Force every C-state, P-state, ASPM level, APST PS; verify entry + exit + functional integrity | FSM gaps the pre-Si missed |
+| 2 | Residency targets | Idle the platform; verify PkgC10, S0ix, ASPM L1.2, APST PS4 residency hits target % | Mis-budgeted constraints (one block keeping the package awake) |
+| 3 | Wake latency | Wake from every source × every state; measure latency at -40/+25/+85/+105 °C | Wake-path SI / PMIC droop / clock-relock margin |
+| 4 | Cycling endurance | 1000× S0ix, 1000× S3, 1000× S4; `fio --verify` survives all of them | Cumulative state-machine drift, retention bugs, leak-after-cycle |
+| 5 | Thermal × power coupling | -40 / +25 / +85 / +105 °C × 72 h with full PM enabled; verify throttle entry/exit + data integrity | Bugs that only exist when state-machine + temperature interact (my Story 7) |
+| 6 | Battery / perf-per-watt | Realistic workload mix (browser idle, video, AI inference, modem-connected standby); measure mWh per workload | Regression vs previous gen / vs spec floor |
+| 7 | Negative / abuse | Surprise PERST# in L1.2; rail collapse mid-S3; thermal trip during ADR; wake-storm; concurrent S0ix entry + AER inject | Corner bugs at the seam between PM and protocol |
 
-**Phasing — what to run, in what order, post-Si:**
+**Pre-Si exit gates (PM):**
+- Every P / C / Pkg-C / ASPM / APST / PG FSM 100% state + transition coverage
+- PMIC handshake protocol 100% covered (every opcode, every ack path)
+- Throttle FSM 100% (sensor → throttle → recovery), even though temperature itself is not modelled
+- ADR / power-loss opcode ordering covered with assertions
+- Wake-source × sleep-state matrix 100%
 
-| # | Phase | What runs | Owns |
-|---|---|---|---|
-| 0 | Smoke | Rails up, ROM → Linux, `lspci` enumerates RP, CPU brings all cores online, basic IRQ | CPU + PCIe shared |
-| 1 | Functional / conformance | LTP, AER inject, FLR, hot-plug, MSI-X, NVMe Admin/IO if attached | CPU (LTP) + PCIe (AER/FLR) |
-| 2 | Performance | SPEC-CPU + STREAM (CPU); IOPS/QD sweep + BW vs blk-size + latency CDF (PCIe) | both, separate matrices |
-| 3 | Power | C-state residency at idle / busy idle; ASPM L0s/L1/L1.1/L1.2; APST PS0..PS4; S0ix/S3/S4 × 1000 | CPU (C-states) + PCIe (ASPM) |
-| 4 | Thermal / soak | -40 / +25 / +85 / +105 °C × 72 h; `fio --verify` (PCIe path); LTP stress (CPU); throttle entry/exit | both — interaction surface |
-| 5 | Interop | Multi-OS boot (Win + Linux); 5+ EP-vendor combos for any PCIe slot | PCIe-led, CPU as host |
+**Post-Si exit gates (PM, PRQ-ready):**
+- All residency targets met at idle and busy-idle (PkgC10 / S0ix / ASPM L1.2 / APST PS4)
+- All wake latencies in spec at -40 / +25 / +85 / +105 °C
+- 1000× S0ix / S3 / S4 with zero data loss, zero hang, zero spurious wake outside budget
+- 72 h soak at +85 °C with full PM enabled — zero corruption, throttle clean, no oscillation
+- Battery / perf-per-watt regression vs previous gen ≤ 0%
+- 0 P0/P1 PM escapes; ≤ 3 P2 with documented workaround
 
-**Pre-Si exit gates:**
-- CPU FSM coverage 100% (pipeline, MMU, MESI, C-state, P-state, PCU)
-- PCIe LTSSM 100%, TLP/AER classes 100%, enumeration walk verified ≥ 3 topologies, IOMMU walk verified ≥ 3 Stream IDs
-- Linux boots on virtual platform with both CPU and PCIe-EP models active; 30-min stress passes
-- Closed-form perf model within ±10% of spec floor
+**The seam where PM bugs hide (and why this matrix is the right shape):**
 
-**Post-Si exit gates (PRQ):**
-- Functional + Conformance: 100% pass at all 4 temp corners
-- Perf: within ±10% of pre-Si model AND ≥ spec floor
-- Power: PkgC10 / S0ix idle current in spec; ASPM L1.2 exit < 200 µs; 1000× S3/S4 zero data loss
-- Thermal: 72 h @ +85 °C zero corruption, zero panic, throttle clean
-- 0 P0/P1 escapes; ≤ 3 P2 with documented workaround
+PM bugs are almost never in *one* axis — they live at intersections that pre-Si treats as separate cells:
 
-**The line that lands the offer:** "Pre-Si owns the FSM and protocol-state space — if a bug class lives in a state machine you can enumerate, it should never escape pre-Si. Post-Si owns analog, time, and temperature — anything that depends on PVT, SI, real PMIC droop, or 72-hour cumulative effects is fundamentally a post-Si discovery, and pre-Si's job is to *narrow* the search space, not eliminate it. The hard bugs sit at the seam — protocol FSMs that look clean in isothermal RTL but couple to a thermal-throttle path on silicon. That's the cell I instrument first."
+- **C-state × clock domain** → my Story 3 (Core C6 wake lost when CFC FIFO mid-reset)
+- **Power-loss × FW opcode order** → my Story 1 (ADR WPQ flush before IO quiesce ack)
+- **Thermal × data path** → my Story 7 (HMB silent corruption above WCTEMP)
+- **ASPM × PkgC dependency** → classic "S0ix won't enter because one EP refuses L1.2"
+- **APST × ASPM cross-product** → device + link both want to sleep, host policy doesn't agree
+
+**The line that lands the PM-flavoured offer:** "PM coverage is three axes — *state space*, *transition / time*, *residency / energy*. Pre-Si owns the first two completely: if a PM state or a PM transition lives in an enumerable FSM, it should never escape into silicon. Post-Si owns the third axis and everything that couples to PVT — real droop at a transition, real residency under a real workload, real thermal feedback into a state machine that pre-Si modelled as isothermal. The hard PM bugs all sit at the seam: C-state × clock-domain, power-loss × opcode-order, thermal × data-path. I've owned cells across the matrix on three different products — Intel pre-Si PCU/ADR/Core-C6, NVMe APST/ASPM/HMB at L&T and SanDisk, NPU power on Copilot+ PC at Microsoft — so when I look at a new PM cell, I know which axis it lives on and which seam to instrument first."
 
 ### 6. The 5 + 1 polished bug stories
 
@@ -160,51 +177,145 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 
 ### 7. Story 1 — PCU / ADR opcode-ordering hang (90 sec)
 
-> "Pre-silicon validation of the ADR power-loss flow on a Cambria Xeon SoC running on Zebu emulation. ADR flushes the iMC write-pending queue into persistent memory before rails collapse. On Zebu the sequence hung mid-flow — PSU loss simulated, PLI asserted, PCU started its FW opcode sequence but DDR never entered self-refresh. I pulled the Zebu trace and walked the PCU opcode log against the ADR spec. The ordering was wrong: PCU issued the WPQ-flush opcode before the IO-quiesce opcode had acknowledged completion. I wrote a Perspec test that re-ran just those two opcodes with a controlled handshake — reproduced 100%. Root cause was the FW sequencer not waiting for the IO-quiesce ack; IO traffic still in flight kept refilling the WPQ, so the self-refresh entry condition never met. Fix was an explicit wait-for-ack and a Perspec assertion gate on the ordering for regression. The lesson: opcode-level FW sequences need explicit handshakes, not implicit ordering. Pre-Si caught it because Zebu lets you trace at opcode granularity — post-Si would have shown 'random ADR fail' and taken weeks."
+> *Pre-Si, Cambria Xeon on Zebu emulation. ADR = Async DRAM Refresh: when AC power drops, on-board capacitors hold the rails just long enough for PCU firmware to push DRAM into self-refresh so writes survive the outage. A power-management flow under the worst possible deadline.*
+
+> **1. Observe.** Simulated PSU loss, PLI asserted, PCU started its ADR opcode sequence — but DDR never entered self-refresh. Sequence hung mid-flow. iMC write-pending-queue (WPQ) never drained.
+>
+> **2. Reproduce.** 100 % on every PSU-loss injection. Functional bug, not a race.
+>
+> **3. Isolate.** Pulled the Zebu PCU opcode trace and diff'd it against the ADR spec sequence. Narrowed the failure window to two adjacent opcodes: `IO_QUIESCE` followed by `WPQ_FLUSH`.
+>
+> **4. Hypothesise.** PCU was issuing `WPQ_FLUSH` before `IO_QUIESCE` had returned its completion ack — so live IO traffic kept refilling the WPQ, and the self-refresh entry condition was never satisfied.
+>
+> **5. Test.** Wrote a Perspec scenario that ran just those two opcodes with a controlled, observable handshake. With a forced wait between them: pass. Without: hang. Hypothesis confirmed.
+>
+> **6. Root cause.** PCU FW sequencer relied on *implicit* ordering between opcodes instead of waiting on the `IO_QUIESCE` ack. Under realistic IO load that implicit gap closed and ordering broke.
+>
+> **7. Fix & verify.** FW change: explicit wait-for-ack on `IO_QUIESCE` before `WPQ_FLUSH` issues. Added a Perspec assertion gate on the ordering and put it in the nightly regression. Zero recurrence.
+>
+> **Lesson.** Opcode-level FW sequences in PM flows need explicit handshakes, not implicit ordering. Pre-Si caught it because Zebu shows opcode granularity — post-Si this is a 'random ADR fail' that takes weeks to triage.
 
 ### 8. Story 2 — NVMe CSTS.RDY never asserts (90 sec)
 
-> "Polaris NVMe controller boot validation in ROM mode. Standard init: PERST# de-assert, wait CSTS.RDY=0, program AQA/ASQ/ACQ, set CC.EN=1, poll CSTS.RDY=1 within CAP.TO. New host script on Oakgate hung at the CSTS.RDY=1 poll on every boot. CC.EN read back as 1, CSTS.CFS clear, but RDY stayed 0 past CAP.TO. I diff'd the new script against the working one — only difference was AQA: new script programmed ASQS=ACQS=0, treating it as a 0's-based field and 'wanting one entry.' Walked NVMe 1.3 §4.1: every queue reserves one slot for head/tail empty/full disambiguation, so AQA size 0 means zero usable slots — illegal. Re-ran with ASQS=ACQS=3 and contiguous AQ buffers and CSTS.RDY came up every boot. Root cause was host-side spec misuse against a controller that didn't fail loud. Fix on the host side, plus an FW ask: ROM should set CSTS.CFS when it sees CC.EN=1 with AQA=0 so the next person debugs in seconds. Lesson: when CSTS.RDY hangs on first boot, suspect the host before the device — AQA, ASQ/ACQ physical address, contiguous-buffer requirement."
+> *Polaris NVMe controller bring-up in ROM mode. The boot path that brings the device out of its lowest power state into operational — the very first PM transition the host drives.*
+
+> **1. Observe.** Standard init sequence on Oakgate. Host de-asserts PERST#, waits `CSTS.RDY=0`, programs `AQA/ASQ/ACQ`, sets `CC.EN=1`, then polls `CSTS.RDY=1` within `CAP.TO`. Poll hung on every boot. `CC.EN` read back as 1, `CSTS.CFS` was clear — controller wasn't complaining, it just wasn't coming ready.
+>
+> **2. Reproduce.** 100 %, every boot. Pure functional.
+>
+> **3. Isolate.** Diff'd the new host script against the previously-working one. One field different: `AQA`. New script programmed `ASQS=ACQS=0`, treating the field as 0's-based and 'requesting one slot.'
+>
+> **4. Hypothesise.** `AQA` is *not* 0's-based — every NVMe queue reserves one slot for head/tail disambiguation, so size 0 means zero usable slots, which is illegal. Controller silently refuses to come ready.
+>
+> **5. Test.** Re-ran with `ASQS=ACQS=3` and a properly contiguous AQ buffer. `CSTS.RDY=1` came up well within `CAP.TO` on every boot.
+>
+> **6. Root cause.** Host-side spec misuse against a controller that didn't fail loud. NVMe 1.3 §4.1 is explicit; the script wasn't.
+>
+> **7. Fix & verify.** Host script corrected. Filed an FW ask: ROM should set `CSTS.CFS` when it sees `CC.EN=1` with `AQA=0`, so the next person debugs in seconds, not hours. Boot regression added.
+>
+> **Lesson.** When `CSTS.RDY` hangs on the first PM transition out of reset, suspect the host before the device — `AQA`, `ASQ/ACQ` physical address, contiguous-buffer requirement. Silent-fail FW is a coverage gap, not a feature.
 
 ### 9. Story 3 — Core C6 wake lost on back-to-back ARAT (90 sec)
 
-> "Pre-Si validation of Core C6 entry/exit on Cambria. Workload: idle thread armed with the local APIC ARAT timer firing back-to-back at ~2 µs, designed to stress the C6 wake path with two wakes landing close enough that the second arrives mid-exit. Sporadic 50-500 ms hangs on the idle thread. Perfmon showed C6 residency continuing past the second timer's expected exit, even though the first wake had already serviced its IRQ. I pulled the Core PMA wake-pending CSR in Zebu trace — second wake's latch fired, but DOMAIN_STATUS.CORE_STATE never went C6→C0 for that event. Triggered Lauterbach on `CORE_STATE==C6 && wake_in==1 && cfc_init_busy==1`; every failure landed in the window where the CFC clock-crossing FIFO was being re-initialised after PLL relock but before interrupt-buffer drain completed. Wake #2's ack edge was sampled in the old domain just as the FIFO got reset — the edge never made it across. Root cause: 2-clock-domain race in C6 exit; the wake latch crossed a CFC FIFO that was mid-reset. Fix held the wake latch in the always-on domain until both `init_done` and `drain_done` were high; CORE_STATE→C0 write gated on both. Filed under HSD 16015450088. Lesson: 2-clock-domain races on power-gated blocks are the classic 'works in unit sim, fails in full-die emul' class — unit testbenches don't exercise both domains being transient at the same instant."
+> *Pre-Si Cambria. Core C6 = the deepest per-core sleep state — core is power-gated, PLL off, caches flushed; wake requires a full power-up + PLL relock. The classic PM bug surface: a wake event that arrives *during* the exit transition.*
+
+> **1. Observe.** Idle thread armed with the local APIC ARAT timer firing back-to-back at ~2 µs — designed so wake #2 lands while the core is still mid-C6-exit from wake #1. Sporadic 50–500 ms hangs on the idle thread. Perfmon showed C6 residency continuing past the second timer's expected exit, even though wake #1's IRQ had already been serviced.
+>
+> **2. Reproduce.** Intermittent — only on back-to-back wakes inside a tight window. Race-condition signature.
+>
+> **3. Isolate.** Pulled the Core PMA wake-pending CSR from the Zebu trace. Wake #2's latch *did* fire, but `DOMAIN_STATUS.CORE_STATE` never moved C6→C0 for that event. So: wake observed, wake acted on internally, but power-state register never updated.
+>
+> **4. Hypothesise.** A 2-clock-domain race in the C6 exit path — wake #2's ack edge gets dropped while a clock-crossing FIFO is mid-reset.
+>
+> **5. Test.** Set a Lauterbach trigger on `CORE_STATE==C6 && wake_in==1 && cfc_init_busy==1`. Every failure landed in exactly that window — the CFC clock-crossing FIFO being re-initialised after PLL relock, *before* the interrupt-buffer drain finished. Hypothesis confirmed.
+>
+> **6. Root cause.** Wake #2's ack edge was sampled in the old clock domain at the same instant the CFC FIFO was being reset. The edge never made it across the crossing. Net effect: C6→C0 transition silently lost.
+>
+> **7. Fix & verify.** RTL change: hold the wake latch in the always-on domain until both `init_done` and `drain_done` are high, and gate the `CORE_STATE→C0` write on both. Filed HSD 16015450088. Regression: directed back-to-back-ARAT scenario added; zero recurrence over million-cycle randomised PM stress.
+>
+> **Lesson.** 2-clock-domain races on power-gated blocks are the classic 'clean in unit sim, fails in full-die emul' class. Unit testbenches don't exercise both domains being transient at the same instant — only a full-die PM scenario does.
 
 ### 10. Story 4 — QNN/ORT page-fault + VM regression (90 sec)
 
-> *Honest framing: platform validation, not Hexagon RTL.*
+> *Platform validation on Copilot+ PC NPU stack. Honest framing: ORT/QNN host-runtime path, not Hexagon RTL. Memory pressure is a power-management surrogate on a battery-powered device — more resident pages = more DRAM refresh = more system power = less PkgC residency.*
 
-> "On the Qualcomm QNN EP path for a PSMU model on Copilot+ PC, we saw a memory regression across EP/ORT drops. Known-good EP 2.39 + ORT 1.23.3 had ~7K page-fault events and ~300 MB virtual memory during inference. With EP 2.45 + ORT 1.24.4, VM grew to ~502 MB and in one isolated run page faults spiked to ~102K. I did not treat it as a VTCM or silicon defect first. Built a version matrix: old EP/old ORT, new EP/new ORT, then new EP with old ORT. The reduced VM in that combo proved the bug followed the ORT/QNN context-loading path, not the EP itself. ETL/WPA correlation showed the newer path accumulating multiple model context buffers together; touching many host virtual pages at once caused the fault burst. The later mitigation reduced faults but kept more VM alive, which explained the 300→502 MB increase. Source pointer landed on `qnn_backend_manager.cc::CreateContextFromListAsync()`. Fix direction was bounded context lifetime — load, create, release per context unless parallel loading is needed — and a regression gate that records EP version, ORT version, page-fault count, VirtualAlloc count, peak VM. Lesson: page faults alone are not the bug. You correlate them with VirtualAlloc and peak memory before blaming hardware."
+> **1. Observe.** PSMU model inference on Qualcomm QNN EP. Known-good EP 2.39 + ORT 1.23.3 → ~7 K page-fault events and ~300 MB virtual memory during inference. New drop EP 2.45 + ORT 1.24.4 → VM grew to ~502 MB, and in one isolated run page faults spiked to ~102 K.
+>
+> **2. Reproduce.** Deterministic per drop combination. Per-run variance on the page-fault spike, but the VM growth was always present.
+>
+> **3. Isolate.** Did **not** jump to 'silicon / VTCM defect.' Built a version matrix: old EP / old ORT, new EP / new ORT, and the diagonal — new EP with old ORT. The diagonal showed reduced VM, proving the bug rode the ORT/QNN context-loading path, not the EP binary itself.
+>
+> **4. Hypothesise.** The newer path was accumulating multiple model context buffers together instead of streaming them through, so touching many host virtual pages at once produced the fault burst, and not releasing them produced the VM growth.
+>
+> **5. Test.** ETL + WPA correlation: newer path showed bursty `VirtualAlloc` followed by a long 'no-release' tail, lined up exactly with the page-fault timestamps. Source-walked QNN to `qnn_backend_manager.cc::CreateContextFromListAsync()` — confirmed the bulk-load shape. The later mitigation reduced fault count but kept more VM alive, which is exactly what the 300→502 MB shape predicted.
+>
+> **6. Root cause.** Unbounded context lifetime in `CreateContextFromListAsync` — contexts loaded eagerly and held for the lifetime of the inference session, instead of load → create → release per context.
+>
+> **7. Fix & verify.** Fix direction: bounded context lifetime (release per-context unless parallel loading is explicitly required). Regression gate added that records EP version, ORT version, page-fault count, `VirtualAlloc` count, peak VM — so the next regression is caught at gate, not in the wild.
+>
+> **Lesson.** Page faults alone are not the bug. Correlate them with `VirtualAlloc` and peak memory before blaming hardware. On a battery device, host-runtime memory growth is a *power* regression in disguise — more resident pages keep DRAM out of self-refresh.
 
 ### 11. Story 4b — Paint SR starves Camera (60 sec)
 
-> "Two AI workloads sharing the NPU on Copilot+ PC. Paint Super-Resolution submits ~36 inference tiles back-to-back; Camera preview submits a fresh inference at 30 fps. When SR runs, Camera drops frames. Built a deterministic repro with two semaphore-fired threads and QPC timestamps. GPUView showed Camera frame 0 queued at t=3 ms but not starting on the NPU until t=108 ms — about 3.2 frame periods at 30 fps — sitting behind SR's 36 tiles in the queue. Cross-checked with the IHV: HTP exposes a single hardware scheduler with no preemption; once a tile dispatches it runs to completion. Root cause was a structural limitation, not a defect: single non-preemptive queue plus no priority hint from the framework. Fix path: framework-side priority lanes so high-priority frames interleave; until then, gate concurrent NPU workloads. Lesson: a single hardware scheduler is fine until you have two real-time tenants on it; the framework must expose priority."
+> *Copilot+ PC NPU, two AI workloads sharing one accelerator. PM-relevant because the only way to get good NPU residency without a real-time tenant starving is to schedule the queue properly — otherwise the framework keeps the NPU at top voltage longer than it needs to be.*
 
-### 11a. Story 6 — PCIe Gen6 L0p re-scaling races TLP in flight (90 sec)
+> **1. Observe.** Paint Super-Resolution submits ~36 inference tiles back-to-back; Camera preview submits a fresh inference at 30 fps. When SR runs, Camera drops frames.
+>
+> **2. Reproduce.** Built a deterministic repro: two semaphore-fired threads, QPC timestamps, both targeting the NPU. Repros every run.
+>
+> **3. Isolate.** GPUView trace showed Camera frame 0 queued at t = 3 ms but not starting on the NPU until t = 108 ms — ~3.2 frame periods at 30 fps — sitting behind SR's 36 tiles in the queue.
+>
+> **4. Hypothesise.** The HTP scheduler is single-queue and non-preemptive: once a tile dispatches, it runs to completion. No priority hint means Camera waits behind SR's whole batch.
+>
+> **5. Test.** Cross-checked with the IHV docs and a second repro with a 1-tile SR vs many-tile SR — head-of-line latency tracked tile count linearly. Confirms single non-preemptive queue.
+>
+> **6. Root cause.** Structural, not a defect: one HW scheduler, no preemption, no framework-level priority lane to interleave a real-time tenant ahead of a batch tenant.
+>
+> **7. Fix & verify.** Fix path: framework-side priority lanes so high-priority frames interleave at tile boundaries. Until that lands: workload-policy gate that prevents concurrent NPU workloads when a real-time tenant (Camera, voice) is active.
+>
+> **Lesson.** A single hardware scheduler is fine until you have two real-time tenants on it. The framework must expose priority — otherwise the only PM-friendly answer is 'don't run them at the same time,' which costs both perf and battery.
 
-> *Pre-Si transactor enhancement. New feature, no prior reference model.*
+### 11a. Story 6 — PCIe Gen6 L0p lane-scaling: a link-level DVFS bug (90 sec)
 
-> "Pre-silicon, I was extending an in-house PCIe transactor to support Gen6 **L0p** — the new feature that lets a link drop from x16 down to x8 or x4 (and back up) on the fly without leaving L0, so workloads with low-but-steady traffic don't pay L1 entry/exit cost. The transactor already supported L0s/L1/L1.1/L1.2; L0p was net new because it changes lane count *while TLPs are flowing*, which L0s/L1 never do. First pass passed all the directed L0p enter/exit tests but a randomised mixed-traffic regression hit intermittent FEC error bursts on the DUT — the link stayed in L0, so AER was clean, but per-FLIT FEC counters spiked exactly at every L0p transition. The TLP itself was correct; the problem was the seam.
+> *Pre-Si transactor enhancement for a brand-new PCIe PM feature. **The mental model:** L0p is to a PCIe link what DVFS is to a CPU and what tile-power-gating is to an NPU — scale capacity down when traffic is light, scale back up on demand, **without paying the wake-up cost of full sleep**. Same shape as a CPU dropping from P0→P3 instead of going to C6.*
 
-> Pulled the FLIT-level trace. Gen6 packs TLPs into 256-byte FLITs with FEC over the FLIT — not over the TLP. The transactor was applying the new lane-count to the **next FLIT after the negotiation completed**, but the *current* FLIT was already half-serialised across the old wider lane set. The DUT receiver de-skewed the second half against the new (narrower) lane map and FEC failed on every transition.
+> *Background in plain terms: PCIe already had deep sleep states (L1/L1.1/L1.2) — analogous to CPU C-states — but exiting them costs hundreds of microseconds. **L0p adds a DVFS-like tier:** stay awake, but shed lanes (x16 → x8 → x4) so the unused lanes can drop power. Bug class is exactly the one we know from CPU DVFS — a transition that happens **while a transaction is mid-flight**.*
 
-> Spec-walked the L0p section: lane reconfiguration must align to a **FLIT boundary** — the negotiation handshake commits, but the actual lane-count change must be deferred until the in-flight FLIT has fully drained. I added a one-FLIT delay state to the transactor's L0p FSM, gated lane reconfig on `flit_drain_done`, and added an SVA `assert always (lane_cfg_change |-> flit_in_flight == 0)`. FEC bursts went to zero; randomised regression clean over a million transitions.
-
-> Lesson: when you build a transactor for a brand-new spec feature, the directed tests cover the FSM but the *boundary conditions between the old and new feature* are where transactor bugs live. L0p plus pre-existing TLP flow created an ordering surface that didn't exist before — spec literacy at the *FLIT* layer, not the TLP layer, was the unlock. And because this was caught pre-Si, post-Si never saw the bug class at all."
+> **1. Observe.** First pass of L0p support in the transactor passed every directed enter/exit test. A randomised mixed-traffic regression then hit intermittent receive-side error bursts on the DUT at exactly the moments L0p changed lane count. Link stayed up, no fatal errors, but the receiver was getting bad data at the transition boundary.
+>
+> **2. Reproduce.** Intermittent overall, but **100 % correlated to L0p transitions** — error counter ticked up on every up-shift and down-shift. So: deterministic with respect to the PM event, even if the workload mix made it 'feel' intermittent.
+>
+> **3. Isolate.** Walked the lane-level trace. The transmit-side data stream changes width at the transition; the receive-side has to know **at exactly which byte** the new width takes effect. The errors all landed at the byte position where the old and new lane widths met.
+>
+> **4. Hypothesise.** Same mental shape as a CPU DVFS transition that lands mid-instruction: the transactor was switching to the new lane count **as soon as the negotiation completed**, even if the current packet was only half-sent on the old (wider) lane set. The receiver re-aligned to the new width mid-packet, and the second half decoded against the wrong lane map.
+>
+> **5. Test.** Forced a one-packet quiet window between negotiation-complete and lane-change. Errors went to zero. Restored the original (no-quiet-window) behaviour: errors returned. Hypothesis confirmed.
+>
+> **6. Root cause.** Transactor was treating the L0p *negotiation* as the commit point. The spec actually requires the lane-count change to be **deferred to the next packet boundary** — exactly like a CPU P-state change has to land on an instruction boundary, not mid-instruction.
+>
+> **7. Fix & verify.** Added a one-packet drain state to the L0p FSM, gated lane reconfig on `packet_drain_done`, and an assertion `assert always (lane_cfg_change |-> packet_in_flight == 0)`. Receive-side errors went to zero. Million-transition randomised regression clean.
+>
+> **Lesson.** L0p is link-level DVFS, and its bug class is the same as CPU DVFS: **transitions must align to a transaction boundary.** When you build coverage for any new PM feature — link, CPU, NPU island — the must-have cell is *'what happens if the transition lands mid-traffic.'* Directed tests cover the FSM; the bugs live at the seam between the new PM action and the in-flight payload. Caught pre-Si — post-Si this would have shown as 'random link errors when load is light,' which is weeks of triage.
 
 ### 11b. Story 7 — NVMe HMB silent read corruption above WCTEMP (90 sec)
 
-> *Post-Si only. Pre-Si could not see this class.*
+> *Post-Si only — pre-Si cannot see this class because RTL is isothermal. The bug lives at the seam between the **thermal-throttle PM action** and the data path: a textbook 'PM coupling' failure.*
 
-> "Post-silicon characterisation of a Gen4 x4 NVMe SSD on our SoC EVM. `fio --rw=randrw --rwmixread=70 --bs=4k --iodepth=64 --verify=crc32c` running 72 hours at ambient 85 °C with the fan off. About once every 6–9 hours, verify failed — and the wrong data was *another LBA's bytes*, not random garbage. NVMe completion `SC=0`, PCIe AER clean, link Gen4 x4 the entire run. Composite Temperature was 84 °C, just above WCTEMP 82 °C; vendor counter `HMB_L2P_WRITEBACK_DEFERRED` was rising in lockstep with the failures. Never reproduced at 25 °C. Never reproduced pure-read or pure-write. Never reproduced on a DRAM-equipped SSD — only on the DRAM-less HMB SSD.
-
-> Walked the hypothesis ladder. HMB DRAM bit-flip ruled out — the wrong data was coherent, an LBA's worth of bytes, not random. Host PRP confusion ruled out — AER clean and the pattern correlated to LBA, not to host buffer address. FTL-bug-independent-of-temp ruled out — doesn't repro at 25 °C. ECC scrub disabled by throttle ruled out — SMART media-error counter zero. The vendor counter was the smoking gun.
-
-> Root cause was inside the SSD data path, not on the link. Above WCTEMP the throttle FSM defers HMB L2P writebacks to save controller power. But the SLC-reuse allocator clears its in-controller ‘SLC dirty’ bit on **fold completion**, not on **L2P writeback completion**. Sequence: write LBA L lands at SLC page P_slc, CQE returned. Fold P_slc to TLC completes, dirty bit cleared. Throttle engages — L2P writeback for L → P_tlc deferred, so HMB still maps L to P_slc. SLC allocator sees P_slc ‘clean’ and reuses it for a new write of LBA L'. Host now reads L; controller follows stale L2P, DMAs from P_slc which now holds L''s bytes. Two NVMe invariants violated — L2P update plus SLC reuse must be atomic w.r.t. subsequent reads, and Composite-Temperature throttle must affect performance only, never consistency.
-
-> Fix on SSD FW: clear SLC-dirty only after the L2P HMB writeback DMA completes; never defer writeback for a page eligible for reuse. Host-side workaround: lower HCTM thresholds via `nvme set-feature 0x10` so the host throttles before the SSD's internal defer kicks in — about 10–15 % sustained perf cost, but zero-corruption while we waited for FW.
-
-> Pre-Si gap: RTL is isothermal — Composite Temp doesn't exist in simulation — and throttle was modelled as a perf knob with no coupling to the L2P data path. Coverage fix: a UVM `throttle_during_mixed_rw_l2p_consistency` test that asserts thermal throttle during mixed RW and shadow-checks read-after-write, plus an SVA ‘SLC dirty bit clear implies L2P entry has been written to HMB.’ Lesson: silent data corruption with `SC=0` and clean AER means the link is honest; the lie is in the data path. Always pull vendor counters before blaming the visible layer."
+> **1. Observe.** Post-Si characterisation of a Gen4 x4 NVMe SSD on our SoC EVM. `fio --rw=randrw --rwmixread=70 --bs=4k --iodepth=64 --verify=crc32c` running 72 h at ambient 85 °C with the fan off. About once every 6–9 hours, verify failed — and the wrong data was *another LBA's bytes*, not random garbage. NVMe completion `SC=0`, PCIe AER clean, link Gen4 x4 the entire run.
+>
+> **2. Reproduce.** Corner-only — never at 25 °C, never pure-read or pure-write, never on a DRAM-equipped SSD. Repro window: ambient ≥ 85 °C, mixed RW, DRAM-less HMB part. That repro shape said 'thermal × data-path coupling' before any other hypothesis.
+>
+> **3. Isolate.** SMART showed Composite Temperature 84 °C, just above WCTEMP 82 °C — i.e. the device was actively throttling. Vendor counter `HMB_L2P_WRITEBACK_DEFERRED` was rising in lockstep with the failures. Two signals on the same axis — temperature.
+>
+> **4. Hypothesise.** Walked the hypothesis ladder and killed each one cheaply. (a) HMB DRAM bit-flip → ruled out, the wrong data was coherent LBA bytes, not random. (b) Host PRP confusion → ruled out, AER clean and pattern correlated to LBA, not to host address. (c) FTL bug independent of temp → ruled out, doesn't repro at 25 °C. (d) ECC scrub disabled by throttle → ruled out, SMART media-error counter zero. **Surviving hypothesis:** the throttle action defers HMB L2P writebacks, and something downstream isn't honouring that.
+>
+> **5. Test.** Forced the device into the same throttle state at lower ambient using a vendor debug knob; mixed-RW verify failed in the same shape. Disabled HMB writeback deferral via vendor mode; failures stopped. Two-way confirmation that the deferral is the trigger.
+>
+> **6. Root cause.** Above WCTEMP, the throttle FSM defers HMB L2P writebacks to save controller power. But the SLC-reuse allocator clears its in-controller 'SLC dirty' bit on **fold completion**, not on **L2P writeback completion**. Sequence: write LBA `L` lands at SLC page `P_slc`, CQE returned. Fold `P_slc` to TLC completes, dirty bit cleared. Throttle engages — L2P writeback for `L → P_tlc` deferred, so HMB still maps `L → P_slc`. SLC allocator sees `P_slc` 'clean' and reuses it for a new write of LBA `L'`. Host reads `L`; controller follows the stale HMB L2P entry, DMAs from `P_slc` which now holds `L'`'s bytes. Two NVMe invariants violated: L2P update + SLC reuse must be atomic w.r.t. subsequent reads, and **Composite-Temperature throttle must affect performance only, never consistency.**
+>
+> **7. Fix & verify.** SSD FW fix: clear SLC-dirty only after the L2P HMB writeback DMA completes; never defer writeback for a page eligible for reuse. Host-side workaround while we waited for FW: lower HCTM thresholds via `nvme set-feature 0x10` so the host throttles before the SSD's internal defer kicks in — ~10–15 % sustained perf cost, zero corruption. Pre-Si coverage gap closed with a UVM `throttle_during_mixed_rw_l2p_consistency` test that asserts thermal throttle during mixed RW and shadow-checks read-after-write, plus SVA 'SLC dirty clear ⇒ L2P entry written to HMB.'
+>
+> **Lesson.** Silent data corruption with `SC=0` and clean AER means the link is honest; the lie is in the data path. **PM bugs that couple to data-path correctness are the post-Si-only class** — pre-Si modelled throttle as a perf knob, with no coupling to L2P. Always pull vendor counters before blaming the visible layer.
 
 ### 12. Delivery discipline
 
