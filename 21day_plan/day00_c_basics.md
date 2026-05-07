@@ -16,7 +16,7 @@ This is still learn-by-doing:
 - fix every warning you understand,
 - explain the pointer movement out loud.
 
-Do this once before starting Day 1. Keep the daily career skim in [day00_revision_guide.md](day00_revision_guide.md) separate; that file is for interview narrative, not C practice.
+Do this once before starting Day 1. Keep the daily career skim in [INTERVIEW_REVISION_GUIDE.md → Appendix A](../INTERVIEW_REVISION_GUIDE.md#appendix-a--career-narrative-long-form-daily-skim) separate; that file is for interview narrative, not C practice.
 
 ---
 
@@ -125,15 +125,15 @@ These are basic C bugs, but they become silicon-validation bugs when they sit in
 
 ## Coding A — Embedded C basics
 
-Use the files in [`day00/`](day00/):
+Use the reference solutions in [`coding/solutions/`](coding/) (write your own first in [`coding/exercises/`](coding/exercises/)):
 
-- `reverse_list.c` — build and reverse a linked list.
-- `cycle_detect.c` — Floyd slow/fast pointer cycle detection.
-- `my_memcpy.c` — byte copy with no-overlap contract.
-- `my_memmove.c` — overlap-safe copy.
-- `struct_sizes.c` — inspect padding, alignment, and array decay.
+- `d00_reverse_list.c` — build and reverse a linked list.
+- `d00_cycle_detect.c` — Floyd slow/fast pointer cycle detection.
+- `d00_my_memcpy.c` — byte copy with no-overlap contract.
+- `d00_my_memmove.c` — overlap-safe copy.
+- `d00_struct_sizes.c` — inspect padding, alignment, and array decay.
 
-For the Day 0 pass, the canonical exercise set is exactly the five files above plus `Makefile`. Other C files in `day00/` are older scratch/reference drills for MMIO and CSR practice; ignore them unless a later day explicitly points you there.
+For the Day 0 pass, the canonical exercise set is exactly the five files above. The other Day 0 files (`d00_test_macros`, `d00_mmio`, `d00_poll`, `d00_csr_model`, `d00_csr_init`, `d00_bench`) are MMIO / CSR drills used by later days — ignore them until you reach Day 1.
 
 Type each exercise again from memory after one pass. The second pass is where the learning lands.
 
@@ -180,7 +180,7 @@ When allocation, locality, and deterministic latency matter, which is most embed
 
 ## Exit Check
 
-- [ ] Can compile and run every file in `day00/` with `make`.
+- [ ] Can compile and run every Day 0 file from [`coding/`](coding/) with `make sol-d00_<name>`.
 - [ ] Can explain array decay and why `sizeof(arr)` changes in a function.
 - [ ] Can write `my_strlen`, `my_memcpy`, and `my_memmove` from memory.
 - [ ] Can reverse a linked list and detect a cycle without notes.

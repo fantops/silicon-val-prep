@@ -33,16 +33,19 @@ Plan for ~2-3 hours per day:
 
 [Day 0 — Embedded-C basics ramp](day00_c_basics.md) is the one pure C-basics day before the 21-day system flow starts. It covers compile/run discipline, functions, arrays, strings, pointers, structs, linked lists, `memcpy`/`memmove`, and size/alignment checks. The goal is not mastery of all C; the goal is to arrive at Day 1 ready to type and debug MMIO-style C without freezing on syntax.
 
-The matching hands-on exercises live in [`day00/`](day00/). Build them with:
+All hands-on exercises — for Day 0 *and* Days 1–20 — live in a single folder: [`coding/`](coding/). One document, one source tree:
 
 ```sh
-cd day00
-make
+cd coding
+make sol-d00_my_memcpy   # build + run a reference solution
+make ex-d00_my_memcpy    # build + run YOUR attempt
 ```
+
+Read [coding/EXERCISES.md](coding/EXERCISES.md) — every problem statement, signature, driver, architect drill, and bug anchor is there in one place.
 
 ## Daily Skim Guide (do this every study day)
 
-[Day 0 — Career narrative + revision skim guide](day00_revision_guide.md) — 5-minute daily skim covering Introduction, current Microsoft work, Intel work, L&T work, why-I-left-Intel, per-company tailoring (Qualcomm CPU sysval / Intel NPU post-Si / Microsoft lateral), the 60-sec NPU explanation, and a 10-question Q&A bank. **Read this before every study block.** Use the 30-sec / 60-sec / 2-min versions in section 10 as warm-up.
+**Career narrative + daily revision skim** — moved to repo root: [INTERVIEW_REVISION_GUIDE.md → Appendix A](../INTERVIEW_REVISION_GUIDE.md#appendix-a--career-narrative-long-form-daily-skim). 5-minute daily skim covering Introduction, current Microsoft work, Intel work, L&T work, why-I-left-Intel, per-company tailoring (Qualcomm CPU sysval / Intel NPU post-Si / Microsoft lateral), the 60-sec NPU explanation, and a 10-question Q&A bank. **Read before every study block.**
 
 ## The Sequence — System-Flow Layers
 

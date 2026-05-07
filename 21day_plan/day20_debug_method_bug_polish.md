@@ -14,51 +14,15 @@ In the Layer map this is the **debug methodology + storytelling layer**.
 
 ## Deep Study Notes
 
-### 1. The 7-step debug framework
+### 1. Debug framework + triage signals
 
-```
-1. OBSERVE      collect symptoms — exact failure, registers, logs, PVT corner
-2. REPRODUCE    establish consistency — always? intermittent? specific corner?
-3. ISOLATE      narrow scope — binary search, single-step, swap components
-4. HYPOTHESISE  form a testable theory mapping symptom → mechanism
-5. TEST         design experiment that confirms or denies one hypothesis
-6. ROOT-CAUSE   identify the exact RTL / FW / silicon defect
-7. FIX & VERIFY implement; re-test across all affected scenarios
-```
+**7 steps:** Observe → Reproduce → Isolate → Hypothesise → Test → Root-cause → Fix & Verify.
 
-### 2. Reproducibility as a diagnostic signal
+**Repro rate = first triage signal:** 100% → functional (design/FW); intermittent → race/timing; PVT-corner only → V-droop/thermal/process; single-unit only → silicon defect.
 
-| Reproduction rate | What it usually means |
-|---|---|
-| 100% | functional bug — design or FW |
-| intermittent | timing issue, marginal silicon, race condition |
-| only at PVT corner | voltage droop, thermal margin, process sensitivity |
-| only on a specific unit | silicon defect, process outlier |
+**Isolation toolkit:** binary-search the test, JTAG single-step, swap SoC/board/PSU, freq/volt sweep, register-dump diff vs golden, disable prefetch/Turbo.
 
-Reproduction rate is the **first** triage signal. Always quantify it before chasing the bug.
-
-### 3. Isolation techniques
-
-| Technique | When |
-|---|---|
-| Binary-search test scope | shrink failing test until minimal repro |
-| Single-step via JTAG | pre-OS or low-level FW |
-| Swap components | isolate to SoC vs board vs PSU |
-| Frequency / voltage sweep | timing-margin vs functional |
-| Register-dump diff vs golden | "what changed?" |
-| Disable HW prefetch / Turbo | does the symptom move? |
-
-### 4. Hypothesis catalog (symptom → mechanism)
-
-| Symptom | Likely mechanism |
-|---|---|
-| Data corruption in memory | DMA address wrong, cache coherence, ECC failure |
-| System hang | deadlock, infinite poll, link down |
-| Intermittent crash at high temp | timing-margin erosion, V-droop |
-| Works in emul, fails in silicon | analog, timing closure, CDC race |
-| Reads return `0xFFFFFFFF` | PCIe link down, BAR not mapped, device in reset |
-| Page-fault count spike | host runtime memory lifecycle (Day 19) |
-| EP fallback / CPU% high | model build / EP version (Day 19) |
+**Symptom → mechanism cheatsheet:** corruption → DMA/coherence/ECC; hang → deadlock/link-down; hot-only crash → timing margin/V-droop; emul-pass silicon-fail → analog/CDC; `0xFFFFFFFF` reads → PCIe down / BAR unmapped / in-reset; page-fault spike or EP fallback → Day 19 runtime issues.
 
 ### 5. Validation stages — bug-cost ladder
 

@@ -179,23 +179,18 @@ This is why DMA buffers are aligned to a cache line and sized in multiples of on
 
 You will revisit this on Day 8.
 
-### 11. What this is **not** — the QNN/ORT distinction
+### 11. What this is **not** — vocabulary discipline
 
-The QNN/ORT page-fault story (Day 19) is **not** a cache-line bug:
+Don't conflate layers (interviewers catch this):
 
-- **Cache miss** = locality event, 64 B granularity, hardware-managed.
-- **Page fault** = translation/allocation event, 4 KB granularity, OS-managed.
+| Layer | Granularity | Managed by |
+|---|---|---|
+| CPU cache | 64 B line | hardware (locality, coherence) |
+| Virtual memory | 4 KB page | OS / MMU (translation, faults) — Day 6 |
+| IOMMU/SMMU | IO page | OS / device map — Day 7 |
+| VTCM | tile / buffer | NPU compiler/runtime — Day 18 |
 
-Saying "the page-fault regression was a cache miss problem" is a vocabulary mistake interviewers catch. The QNN/ORT bug was about virtual-memory allocation lifetime under a new context-loading path, not 64-byte locality.
-
-Likewise, **VTCM** in Hexagon HTP (Day 18) is **software-managed** local SRAM, not a CPU cache. Same word "memory," different layer.
-
-| Layer | Granularity | Managed by | Concern |
-|---|---|---|---|
-| CPU cache | 64 B line | hardware | locality, coherence |
-| Virtual memory | 4 KB page | OS / MMU | translation, faults |
-| IOMMU/SMMU | IO page | OS / device map | safe DMA |
-| VTCM | tile / buffer | NPU compiler/runtime | NPU local-store fit |
+The Day 19 QNN/ORT page-fault story is a *page-table* event (4 KB, OS-managed), **not** a cache-line miss. VTCM in Hexagon HTP is a *software-managed* local store, **not** a CPU cache.
 
 ---
 
