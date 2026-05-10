@@ -138,7 +138,7 @@ Same core narrative; emphasis adjusted to the team's product.
 - "I'm comfortable with the ARM platform: EL0-3, GIC interrupt routing, SMMU stream IDs, RPMh / PMIC, and PSCI for power state coordination."
 - "Hexagon's compute/vector/DMA pipeline is how Snapdragon X Elite-class NPUs reach their advertised peak TOPS; one stalled engine and the pipeline degrades toward serial execution."
 
-**Bug stories to lead with:** QNN page-fault (4) → Paint SR vs Camera (4b) → NVMe CSTS.RDY (2). Save ADR (1) and Core C6 (3) for if Intel-side comes up.
+**Bug stories to lead with:** Screen Region Detector / HMX tile (4d — vendor-FW escalation, your strongest current-job HW-pointed story) → QNN page-fault (4) → Paint SR vs Camera (4b) → NVMe CSTS.RDY (2). Save ADR (1) and Core C6 (3) for if Intel-side comes up.
 
 **Day-anchors to revise night-before:** Day 9 (ARM/Snapdragon vocab), Day 11 (NVMe), Day 16 (memory model), Day 18 (NPU stack), Day 19 (NPU bugs), Day 20 (debug + stories).
 
@@ -189,7 +189,7 @@ This is a **specialisation** of the generic Intel framing above for the Ireland 
 - "On the pre-Si side I've owned C-state / ADR / PCIe Gen6 flows on **Zebu**, written **C++ transactor** enhancements, and developed **Perspec** test content for cross-IP validation — so I can build infra, not just consume it."
 - "Spec → test case is how I work: I read the PCIe Gen6 FLIT mode and L0p sections, derived targeted scenarios for the transactor, and the same approach applies to NPU IP specs — read the architectural intent, then derive workloads that exercise the corner."
 
-**Bug stories to lead with:** ADR opcode-ordering (1) → Core C6 ARAT wake-loss (3) → QNN page-fault regression (4) → silent EP fallback (5). The first two prove pre-Si depth; the last two prove post-Si NPU depth. Save NVMe CSTS.RDY (2) for "any other bring-up experience?" follow-ups.
+**Bug stories to lead with:** ADR opcode-ordering (1) → Core C6 ARAT wake-loss (3) → Screen Region Detector / HMX tile (4d, current-job vendor-FW escalation) → QNN page-fault regression (4) → silent EP fallback (5). The first two prove pre-Si depth; 4d + 4 prove post-Si NPU depth on real silicon. Save NVMe CSTS.RDY (2) for "any other bring-up experience?" follow-ups.
 
 **Why Ireland specifically (sentence 4 of the "why this company" template):**
 
@@ -224,7 +224,7 @@ This is a **specialisation** of the generic Intel framing above for the Ireland 
 - "I built **EdgeOptimizer**, a platform-level profiler that surfaces EP-fallback, NPU vs CPU utilisation, and energy-per-inference regressions before launch."
 - "My agentic Copilot CLI workflow autoloads ETL traces, correlates CPU scheduler events with NPU EP events, and turns a 2-hour WPA triage into a 15-min report."
 
-**Bug stories to lead with:** QNN page-fault (4) → Paint SR vs Camera (4b) → silent EP fallback (5). The Intel/L&T stories are your foundation, not the headline.
+**Bug stories to lead with:** Screen Region Detector / HMX tile (4d, vendor-FW escalation) → QNN page-fault (4) → Paint SR vs Camera (4b) → silent EP fallback (5). The Intel/L&T stories are your foundation, not the headline.
 
 **Day-anchors:** Day 15 (perf counters / RAPL / multi-IP), Day 18-19 (NPU stack + bugs), Day 20 (stories + honest framing).
 
@@ -477,7 +477,7 @@ Same workload behaves differently on Intel/AMD/Qualcomm because of cache hierarc
 Structure: situation (what you were validating, what designer claimed) → your evidence (waveforms, repro, perf counters) → escalation (1:1 first, then data review with both managers, never email war) → outcome (root cause confirmed on either side — both are valid endings) → process change afterwards. Pick a real disagreement; "I always agreed" is a red flag.
 
 **Q6. "Tell me about a tough bug." — which one do you tell?**
-Default: pick from [Day 20](day20_debug_method_bug_polish.md). **Qualcomm CPU system validation:** lead with Core C6 wake-loss. **Intel NPU post-Si:** lead with QNN page-fault framed as method, then ADR for Intel-side credibility. **Microsoft lateral:** QNN page-fault → Paint SR → silent EP fallback.
+Default: pick from [Day 20](day20_debug_method_bug_polish.md). **Qualcomm CPU system validation:** lead with Core C6 wake-loss. **Intel NPU post-Si:** lead with Screen Region Detector / HMX tile (4d) for HW-pointed credibility, then ADR for Intel-side credibility. **Microsoft lateral:** Screen Region Detector / HMX tile (4d) → QNN page-fault → Paint SR → silent EP fallback.
 
 **Q7. "Why are you leaving Microsoft / your current role?"**
 "Not running from Microsoft — going toward vendor-side ownership. Microsoft gave me three-vendor breadth and the EdgeOptimizer/ETL discipline. The next step is to take that platform-validation rigor inside a vendor and own the silicon end-to-end — pre-Si through PV — instead of partnering with the vendor on triage."

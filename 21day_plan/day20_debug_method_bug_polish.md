@@ -135,6 +135,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 | 3 | **Core C6 wake lost on back-to-back ARAT** (Intel pre-Si) | 2-clock-domain race, CFC FIFO mid-reset | Day 14 |
 | 4 | **QNN/ORT page-fault + VM regression** (Microsoft + QC, platform) | host runtime memory lifecycle | Day 19 |
 | 4b | **Paint SR starves Camera preview** (Microsoft, platform) | single-queue NPU scheduler | Day 19 |
+| 4d | **Screen Region Detector ops drop off NPU on new HTP ROM** (Microsoft + QC, vendor-FW escalation) | EP-supports-it Section silicon-fits-it; HMX/VTCM tile geometry; per-op HTP compiler log as primary evidence | Day 18 / 19 |
 | 5 | (back-pocket) **Silent EP fallback after model rebuild** | QDQ fusion, EP assignment | Day 19 |
 | 6 | **PCIe Gen6 L0p re-scaling races a TLP in flight** (transactor enhancement, pre-Si) | new-feature spec literacy + transactor design + ordering at FLIT boundary | Day 10 |
 | 7 | **NVMe HMB silent read corruption above WCTEMP** (post-Si only) | thermal × data-path coupling that pre-Si cannot see | Day 11 |
@@ -238,6 +239,31 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 > **7. Fix & verify.** Fix path: framework-side priority lanes so high-priority frames interleave at tile boundaries. Until that lands: workload-policy gate that prevents concurrent NPU workloads when a real-time tenant (Camera, voice) is active.
 >
 > **Lesson.** A single hardware scheduler is fine until you have two real-time tenants on it. The framework must expose priority — otherwise the only PM-friendly answer is 'don't run them at the same time,' which costs both perf and battery.
+
+### 11c. Story 4c — Screen Region Detector: ops drop off NPU on a new HTP ROM (90 sec)
+
+> *Copilot+ PC, Snapdragon X Elite, Qualcomm QNN EP. The model is a **Screen Region Detector** — a small vision model the OS uses to identify interactive regions on the current display (button, text field, image, video surface) so downstream features (Click-to-Do, Recall, Live Captions, Studio Effects) know what to act on. It runs continuously while a user is on screen, so a latency or NPU-residency regression is felt across the whole AI-feature surface, not just one app.*
+>
+> *Honest framing: I don't author HMX kernels. What I own is the evidence chain that proves an op the EP claims to support is being rejected by the on-device HTP graph compiler at the model's real shape — because the silicon's HMX tile geometry and VTCM budget can't hold it under the new ROM's tile-mapper.*
+>
+> **1. Observe.** Across two consecutive vendor drops on the same EVT device, Screen Region Detector inference latency regressed ~8× (from ~3 ms to ~24 ms per frame). EdgeOptimizer EP-assignment counter showed `npu_op_pct` dropped from 96% → 71% on the regressed drop. Same ONNX file, same opset, same quantisation config — only the SDK + HTP ROM moved.
+>
+> **2. Reproduce.** Deterministic. Same EVT device, warm-up applied, same ambient. Repros every run, every region the detector evaluates.
+>
+> **3. Isolate.** Built the four-axis matrix (model × ORT × EP × SDK+ROM). ORT alone clean. EP alone clean. **SDK + ROM** axis is the only mover. So far the bisect looks like a normal SW regression — except the EP-assignment log told me *which ops fell off NPU*: a contiguous block of `DepthwiseConv2D → Mul → Add` in one branch of the detector. Other instances of the same op kind elsewhere in the model still ran on NPU. Different shape, same op kind → the bug is shape-specific, not op-specific.
+>
+> **4. Hypothesise.** EP advertises these ops as supported (`QnnHtp.dll` capability table confirmed). Two possible owners: (a) the host partitioner refused the subgraph wrongly, or (b) the partitioner offered the subgraph and the **on-device HTP graph compiler rejected it** at this shape under the new ROM. Different verdicts → different escalation paths.
+>
+> **5. Test.** Three pieces of evidence converged on (b):
+> - **`qnn-net-run --enable_logging`** on the regressed ROM: HTP compiler emitted `OP_CANNOT_FIT_IN_TILE: input H*W*C exceeds VTCM tile budget; falling back to host` for exactly the affected `DepthwiseConv2D` shape (channels = 1280, kernel = 5×5). Prior ROM emitted no such message for the same op.
+> - **`qnn-profile-viewer` per-op dump** on the prior ROM: the same op ran with 4 sub-tiles inside VTCM. New ROM didn't generate sub-tiles — it rejected the subgraph outright, and the partition shrank, taking the surrounding `Mul / Add` to CPU EP with it. That's how one rejected op cost three ops of NPU residency.
+> - **Manual shape sweep:** dropped channels from 1280 → 1024 → 768 in a test build. At 768 the new ROM accepted it and ran on NPU. The boundary was deterministic and shape-driven.
+>
+> **6. Root cause (escalated, not authored).** Tile-mapper change in the new HTP graph compiler. The prior ROM emitted a sub-tiling path for that `DepthwiseConv2D` shape that fit each sub-tile within VTCM; the new ROM's mapper had a stricter single-tile budget check that refused the op outright at this channel count. **The silicon's VTCM is fixed (8 MB on HTP v79) and the HMX tile geometry is fixed in hardware** — that's why no host SW knob fixes it; the SDK had to ship a workaround that re-enables sub-tiling for this pattern.
+>
+> **7. Fix & verify.** Vendor confirmed on their side and restored the sub-tiling path in a follow-up SDK + ROM drop. Rerun on the same EVT device returned `npu_op_pct` to 96% and Screen Region Detector latency to the ~3 ms baseline. **My side of the fix:** added two regression gates to EdgeOptimizer — (i) `npu_op_pct` per layer-class so any op-class drop is flagged at gate, (ii) automatic side-by-side diff of the HTP compiler log between drops so the next time a tile-mapper change demotes an op pattern to CPU, the gate fires before another team's perf bar regresses on Recall / Click-to-Do / Live Captions.
+>
+> **Lesson.** "EP supports it" and "the silicon can run it at this shape" are different claims. The first lives in a static op table on the host; the second depends on VTCM size, HMX tile geometry, and which sub-tiling paths the on-device compiler chose to enable. The version matrix tells you it's vendor-side; the **per-op HTP compiler log** tells you it's silicon/FW-side. Once you can show "this exact op rejected with this exact reason on this ROM but accepted on the prior ROM, at this exact shape," the escalation conversation is short.
 
 ### 11a. Story 6 — PCIe Gen6 L0p lane-scaling: a link-level DVFS bug (90 sec)
 
