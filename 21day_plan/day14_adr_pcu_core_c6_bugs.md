@@ -155,6 +155,46 @@ The "Why isn't S3M defeating the purpose?" interview question: S3M is a few KB a
 - **Perspec** for assertion-driven directed regressions on the offending sequence.
 - **Perfmon / RAPL counters** for residency vs telemetry cross-checks.
 
+### 7. Intel platform boot & reset flow (simple model)
+
+The principle: **rails before resets, resets before clocks, clocks before code.** Power up in stages, hand off to firmware, firmware hands off to OS. When something fails, ask *which stage was the last one that worked*.
+
+**Stage A — power and reset ladder (no code yet, hardware sequencing).**
+
+A small always-on island (battery-backed: RTC + wake logic) is the only thing alive in mech-off. When AC arrives, the platform brings up rails in order — always-on first, then standby, then main CPU/IO rails. Each rail must be stable before the next one enables, because downstream logic latches garbage if its inputs are floating. Once all rails are good, resets are released in order: standby reset first (so the platform power-management controller can boot from its own ROM), then the main platform reset (so PCH IPs and the CPU come out of reset together). The CPU's first instruction fetch happens only after every rail is good and every reset is released.
+
+*Why staged:* one bad rail or an early reset release means flops capture random data. You'd see "boots sometimes," cold-corner fails, or units that work warm but die from full power-off. The whole ladder exists to make boot deterministic across PVT.
+
+**Stage B — firmware brings the machine up.**
+
+The CPU starts in a tiny mode with no DRAM. First job: turn the cache into scratchpad memory so firmware has somewhere to run. Then **train DDR** — a slow, PVT-sensitive calibration that picks the right per-bit timing. After DDR is up, firmware copies itself into DRAM and runs the heavier work: bring up PCH IPs, **enumerate PCIe** (walk the bus, size BARs, assign addresses), build ACPI tables for the OS, set up SMM. Then it loads the OS bootloader and hands control over.
+
+*Why this order:* you can't run real code without DRAM, you can't enumerate PCIe before the controllers are out of reset, and the OS needs ACPI tables to know what hardware exists. Each step depends on the previous one being complete.
+
+**Stage C — OS runs, firmware sleeps.**
+
+OS is in charge. Firmware is mostly dormant — only called for variable storage, capsule updates, or system reset. **All the runtime power management lives here:** C-states, P-states, S0ix entry, PROCHOT, thermal throttling. This is where my work happened.
+
+**Reset types (only three you really need):**
+
+| Reset | What survives | When |
+|---|---|---|
+| **Cold** (full power cycle) | nothing | first boot, recovery — DDR retrains from scratch |
+| **Warm** (OS `reboot`) | trained DDR, firmware state | normal reboot — fast because DDR training is skipped |
+| **Per-device** (FLR for one PCIe function) | everything else | recover one bad device without rebooting the box |
+
+The big diagnostic split: **cold-only failures usually mean DDR training or rail ramp; warm-only failures mean state that wasn't restored properly.**
+
+**Where my PnP work fits:**
+- C-state / S0ix / PROCHOT bugs all live in Stage C (OS up). The PCU/ADR/Core-C6 bugs in §3-4 are Stage C bugs.
+- "Boots warm but not from cold" → Stage A or DDR training. Warm boot reuses cached training, so it hides the bug.
+- "S0ix won't enter" → Stage C, but the cause is usually one IP (often a PCIe link) not idling, blocking the PMC from dropping the rail.
+
+**Three-way first-pass triage:**
+- **No display, no POST code** → Stage A (rails / reset ladder). Scope the rails.
+- **POST progresses but hangs before OS** → Stage B (DDR training, PCIe enum, or firmware drivers). Read BIOS log / serial.
+- **OS boots, dies at idle or under thermal load** → Stage C. `turbostat`, throttle-reason MSR, PMC trace.
+
 ---
 
 ## Bugs in this Topic (the two stories you must own)

@@ -206,40 +206,23 @@ POR → PBL (ROM, EL3, validates SBL signature, loads to SRAM)
 
 **Secure boot in one slide:** ROM holds an immutable public key (or hash) — the *root of trust*. Each stage verifies the next stage's signature before jumping. Anti-rollback fuse counters block loading older signed images with known vulnerabilities. TrustZone establishes secure-world isolation for keys / DRM / biometrics.
 
-### 12a. Where PCIe sits in the boot flow (system-level anchor for Day 10)
+### 12a. Where PCIe sits in the boot flow (anchor for Day 10)
 
-PCIe doesn't appear at one point — it's touched in **four distinct phases**, and each phase has its own pre-Si failure class. This is the map every platform validator should be able to draw:
+PCIe is touched in **four phases**, each with its own failure class:
 
-```
-POR ─► PBL ─► SBL/XBL ─► ATF ─► ABL ─► Kernel ─► userspace
-                │            │       │       │
-                │            │       │       └── (D) hot-plug, FLR, runtime PM
-                │            │       │
-                │            │       └────────── (C) full enumeration, BAR assign,
-                │            │                       driver bind, MSI-X, ASPM enable
-                │            │
-                │            └────────────────── (B) PHY/PLL bring-up, REFCLK,
-                │                                    PERST# de-assert, LTSSM → L0,
-                │                                    minimal CfgRd to confirm Vendor ID
-                │
-                └─────────────────────────────── (A) PCIe controller IP out of reset,
-                                                     fuses/straps latched (Gen, lane map,
-                                                     Vendor/Device ID, class code)
-```
+- **A — IP reset release** (PBL/SBL early): controller out of reset, fuses/straps latched (Gen, lane width, Class code). Bug shape: wrong strap → wrong Class → wrong driver binds.
+- **B — PHY + LTSSM bring-up** (SBL/XBL, pre-DRAM-OS): PERST# released, REFCLK on, LTSSM Detect→Polling→Config→L0, first CfgRd reads Vendor ID. Bug shape: stuck Polling (refclk/term), width/speed downgrade.
+- **C — Enumeration + BAR + bind** (UEFI/ABL/kernel): depth-first scan, BAR sizing, bridge windows, MSI-X, ASPM cap. Bug shape: bridge window too small, cap-list corruption.
+- **D — Runtime** (kernel + driver): ASPM L1.x, FLR, hot-plug, AER, runtime PM. Mostly **post-Si**. Bug shape: L1.2 not advertised → PkgC6 never enters.
 
-| Phase | Who runs it | What PCIe is doing | Pre-Si test vehicle | Pre-Si failure classes |
-|---|---|---|---|---|
-| **A — IP reset release** | PBL / SBL early | Controller out of reset, fuses & straps latched (max Gen, lane width, BDF roots, Class:Sub:ProgIF), REFCLK gated on | RTL unit-sim of PCIe IP + fuse/strap testbench | Wrong strap value → wrong Class code post-enum; reset de-asserted before REFCLK stable → LTSSM stuck Detect; SerDes calib not run before Polling |
-| **B — PHY + LTSSM bring-up** | SBL/XBL (still pre-DRAM-OS) | PERST# released to EP, REFCLK on, LTSSM Detect → Polling → Config → L0; **first CfgRd reads Vendor ID** to confirm link | Full-die emulation (Zebu/Palladium) with EP BFM | LTSSM stuck Polling (refclk wrong / termination wrong); width downgrade in Config (lane map strap mis-routed); `Trhfa` violated → first CfgRd returns `0xFFFF` even though link is up; speed stuck at Gen1 (EQ phase 2/3 fails) |
-| **C — Enumeration + BAR + bind** | UEFI / ABL or Linux kernel `pci_scan_root_bus()` | Depth-first walk: probe Vendor ID, read Header Type, recurse bridges, size BARs, write bridge Memory Base/Limit, walk capability list, enable Bus Mastering, allocate MSI-X vectors, enable ASPM if cap present | Virtual platform Linux + KVM + EP model; or emulation with a real `nvme.ko` driver | Bridge Memory Base/Limit too small → EP enumerates but BAR unreachable; Header Type bit[7] strap wrong → fn1+ invisible; Class:Sub:ProgIF wrong fuse → wrong driver binds; cap-list pointer corrupt → MSI-X never enumerated; CfgRd burst dominates boot time |
-| **D — Runtime** | Linux kernel + driver | ASPM L0s/L1/L1.x entry/exit, FLR, hot-plug add/remove, AER service, runtime PM (D0↔D3hot↔D3cold), PkgC6 dependency on L1.2 | Virtual platform + fault-injection harness; very limited pre-Si; mostly a **post-Si** discovery surface | L1.2 not advertised → PkgC6 never enters; AER UR storm during enumeration of unimplemented function; FLR doesn't restore BAR → driver re-bind fails; surprise removal during DMA → IOMMU fault on stale ATC entry |
+**Pre-Si vs post-Si line:** A/B catchable pre-Si (RTL + emulation); C partly (virtual platform); D fundamentally post-Si (analog timing, real PMIC droop).
 
-**Pre-Si vs post-Si gap by phase (the line that lands):**
-- **A and B** — almost entirely catchable pre-Si (RTL + emulation). If silicon stalls in Detect/Polling, that's a *coverage hole*, not a "post-Si finds it" success.
-- **C** — partly pre-Si (virtual-platform Linux can run real PCI core code), but bridge-window math and multi-function corner cases are first found on EVM with real OS + real EP IP.
-- **D** — fundamentally post-Si. ASPM exit timing, real PERST# de-bounce, real PMIC droop, real EP firmware races. Pre-Si can model the *FSM*, never the *analog timing*.
+**Boot-time PCIe triage cheat:**
+- No PCIe devices in OS log → phase B (link never trained).
+- Devices enumerate, driver doesn't load → phase C (BAR / bridge / class code).
+- Works at boot, breaks at idle → phase D (ASPM / runtime PM).
 
-**Boot-time PCIe debug cheat:** if the OS log shows no PCIe devices at all, you're in phase B (link never came up). If devices enumerate but the driver doesn't load, you're in phase C (BAR/bridge/class code). If the device works at boot but breaks at idle, you're in phase D (ASPM / runtime PM). This three-way split is how I'd structure first-pass triage on a new SoC.
+> Intel-flavour boot/reset ladder (7 hardware phases + UEFI PI 7 firmware phases) lives in [Day 14 §7](day14_adr_pcu_core_c6_bugs.md#7-intel-platform-boot--reset-flow-the-7-phase-view).
 
 ---
 
