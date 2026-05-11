@@ -44,85 +44,29 @@ Design ── Sim (Hz-kHz) ── Emul (MHz) ── FPGA (10-100 MHz) ── Pos
 
 Cost-of-finding rises ~10×/stage. A bug found in sim is "free"; one found post-tape-out can delay a product cycle.
 
-### 5a. Coverage plan — Power Management across pre-Si and post-Si (the one I lived)
+### 5a. Coverage plan — CPU power management + PCIe link power (interview shape)
 
-> *Why this matrix exists alongside Section 5a:* every role I've owned reduces to a power-management surface — **L&T/SanDisk NVMe SSD** (APST / ASPM / HMB / WCTEMP / throttle), **Intel pre-Si Cambria Xeon** (PCU opcode flow, Core C6, PkgC, ADR, S0ix gating), **Microsoft NPU on Copilot+ PC** (HTP power islands, modem-style duty-cycling, thermal headroom shared with CPU/GPU). When an interviewer asks "how do you build coverage for PM," I answer with this matrix because I've actually filled cells in it.
+> *Compact version for interview prep. Pick two cells you've actually owned (CPU C-state + PCIe ASPM) and answer "how do you build coverage" with the three-axis frame, then drop into the cell.*
 
-**The PM coverage frame — three orthogonal axes:**
+**Three-axis PM coverage frame:**
 
-```
-                  STATE SPACE                          TIME / TRANSITION                    ENERGY / RESIDENCY
-              (where can we be?)                  (how do we get between states?)        (does it pay back?)
-              ────────────────────                 ──────────────────────────────         ──────────────────────
-   Pre-Si    enumerate every P/C/D/L state,        every entry/exit FSM,                 modelled wake cost vs
-             every PkgC + per-core C combo,        every voltage/freq transition,         residency budget,
-             every ASPM/APST level,                handshakes (PCU↔core, PCU↔PMIC,        break-even check is
-             every PMIC rail collapse order        RPMh↔CPRSS, host↔NVMe APST)            a coverage cell
+1. **State space** — every state enumerated (P-states, C-states, PkgC, ASPM L0s/L1/L1.1/L1.2).
+2. **Transitions** — every entry/exit FSM, every handshake (PCU↔core, PCU↔PMIC, CLKREQ#/PERST#).
+3. **Residency / energy** — does the state actually pay back at PVT under real workload?
 
-   Post-Si   real silicon residency at PVT,        wake latency at -40/+25/+85/+105 °C,   battery-life under
-             rail current at every state,          droop at every transition,             real workload mix,
-             leakage variance lot-to-lot,          1000× S0ix/S3/S4 cycles,              perf-per-watt vs
-             thermal-coupled state shifts          throttle entry/exit timing             previous gen
-```
+Rule of thumb: **pre-Si owns state + transitions** (FSMs are enumerable, no excuse to escape). **Post-Si owns residency + everything that couples to PVT** (droop, leakage, thermal feedback).
 
-**Coverage matrix — fill every cell, per project:**
-
-| PM axis | Pre-Si (RTL / emul / virtual platform) | Post-Si (A0 on EVM / reference platform) | Gate that says "you're done" | Where I've owned it |
-|---|---|---|---|---|
-| **CPU P-states (DVFS)** | Directed P0…Pn ladder; every Δf transition; PCU opcode trace; voltage-rail handshake with PMIC model; turbo entry on multi-core load | Real workload P-state residency; turbo headroom at PVT; V-f curve characterisation; PROCHOT# on droop | All P-state transitions covered pre-Si; perf/W within ±5% of model post-Si | Intel Cambria pre-Si (PCU flow); MS NPU DVFS-equivalent (HTP voltage corners) |
-| **CPU C-states (per-core)** | C0/C1/C1E/C6/C7/C10 entry/exit FSM; LAPIC ARAT wake; cross-core dependency (last-core-out → PkgC eligible); CFC FIFO clock-domain crossings | C-state wake latency at PVT corners; idle-injection sweeps; C6 wake under back-to-back ARAT (my Story 3); residency at idle vs busy-idle | Every per-core FSM transition covered pre-Si; wake latency in spec at all 4 corners post-Si | Intel Cambria pre-Si (Core C6 / CFC FIFO bug — Story 3) |
-| **Package C-states (PkgC)** | PkgC2/C6/C10 entry conditions; PCU last-level coordination; uncore/LLC flush ordering; PCIe L1.2 dependency walk; PCU opcode log per entry | PkgC10 idle current in spec; S0ix entry with PCIe in L1.2 + USB suspended; 1000× cycles; wake from any of N sources | PCU opcode coverage pre-Si; idle current + wake-latency targets post-Si | Intel Cambria pre-Si (PkgC entry, ADR coupling) |
-| **System sleep (S0ix / S3 / S4)** | S0ix LPI counters; constraint walk (every block must be in low-power); S3 register save/restore; S4 hibernate page-out path | S0ix residency under realistic idle (browser idle, screen-on idle, modem-connected); 1000× S3/S4 cycles zero data loss; resume time | All entry constraints covered pre-Si; residency + zero-loss post-Si | Intel pre-Si (S0ix gating); MS Copilot+ PC platform validation |
-| **Clock gating (CG)** | Per-block CG enable matrix; CG-on / CG-off functional equivalence; glitch-free clock OR; reset-domain interactions | Real CG residency telemetry; perf delta CG-on vs CG-off; no functional regression at PVT | CG matrix 100% covered pre-Si; zero functional delta post-Si | Intel pre-Si (PCU clock-gating opcode sequencing) |
-| **Power gating (PG) / power islands** | Per-island PG entry/exit FSM; isolation cell coverage; retention vs cold-start; wake-up sequencer; rail collapse + restore order | Real leakage savings at +85 °C; wake latency from PG; data integrity across PG cycles | PG FSM + isolation 100% pre-Si; leakage targets met at corners post-Si | Intel pre-Si (PG islands); MS NPU (HTP power islands per inference) |
-| **Voltage / rail management (PMIC)** | PMIC handshake model (RPMh / SVID / PCU↔PMIC); rail-up/down ordering; droop response model; AVS/adaptive voltage scaling FSM | Real rail current per state; V-droop at transitions; PMIC firmware regression; lot-to-lot variance | Handshake protocol 100% pre-Si; rail current within spec post-Si | Intel pre-Si (PCU↔PMIC opcode sequencing — anchor for ADR Story 1) |
-| **Thermal control loop** | **Pre-Si is isothermal — coverage is throttle-FSM only:** every throttle level, hysteresis FSM, sensor-to-throttle path, PROCHOT#/HOT# assertion | Real -40/+25/+85/+105 °C chamber; throttle entry/exit timing; perf-under-throttle correctness; 72 h soak; control-loop oscillation check; per-zone sensor calibration | Throttle FSM 100% pre-Si; control loop stable + zero corruption at all corners post-Si | NVMe SSD WCTEMP/CCTEMP (L&T/SanDisk); Intel PROCHOT path; MS NPU shared thermal budget with CPU/GPU |
-| **PCIe link power (ASPM L0s/L1/L1.1/L1.2)** | Every ASPM entry/exit FSM; LTSSM × ASPM cross-product; PkgC↔L1.2 dependency walk; CLKREQ# handshake | ASPM under load × 24 h; L1.2 exit < 200 µs at PVT; per-rail current in each state; PMIC droop on exit; surprise removal in low-power | Every ASPM cap covered pre-Si; residency + wake-latency targets post-Si | Intel pre-Si (PCIe transactor — Story 6 anchor); NVMe SSD ASPM × APST cross-product (L&T/SanDisk) |
-| **NVMe device power (APST / PS0…PS4)** | APST autonomous transition FSM; host-driven power-state set; idle-timer coverage; PS-transition mid-IO; latency vs power table sanity | APST residency under real fio mix; PS0↔PS4 wake latency; data integrity across transitions; ASPM × APST interaction; battery-impact under filesystem idle | All PS transitions + APST FSM covered pre-Si; per-state current + zero data loss post-Si | **L&T/SanDisk NVMe SSD validation — owned cell** |
-| **NVMe HMB power-coupling** | HMB allocation / release FSM; HMB present vs absent equivalence; L2P writeback ordering when HMB throttled | HMB behaviour above WCTEMP (my Story 7); HMB integrity across S3/S4; HMB after surprise PERST# | FSM coverage pre-Si; thermal-coupled corruption check post-Si | **L&T/SanDisk DRAM-less NVMe SSD (my Story 7)** |
-| **ADR / power-loss flow** | PLI assertion → PCU opcode sequence → IO quiesce → WPQ flush → DDR self-refresh; opcode-ordering assertions; ack-handshake check | Real PSU collapse on EVM; persistence verify across N power cycles; capacitor sizing margin | Opcode-sequence FSM + ordering 100% pre-Si; persistence verify post-Si | **Intel Cambria pre-Si — owned cell (my Story 1)** |
-| **NPU / accelerator power** | Per-tile PG FSM; voltage corner coverage; DMA-quiesce before island collapse; runtime↔FW power handshake | HTP residency across inference mix; thermal-throttle entry under sustained AI workload; battery impact of always-on NPU features; shared thermal budget with CPU/GPU | FSM coverage pre-Si; residency + thermal-share targets post-Si | **MS Copilot+ PC NPU (QNN/ORT/HTP power) — owned cell** |
-| **Wake sources / latency budget** | Every wake source × every sleep state matrix; latency budget per source; wake-coalescing FSM | Real wake latency per source at PVT; wake-storm under modem/Wi-Fi traffic; spurious-wake telemetry | All sources × states pre-Si; latency targets post-Si | Intel pre-Si (wake fabric); MS Copilot+ PC modem-standby |
-
-**Phasing — PM-only, post-Si, in the order I'd actually run it:**
-
-| # | Phase | What runs | What it catches |
+| PM axis | Pre-Si coverage | Post-Si coverage | Done-when |
 |---|---|---|---|
-| 0 | Smoke | Boot to OS, all rails up, CPU offlines/onlines clean, basic suspend/resume | Gross PM bringup breaks |
-| 1 | Per-state functional | Force every C-state, P-state, ASPM level, APST PS; verify entry + exit + functional integrity | FSM gaps the pre-Si missed |
-| 2 | Residency targets | Idle the platform; verify PkgC10, S0ix, ASPM L1.2, APST PS4 residency hits target % | Mis-budgeted constraints (one block keeping the package awake) |
-| 3 | Wake latency | Wake from every source × every state; measure latency at -40/+25/+85/+105 °C | Wake-path SI / PMIC droop / clock-relock margin |
-| 4 | Cycling endurance | 1000× S0ix, 1000× S3, 1000× S4; `fio --verify` survives all of them | Cumulative state-machine drift, retention bugs, leak-after-cycle |
-| 5 | Thermal × power coupling | -40 / +25 / +85 / +105 °C × 72 h with full PM enabled; verify throttle entry/exit + data integrity | Bugs that only exist when state-machine + temperature interact (my Story 7) |
-| 6 | Battery / perf-per-watt | Realistic workload mix (browser idle, video, AI inference, modem-connected standby); measure mWh per workload | Regression vs previous gen / vs spec floor |
-| 7 | Negative / abuse | Surprise PERST# in L1.2; rail collapse mid-S3; thermal trip during ADR; wake-storm; concurrent S0ix entry + AER inject | Corner bugs at the seam between PM and protocol |
+| **CPU C-states (per-core)** | C0/C1/C1E/C6/C10 entry+exit FSM; LAPIC ARAT wake; cross-core last-core-out → PkgC eligible; CFC FIFO clock-domain crossings | Wake latency at −40/+25/+85/+105 °C; idle-injection sweeps; residency at idle vs busy-idle | All FSM transitions covered pre-Si; wake latency in spec at all 4 corners post-Si |
+| **PCIe link power (ASPM L0s/L1/L1.1/L1.2)** | Every ASPM entry/exit FSM; LTSSM × ASPM cross-product; PkgC↔L1.2 dependency; CLKREQ# handshake | ASPM under load × 24 h; L1.2 exit < 200 µs at PVT; per-rail current per state; surprise removal in low-power | Every ASPM cap covered pre-Si; residency + wake-latency targets post-Si |
 
-**Pre-Si exit gates (PM):**
-- Every P / C / Pkg-C / ASPM / APST / PG FSM 100% state + transition coverage
-- PMIC handshake protocol 100% covered (every opcode, every ack path)
-- Throttle FSM 100% (sensor → throttle → recovery), even though temperature itself is not modelled
-- ADR / power-loss opcode ordering covered with assertions
-- Wake-source × sleep-state matrix 100%
+**The seam where PM bugs hide:** intersections, not single axes.
 
-**Post-Si exit gates (PM, PRQ-ready):**
-- All residency targets met at idle and busy-idle (PkgC10 / S0ix / ASPM L1.2 / APST PS4)
-- All wake latencies in spec at -40 / +25 / +85 / +105 °C
-- 1000× S0ix / S3 / S4 with zero data loss, zero hang, zero spurious wake outside budget
-- 72 h soak at +85 °C with full PM enabled — zero corruption, throttle clean, no oscillation
-- Battery / perf-per-watt regression vs previous gen ≤ 0%
-- 0 P0/P1 PM escapes; ≤ 3 P2 with documented workaround
+- **C-state × clock domain** → Story 3 (Core C6 wake lost when CFC FIFO mid-reset).
+- **ASPM × PkgC dependency** → classic "S0ix won't enter because one PCIe EP refuses L1.2."
 
-**The seam where PM bugs hide (and why this matrix is the right shape):**
-
-PM bugs are almost never in *one* axis — they live at intersections that pre-Si treats as separate cells:
-
-- **C-state × clock domain** → my Story 3 (Core C6 wake lost when CFC FIFO mid-reset)
-- **Power-loss × FW opcode order** → my Story 1 (ADR WPQ flush before IO quiesce ack)
-- **Thermal × data path** → my Story 7 (HMB silent corruption above WCTEMP)
-- **ASPM × PkgC dependency** → classic "S0ix won't enter because one EP refuses L1.2"
-- **APST × ASPM cross-product** → device + link both want to sleep, host policy doesn't agree
-
-**The line that lands the PM-flavoured offer:** "PM coverage is three axes — *state space*, *transition / time*, *residency / energy*. Pre-Si owns the first two completely: if a PM state or a PM transition lives in an enumerable FSM, it should never escape into silicon. Post-Si owns the third axis and everything that couples to PVT — real droop at a transition, real residency under a real workload, real thermal feedback into a state machine that pre-Si modelled as isothermal. The hard PM bugs all sit at the seam: C-state × clock-domain, power-loss × opcode-order, thermal × data-path. I've owned cells across the matrix on three different products — Intel pre-Si PCU/ADR/Core-C6, NVMe APST/ASPM/HMB at L&T and SanDisk, NPU power on Copilot+ PC at Microsoft — so when I look at a new PM cell, I know which axis it lives on and which seam to instrument first."
+**The line that lands the PM-flavoured offer:** "PM coverage is three axes — state space, transitions, residency. Pre-Si owns the first two; post-Si owns the third plus anything that couples to PVT. The hard PM bugs sit at the seam — C-state × clock-domain, ASPM × PkgC dependency — so I instrument both sides of the seam first."
 
 ### 6. The 5 + 1 polished bug stories
 
