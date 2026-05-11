@@ -24,27 +24,11 @@ In the Layer map this is the **debug methodology + storytelling layer**.
 
 **Symptom → mechanism cheatsheet:** corruption → DMA/coherence/ECC; hang → deadlock/link-down; hot-only crash → timing margin/V-droop; emul-pass silicon-fail → analog/CDC; `0xFFFFFFFF` reads → PCIe down / BAR unmapped / in-reset; page-fault spike or EP fallback → Day 19 runtime issues.
 
-### 5. Validation stages — bug-cost ladder
+### 2. Validation stages — bug-cost ladder
 
-```
-Design ── Sim (Hz-kHz) ── Emul (MHz) ── FPGA (10-100 MHz) ── Post-Si (GHz)
-            │                │              │                    │
-            │                │              │                    └── analog, PVT, real workload
-            │                │              └── SRAM timing, full SW stack
-            │                └── HW/FW integration bugs (transactor-based)
-            └── functional + protocol bugs (full visibility)
-```
+Cost-of-finding rises ~10×/stage: **RTL sim** (functional / protocol, full visibility) → **Emulation** (HW × FW integration, real FW boots) → **FPGA proto** (full SW stack at MHz) → **Post-Si** (analog, PVT, real workload). A bug found in sim is "free"; one found post-tape-out can delay a product cycle. The detailed phase view lives in Section 4.
 
-| Stage | Catches | Misses |
-|---|---|---|
-| **RTL sim** | functional, protocol; full visibility | analog, real timing, real OS |
-| **Emulation (Zebu/Palladium)** | HW/FW integration (real FW boots) | analog, process corners, transactor latency |
-| **FPGA proto** | full SW stack at MHz | SRAM timing, real silicon analog |
-| **Post-Si** | analog, process corner, V-droop, thermal, real interference | nothing — it's reality |
-
-Cost-of-finding rises ~10×/stage. A bug found in sim is "free"; one found post-tape-out can delay a product cycle.
-
-### 5a. Coverage plan — CPU power management + PCIe link power (interview shape)
+### 3. Coverage plan — CPU power management + PCIe link power (interview shape)
 
 > *Compact version for interview prep. Pick two cells you've actually owned (CPU C-state + PCIe ASPM) and answer "how do you build coverage" with the three-axis frame, then drop into the cell.*
 
@@ -68,7 +52,39 @@ Rule of thumb: **pre-Si owns state + transitions** (FSMs are enumerable, no excu
 
 **The line that lands the PM-flavoured offer:** "PM coverage is three axes — state space, transitions, residency. Pre-Si owns the first two; post-Si owns the third plus anything that couples to PVT. The hard PM bugs sit at the seam — C-state × clock-domain, ASPM × PkgC dependency — so I instrument both sides of the seam first."
 
-### 6. The 5 + 1 polished bug stories
+### 4. Coverage by phase — what to close where (PCIe ASPM L1.2 as anchor)
+
+> *Principle: each phase has a cheapest bug class. Close it there or pay 10× next phase. Use ASPM L1.2 as the worked example; the same shape applies to any feature.*
+
+| Phase | Platform | What I close here | What I cannot see yet |
+|---|---|---|---|
+| **RTL simulation** (verif) | Simulator | L1SS FSM 100% state + transition cov; every reg bit; CLKREQ# handshake; LTSSM × ASPM cross; protocol assertions | PHY electricals, FW, real timing |
+| **Subsystem** | FPGA | Block + neighbours at speed; real-ish FW; driver smoke; 1 h soak | analog PHY, PVT |
+| **SoC validation** | Emulation | Full SoC + FW + driver; L1.2 under PkgC10 (seam); multi-EP; AER inject | wallclock, electrical |
+| **OS boot** | Emulation | OS enumerates, ASPM enable path, S3 cycles, surprise PERST# | real residency / latency |
+| **Post-Si bring-up** | A0 eng board | Link trains with L1.2 advertised; BIOS cap correct; CLKREQ# routing; analyser confirms entry | PVT, long soak |
+| **Functional** | Eng board | Full matrix (gen × width × wake × backdrop); hot-plug; multi-EP concurrency | thermal corners |
+| **Power & perf** | Eng board | L1.2 exit latency p50/p99 vs spec; per-rail current; PkgC10 break-even; 24 h ASPM-on traffic | compliance edge, lot variance |
+| **Compliance** | SIG test setup | PCIe-SIG L1SS / LTR / ASPM patterns; plug-fest interop ≥ N partners | system-level corners |
+| **Thermal / PVT** | Chamber | Exit latency at -40/+25/+85/+105 °C; 72 h soak; lot-to-lot on ≥ 3 samples; throttle × L1.2 interaction | — |
+| **PRQ** | — | 0 P0/P1; ≤ N P2 with workaround; all gates green; errata frozen | — |
+| **Sign-off** | — | Architect / val / FW / Si / PM sign; explicit bounded waivers | — |
+
+**Shift-left rule — bug class → cheapest phase:**
+
+- FSM gap / illegal transition / register field → **RTL sim**
+- FW ↔ HW handshake, ordering → **emulation SoC**
+- OS / driver enable path → **emulation OS-boot**
+- Board routing (CLKREQ#, REFCLK) → **post-Si bring-up**
+- Exit latency vs spec, residency → **power & perf**
+- Partner interop → **compliance / plug-fest**
+- Thermal coupling, lot variance → **thermal soak**
+
+**Seam tests (planned explicitly, not hoped-for):** ASPM × PkgC; ASPM × thermal-throttle; L1.2 × surprise PERST#; LTR mis-set × host PkgC entry refused.
+
+**The line:** "Coverage is phased — every bug class has a cheapest phase. Enumerable things (FSM, registers, ordering) close in RTL sim; FW × HW closes in emulation; analog, residency and PVT close post-Si. The bugs that escape live at seams between phases, so I plan the seam tests explicitly. For ASPM L1.2 that means L1SS covergroup pre-Si, PkgC10 co-entry on emulation, exit latency on engineering board, lot-to-lot in the chamber."
+
+### 5. The bug-story bank
 
 These are the stories you carry into a loop. Each is a Day 1-19 fundamental put in narrative form.
 
@@ -79,12 +95,12 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 | 3 | **Core C6 wake lost on back-to-back ARAT** (Intel pre-Si) | 2-clock-domain race, CFC FIFO mid-reset | Day 14 |
 | 4 | **QNN/ORT page-fault + VM regression** (Microsoft + QC, platform) | host runtime memory lifecycle | Day 19 |
 | 4b | **Paint SR starves Camera preview** (Microsoft, platform) | single-queue NPU scheduler | Day 19 |
-| 4d | **Screen Region Detector ops drop off NPU on new HTP ROM** (Microsoft + QC, vendor-FW escalation) | EP-supports-it Section silicon-fits-it; HMX/VTCM tile geometry; per-op HTP compiler log as primary evidence | Day 18 / 19 |
+| 4d | **Screen Region Detector ops drop off NPU on new HTP ROM** (Microsoft + QC, vendor-FW escalation) | EP-supports-it vs silicon-fits-it; HMX/VTCM tile geometry; per-op HTP compiler log as primary evidence | Day 18 / 19 |
 | 5 | (back-pocket) **Silent EP fallback after model rebuild** | QDQ fusion, EP assignment | Day 19 |
 | 6 | **PCIe Gen6 L0p re-scaling races a TLP in flight** (transactor enhancement, pre-Si) | new-feature spec literacy + transactor design + ordering at FLIT boundary | Day 10 |
 | 7 | **NVMe HMB silent read corruption above WCTEMP** (post-Si only) | thermal × data-path coupling that pre-Si cannot see | Day 11 |
 
-### 7. Story 1 — PCU / ADR opcode-ordering hang (90 sec)
+### 6. Story 1 — PCU / ADR opcode-ordering hang (90 sec)
 
 > *Pre-Si, Cambria Xeon on Zebu emulation. ADR = Async DRAM Refresh: when AC power drops, on-board capacitors hold the rails just long enough for PCU firmware to push DRAM into self-refresh so writes survive the outage. A power-management flow under the worst possible deadline.*
 
@@ -104,7 +120,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** Opcode-level FW sequences in PM flows need explicit handshakes, not implicit ordering. Pre-Si caught it because Zebu shows opcode granularity — post-Si this is a 'random ADR fail' that takes weeks to triage.
 
-### 8. Story 2 — NVMe CSTS.RDY never asserts (90 sec)
+### 7. Story 2 — NVMe CSTS.RDY never asserts (90 sec)
 
 > *Polaris NVMe controller bring-up in ROM mode. The boot path that brings the device out of its lowest power state into operational — the very first PM transition the host drives.*
 
@@ -124,7 +140,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** When `CSTS.RDY` hangs on the first PM transition out of reset, suspect the host before the device — `AQA`, `ASQ/ACQ` physical address, contiguous-buffer requirement. Silent-fail FW is a coverage gap, not a feature.
 
-### 9. Story 3 — Core C6 wake lost on back-to-back ARAT (90 sec)
+### 8. Story 3 — Core C6 wake lost on back-to-back ARAT (90 sec)
 
 > *Pre-Si Cambria. Core C6 = the deepest per-core sleep state — core is power-gated, PLL off, caches flushed; wake requires a full power-up + PLL relock. The classic PM bug surface: a wake event that arrives *during* the exit transition.*
 
@@ -144,7 +160,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** 2-clock-domain races on power-gated blocks are the classic 'clean in unit sim, fails in full-die emul' class. Unit testbenches don't exercise both domains being transient at the same instant — only a full-die PM scenario does.
 
-### 10. Story 4 — QNN/ORT page-fault + VM regression (90 sec)
+### 9. Story 4 — QNN/ORT page-fault + VM regression (90 sec)
 
 > *Platform validation on Copilot+ PC NPU stack. Honest framing: ORT/QNN host-runtime path, not Hexagon RTL. Memory pressure is a power-management surrogate on a battery-powered device — more resident pages = more DRAM refresh = more system power = less PkgC residency.*
 
@@ -164,7 +180,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** Page faults alone are not the bug. Correlate them with `VirtualAlloc` and peak memory before blaming hardware. On a battery device, host-runtime memory growth is a *power* regression in disguise — more resident pages keep DRAM out of self-refresh.
 
-### 11. Story 4b — Paint SR starves Camera (60 sec)
+### 10. Story 4b — Paint SR starves Camera (60 sec)
 
 > *Copilot+ PC NPU, two AI workloads sharing one accelerator. PM-relevant because the only way to get good NPU residency without a real-time tenant starving is to schedule the queue properly — otherwise the framework keeps the NPU at top voltage longer than it needs to be.*
 
@@ -184,7 +200,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** A single hardware scheduler is fine until you have two real-time tenants on it. The framework must expose priority — otherwise the only PM-friendly answer is 'don't run them at the same time,' which costs both perf and battery.
 
-### 11c. Story 4c — Screen Region Detector: ops drop off NPU on a new HTP ROM (90 sec)
+### 11. Story 4d — Screen Region Detector: ops drop off NPU on a new HTP ROM (90 sec)
 
 > *Copilot+ PC, Snapdragon X Elite, Qualcomm QNN EP. The model is a **Screen Region Detector** — a small vision model the OS uses to identify interactive regions on the current display (button, text field, image, video surface) so downstream features (Click-to-Do, Recall, Live Captions, Studio Effects) know what to act on. It runs continuously while a user is on screen, so a latency or NPU-residency regression is felt across the whole AI-feature surface, not just one app.*
 >
@@ -209,7 +225,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** "EP supports it" and "the silicon can run it at this shape" are different claims. The first lives in a static op table on the host; the second depends on VTCM size, HMX tile geometry, and which sub-tiling paths the on-device compiler chose to enable. The version matrix tells you it's vendor-side; the **per-op HTP compiler log** tells you it's silicon/FW-side. Once you can show "this exact op rejected with this exact reason on this ROM but accepted on the prior ROM, at this exact shape," the escalation conversation is short.
 
-### 11a. Story 6 — PCIe Gen6 L0p lane-scaling: a link-level DVFS bug (90 sec)
+### 12. Story 6 — PCIe Gen6 L0p lane-scaling: a link-level DVFS bug (90 sec)
 
 > *Pre-Si transactor enhancement for a brand-new PCIe PM feature. **The mental model:** L0p is to a PCIe link what DVFS is to a CPU and what tile-power-gating is to an NPU — scale capacity down when traffic is light, scale back up on demand, **without paying the wake-up cost of full sleep**. Same shape as a CPU dropping from P0→P3 instead of going to C6.*
 
@@ -231,7 +247,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** L0p is link-level DVFS, and its bug class is the same as CPU DVFS: **transitions must align to a transaction boundary.** When you build coverage for any new PM feature — link, CPU, NPU island — the must-have cell is *'what happens if the transition lands mid-traffic.'* Directed tests cover the FSM; the bugs live at the seam between the new PM action and the in-flight payload. Caught pre-Si — post-Si this would have shown as 'random link errors when load is light,' which is weeks of triage.
 
-### 11b. Story 7 — NVMe HMB silent read corruption above WCTEMP (90 sec)
+### 13. Story 7 — NVMe HMB silent read corruption above WCTEMP (90 sec)
 
 > *Post-Si only — pre-Si cannot see this class because RTL is isothermal. The bug lives at the seam between the **thermal-throttle PM action** and the data path: a textbook 'PM coupling' failure.*
 
@@ -251,7 +267,7 @@ These are the stories you carry into a loop. Each is a Day 1-19 fundamental put 
 >
 > **Lesson.** Silent data corruption with `SC=0` and clean AER means the link is honest; the lie is in the data path. **PM bugs that couple to data-path correctness are the post-Si-only class** — pre-Si modelled throttle as a perf knob, with no coupling to L2P. Always pull vendor counters before blaming the visible layer.
 
-### 12. Delivery discipline
+### 14. Delivery discipline
 
 ```
 Symptom  →  Hypothesis  →  How I narrowed it  →  Root cause  →  Fix  →  Learning
@@ -263,7 +279,7 @@ Symptom  →  Hypothesis  →  How I narrowed it  →  Root cause  →  Fix  →
 - **Honest framing.** "I worked at the platform layer" is stronger than overclaiming RTL ownership you didn't have.
 - **End with the lesson.** That's what they remember.
 
-### 13. Common debug-tool vocabulary
+### 15. Common debug-tool vocabulary
 
 | Tool | Domain | What you read |
 |---|---|---|
