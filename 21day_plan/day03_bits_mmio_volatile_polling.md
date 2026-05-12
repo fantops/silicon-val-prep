@@ -134,6 +134,56 @@ bool poll_ready(volatile void *base, uint32_t off,
 
 Always handle the timeout. The NVMe `CSTS.RDY` bug returned `false` after `CAP.TO × 500 ms`, which forced the host to dump `CSTS.CFS` and the AQA register — that dump is what revealed the field-width mismatch.
 
+### 6a. ISR mechanics — when served, where state goes
+
+*The Intel Bangalore probe: "when an ISR fires, where does the data get stored, by what mechanism?" Answer with the hardware/software split.*
+
+```
+   IRQ line asserted (or MSI write to LAPIC / GIC distributor)
+        │
+        ▼
+   Interrupt controller (LAPIC/APIC, GIC) prioritises + selects target CPU
+        │
+        ▼
+   CPU samples at instruction boundary  — if unmasked + priority > current
+        │
+        ▼
+   HARDWARE auto-save (per ISA):
+     x86       : push SS, RSP, RFLAGS, CS, RIP, (error code) onto kernel stack;
+                 vector → IDT[vec] → handler entry
+     ARMv8 AArch64 : SPSR_ELx ← PSTATE, ELR_ELx ← return PC,
+                 ESR_ELx ← syndrome; branch to VBAR_ELx + offset
+     ARMv7-M (Cortex-M) : HW pushes {R0-R3, R12, LR, PC, xPSR} onto MSP/PSP
+                 ("stacking"); vector table at VTOR points to handler
+     RISC-V    : mepc ← PC, mcause ← cause, mstatus.MIE→MPIE; jump to mtvec
+        │
+        ▼
+   SOFTWARE prologue (compiler / OS):
+     - Save remaining caller-saved GPRs the handler will clobber
+     - Save FPU/SIMD lazily (only if handler touches them)
+     - Switch to interrupt stack if separate (per-CPU IRQ stack on Linux)
+     - Build pt_regs / context frame for the kernel
+        │
+        ▼
+   Handler runs (top half / FLIH — keep it short, mask only what you must)
+        │
+        ▼
+   Acknowledge / EOI to interrupt controller
+        │
+        ▼
+   Epilogue restores in reverse  — IRET / ERET / MRET returns atomically
+```
+
+**Storage answer in three layers:**
+
+1. **Vector table** (IDT / VBAR / VTOR / mtvec) — *where to go*. ROM-fixed location; entry holds handler address (and on x86, segment + DPL).
+2. **Hardware auto-save** — *minimum needed to return atomically*. Either onto the kernel stack (x86, Cortex-M) or into banked system registers (AArch64 ELR/SPSR/ESR; ARMv7-A banked R13/R14 per mode).
+3. **Software context frame** — *the rest*. Handler prologue saves remaining GPRs + (lazily) FPU into a `pt_regs`-shaped frame on the per-CPU IRQ stack.
+
+**Reflex one-liner:** *"Vector table tells the CPU where to jump; hardware auto-saves the minimum needed for atomic return (stack or banked regs depending on ISA); software prologue completes the context frame on the IRQ stack. ISR runs, EOIs the controller, IRET unwinds."*
+
+**Bottom-half / deferred work:** anything that can sleep or take long — softirq, tasklet, workqueue, threaded IRQ. Top half just records + schedules.
+
 ### 7. Endianness — the picture you must be able to draw
 
 For `0xDEADBEEF` at address `0x100`:

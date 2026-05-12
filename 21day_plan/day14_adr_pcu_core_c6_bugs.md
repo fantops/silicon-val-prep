@@ -76,6 +76,29 @@ Key vocabulary you must use correctly in interviews:
 
 **Cross-socket ADR**: in 2-socket systems the UPI link teardown ordering matters. Socket 0 must not power off while Socket 1 is still draining over UPI. Bug shape: socket-1 hang waiting on a UPI completion that will never come.
 
+### 2a. Persistent-region table — *what* gets copied (the Intel Bangalore probe)
+
+*"How do you decide which data needs to be saved on ADR?" — don't hand-wave. Answer with the table.*
+
+ADR doesn't copy *RAM contents*. It copies the **in-flight write tail** that hasn't yet reached the persistent medium. The platform maintains (in BIOS + memory-controller config + NVDIMM region descriptors) a **persistent-region table** with one row per protected region:
+
+| Field | What it pins down |
+|---|---|
+| Region base + size | DRAM range that backs persistent memory (NVDIMM-N or PMem range) |
+| Type | volatile / ADR-protected / eADR-protected / scratch |
+| Flush list | Which queues drain into this region: WPQ on which IMC channel, which iMC instance, which UPI agent for cross-socket |
+| Ordering rank | Order in which `IO_QUIESCE` → `FABRIC_QUIESCE` → `WPQ_FLUSH` apply to this region (matters for striped/interleaved ranges) |
+| Backing media | DDR + NVDIMM SAVE_n# target flash, or PMem AppDirect, or BBU-backed DRAM |
+| eADR flag | If set, LLC writeback covers it; if clear, software must `clwb` before commit |
+
+**The validation question "what gets copied" is really three sub-questions:**
+
+1. **Which DRAM ranges?** — only those in the persistent-region table. Volatile regions are abandoned.
+2. **Which in-flight writes?** — everything past the global visibility point (committed to IMC) and in WPQ; with eADR, also LLC dirty lines for protected ranges.
+3. **In what order?** — the ordering-rank column. Get it wrong and you get the Bug-1 PCU/ADR opcode-ordering hang below.
+
+**Reflex one-liner:** *"ADR doesn't snapshot RAM — it drains the write tail of regions listed in the persistent-region table, in a defined order, into self-refresh or NVDIMM flash. The table is the contract; the opcode sequence is the implementation."*
+
 ### 3. Core C6 entry sequence (Intel-specific, block-by-block)
 
 ```

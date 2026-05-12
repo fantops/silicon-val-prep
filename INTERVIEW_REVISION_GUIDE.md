@@ -226,6 +226,10 @@ Four sentences, then stop. Let them drill.
 | "Strength" | Cross-stack debug + tool-builder mindset (or your equivalent — pick one and commit) |
 | "Weakness" | Specific gap + bridge from adjacent fluency + closing plan. Never "I work too hard" |
 | "Why this role / company" | 4-sentence template: what I do now → what I want → why my background fits → why **this** company specifically (research one product line) |
+| "Why switching again" / "left Intel, why come back" | Honest arc: what I went to learn (NPU runtime + edge tooling at MS) → what I built (EdgeOptimizer, cross-vendor NPU validation) → why now (consolidate that breadth back into deep silicon validation). Don't apologise for the move; frame it as a loop that closed |
+| "Most work is prep, only 5-10% translates to CV" pushback | Agree without flinching: that's the nature of validation — the 90% is what *prevents* the bug; the 10% that ships is the visible tip. The skill is owning the 90% so the 10% lands. Cite one prep-heavy effort (PM coverage matrix / ADR characterisation) that *became* the bug story |
+| "No CPU-core experience — why hire you / value-add?" | Three things: (1) validation rigor + system view from post-Si platform + NPU — transfers cleanly to core val; (2) cross-vendor exposure (Intel uncore, Qualcomm Hexagon, Arm SoCs) gives me the *contrast* most core-only engineers lack; (3) ownership pattern — own end-to-end, escalate fast, write the tool. Close on hard work + dedication — that framing is what's being listened for |
+| "If switching for money, don't come" / cross-offer probe | Lead with fit, not leverage. "I'm choosing for engineering scope and the team I'd learn from" — then if pressed on a specific other offer (Arm vs QC), pick on *technical reason* ("QC's CPU + NPU + modem stack gives a wider system surface to validate against"), never on comp |
 
 ---
 

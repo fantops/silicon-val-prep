@@ -145,6 +145,21 @@ Do these in C, not Python:
 2. Linked-list cycle.
 3. Remove duplicates from sorted array.
 4. Valid parentheses with a fixed-size stack.
+5. **Reverse a string in place using two pointers, no extra variable** (Intel Bangalore probe). Swap via XOR — `*l ^= *r; *r ^= *l; *l ^= *r;` — or via a single temp; the "no extra variable" framing usually means *no auxiliary buffer*, so a `char tmp` is fine. Walk `l` forward and `r` backward until they meet. Edge cases: NULL pointer, empty string, single char, even vs odd length.
+
+```c
+void reverse_in_place(char *s) {
+    if (!s) return;
+    char *l = s, *r = s;
+    while (*r) r++;          /* find terminator */
+    if (r == s) return;       /* empty */
+    r--;                      /* last real char */
+    while (l < r) {
+        char t = *l; *l = *r; *r = t;
+        l++; r--;
+    }
+}
+```
 
 Keep the solutions boring and correct. State time and space complexity out loud.
 

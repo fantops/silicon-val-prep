@@ -166,6 +166,35 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 - PMIC over SPMI drops the right rails.
 - Same debug ladder: did the OS request the right state? did RPMh aggregate? did TCS fire? did rail drop?
 
+### 13. Negative-path debug — "OS requested C3, residency = 0, why?"
+
+*The Intel-Bangalore probe: not "how does C3 work" but "it didn't happen — walk me through the why." Run this ladder top-to-bottom; never skip.*
+
+```
+1. Did the OS actually request it?
+   — cpuidle governor stats, MWAIT hint matches the C-state, idle driver loaded.
+   — Common miss: BIOS hides the deeper rung; OS only sees up to C1E.
+2. Did the core PMA accept the request?
+   — Local conditions: pending interrupts, IPI in flight, fixed timer too close (TSC deadline).
+   — LAPIC/APIC unmasked-but-pending blocks entry.
+3. Did the platform/PCU veto?  ((cross-IP)) — the long list:
+   — Peripheral idle not asserted: PCIe link not in L1.2, USB not in U3, SATA not in slumber, display not in PSR.
+   — LTR (Latency Tolerance Reporting) too tight: an EP advertised "I need <10µs wake" so PCU caps depth at C1.
+   — Broadcast block: a higher-priority IP (ME / SMU / EC) is mid-transaction; PCU-wide gate held.
+   — VR settling timer still running from the last DVFS transition.
+   — Thermal flag pending; PCU refuses deep entry until DTS clears.
+4. Did the OS-side governor demote it?
+   — "C-state demotion" MSR: PCU told the core "you asked C6, I gave you C1" because predicted residency < break-even.
+   — Visible as: requested-count high, achieved-count low, demoted-count matches the gap.
+5. Did it enter but immediately exit?
+   — Wake mask too permissive: USB SOF, EC heartbeat, ME polling, broken LTR-no-snoop interaction.
+   — Residency ≈ 0 with high entry/exit count is the signature.
+```
+
+**Reflex one-liner:** *"Requested vs achieved vs demoted vs entered-then-exited — four different counters, four different root causes. Always pull all four before guessing."*
+
+**Tools to name:** PCU blocking-reason MSR, `turbostat`, `powertop`, vendor PM tracer (Intel SoCWatch / Qualcomm Trepn), PCIe LTSSM trace, `lspci -vvv` for ASPM/L1SS/LTR caps.
+
 ---
 
 ## Bugs in this Topic
