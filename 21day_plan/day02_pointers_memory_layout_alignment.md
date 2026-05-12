@@ -369,122 +369,35 @@ Because it must respect each member's natural alignment. `struct { char c; int i
 
 ## Bare-Metal Boot Flow — From Power Rail to `main()`
 
-This is the runtime story behind the segments above. The `.data` and `.bss` regions only mean what C promises (initialized globals have their values, uninitialized globals are zero) **because startup code makes it true** before `main()` runs. On a hosted OS the loader does this; on bare metal the firmware does it itself.
+The `.data` and `.bss` guarantees from C (initialized globals have their values, uninitialized globals are zero) are only true **because startup code makes them true** before `main()` runs. On a hosted OS the loader does this; on bare metal the firmware does it itself.
 
-### 0. Before the Reset Vector — what the SoC does first
+### Pre-CPU: getting the silicon ready
 
-Before the CPU ever fetches the reset vector, the silicon has to bring itself into a state where fetching from a memory address is even meaningful. Rough order on a typical Arm/Qualcomm-class SoC:
+Before the CPU can even fetch its first instruction, the SoC walks a fixed sequence: **rails → reset → clocks → boot core released → BootROM → SBL**. BootROM (mask ROM) picks the boot medium from straps, loads a signed first-stage bootloader (SBL/XBL) into on-chip SRAM, verifies it against fuse-locked keys, and jumps. SBL trains DDR and loads the application image. On a small MCU most of this collapses to "rails up, ROM jumps to your image in Flash" — same shape, fewer stages.
 
-1. **Power rails ramp.** PMIC sequences core, SRAM, PLL, and I/O rails in a defined order. Until rails are stable, nothing clocks.
-2. **PoR (Power-on Reset) asserted.** Holds every block in reset while rails settle and reference clocks (XO / 32 kHz) start.
-3. **Clock tree comes up.** XO stabilizes → PLLs lock → root clocks gate on. Some blocks stay clock-gated until later boot stages enable them.
-4. **PoR de-asserted on the boot core.** Only the designated boot CPU (often a small always-on core or a fixed application core) is released; the rest stay parked.
-5. **BootROM executes.** Mask-ROM code burned into the silicon. It is the first instruction the CPU ever fetches. Responsibilities:
-   - configure minimal SRAM / TCM,
-   - read straps / fuses to decide boot media (eMMC, UFS, SPI-NOR, USB, PCIe),
-   - load the next stage (often a signed first-stage bootloader / SBL) into on-chip SRAM,
-   - verify its signature against keys in eFUSE (secure boot root of trust).
-6. **First-stage bootloader (SBL / XBL).** Trains DDR, brings up more clocks/voltages, loads later stages (TZ/TF-A, hypervisor, second-stage bootloader).
-7. **Application image is loaded.** For a bare-metal MCU app this is your firmware ELF; for a richer SoC it is U-Boot / TF-A then a kernel. Either way, the loader places `.text`/`.data`/`.rodata` in their target regions and sets the program counter to the **reset vector** of the application image.
+### The startup code C cares about
 
-Only after all of that does step 1 below ("CPU jumps to reset vector") happen. On a small MCU the picture collapses (no PMIC sequencing, no DDR training, no secure boot chain), but the *ordering* — rails → clocks → reset release → ROM → app — is the same shape.
+Once your image is loaded, the CPU jumps to the **reset vector** (address in `.isr_vector`, set by the linker script). That runs the **Reset Handler** (not `main()`), which does, in order:
 
-### 1. Reset vector
-
-- The CPU begins execution at a fixed, architecturally-defined address.
-- On Cortex-M that address holds two words: **initial stack pointer** and **address of the Reset Handler**.
-- On Cortex-A / classic Arm, the reset vector is an instruction (a branch to the Reset Handler).
-- The vector table lives in `.isr_vector` (or similar), placed at the start of Flash by the linker script.
-
-### 2. Reset Handler (startup code)
-
-Not `main()`. Usually `Reset_Handler` in `startup_*.S` or `startup_*.c`. Responsibilities, in order:
-
-1. Set the stack pointer (on Cortex-M this is done by hardware from the vector table; on others by the handler itself).
-2. Optionally configure clocks / FPU / MPU just enough to run C code.
-3. Copy `.data` from Flash → RAM.
-4. Zero `.bss` in RAM.
-5. Run C++ / C constructors (`__libc_init_array` on newlib).
-6. Call `main()`.
-7. If `main()` returns, drop into a safe loop.
-
-### 3. Memory initialization
-
-#### 3.1 `.data` — initialized globals
+1. Set stack pointer (hardware on Cortex-M, by hand elsewhere).
+2. Copy `.data` from Flash → RAM (using linker symbols `_sidata`, `_sdata`, `_edata`).
+3. Zero `.bss` in RAM (using `_sbss`, `_ebss`).
+4. Run C++/C constructors (`__libc_init_array`).
+5. Call `main()`.
+6. If `main()` returns, drop into a safe `for(;;) __WFI();` loop.
 
 ```c
-int x = 5;   /* value 5 lives in Flash; x lives in RAM; startup must copy */
+/* .data copy */                      /* .bss zero */
+while (dst < &_edata) *dst++ = *src++;  while (p < &_ebss) *p++ = 0;
 ```
 
-The linker emits two symbols: load address (in Flash) and run address (in RAM). Startup loops:
+Skip the `.bss` loop and uninitialized globals hold whatever was in SRAM at power-on — the classic *"works after warm reset, fails after cold reset"* bug.
 
-```c
-extern uint32_t _sidata, _sdata, _edata;   /* from linker script */
-uint32_t *src = &_sidata;
-uint32_t *dst = &_sdata;
-while (dst < &_edata) *dst++ = *src++;
-```
+### Linker script = the contract
 
-#### 3.2 `.bss` — uninitialized globals
+It declares memory regions (`FLASH`, `RAM`, `TCM`), places sections (`.text`/`.rodata` in Flash; `.data`/`.bss`/heap/stack in RAM), and exports the symbols startup needs. Wrong LMA or wrong region origin → silent memory corruption before the first C statement.
 
-```c
-int y;   /* C guarantees y == 0 at program start */
-```
-
-Nothing is stored in Flash. Startup zero-fills:
-
-```c
-extern uint32_t _sbss, _ebss;
-uint32_t *p = &_sbss;
-while (p < &_ebss) *p++ = 0;
-```
-
-If you skip this loop, `y` is whatever was in SRAM at power-on — often non-zero, often *different on every reset*. That is the classic "works after warm reset, fails after cold reset" symptom.
-
-### 4. Linker script's role
-
-The linker script is the contract between the C program and the SoC's memory map:
-
-- declares **memory regions** (`FLASH`, `RAM`, `TCM`, `SRAM_AON`, …) with origin + length,
-- places **sections** (`.text`, `.rodata` in Flash; `.data`, `.bss`, `.heap`, `.stack` in RAM),
-- exports **symbols** the startup code needs: `_sidata`, `_sdata`, `_edata`, `_sbss`, `_ebss`, `_estack`, vector table base.
-
-If the linker script is wrong (RAM origin off, `.data` LMA not set, `_ebss` past the region), startup will silently corrupt memory or hang before the first C statement.
-
-### 5. Transition to application
-
-After memory init and constructors, startup calls `main()`. From this point every C guarantee is in force:
-
-- initialized globals have their declared values,
-- uninitialized globals are zero,
-- the stack pointer is valid,
-- `volatile` MMIO accessors (Day 01/03) work because the address map matches the linker script.
-
-### 6. `main()` runs
-
-Typical bare-metal `main()`: configure clocks → init peripherals → enable interrupts → enter the super-loop or RTOS scheduler.
-
-### 7. What if `main()` returns?
-
-There is no OS to return to. Control falls back into startup, usually into a stub like:
-
-```c
-void _exit(int status) { (void)status; for (;;) { __WFI(); } }
-```
-
-Without that stub the CPU keeps fetching past the end of startup — into whatever bytes follow — and behaviour is undefined. Symptoms: random hard faults, watchdog resets, "the board reboots after 3 seconds and we don't know why."
-
-### 8. Safe post-`main()` behaviour
-
-- Infinite `for(;;)` loop — simplest, always correct.
-- `WFI` / `WFE` loop — same shape, but parks the core in a low-power state until an interrupt.
-- Trigger a controlled reset (`NVIC_SystemReset()`) if returning from `main()` is itself a bug you want to surface.
-
-### 9. Why this flow exists
-
-C's abstract machine assumes someone has prepared `.data` and `.bss` before `main()`. On a hosted system that someone is the OS loader. On bare metal it is *you* (your startup code + linker script). Skip a step and you violate a C language guarantee — the bug then looks like "the language is broken," but it is the runtime contract that is broken.
-
-### 10. Debug insight
+### Debug insight
 
 | Symptom                                              | Likely cause                              |
 | ---------------------------------------------------- | ----------------------------------------- |
