@@ -175,6 +175,8 @@ Four sentences, then stop. Let them drill.
 
 ## 8. Hardware-C / coding-round reflexes
 
+**Edge-case pre-amble (always say this *before* writing code):** *"Before I code, the cases I'll handle are: NULL/empty input, single element, max size / overflow, boundary (first/last), and the spec'd error path. I'll mention any I'm choosing to skip."* This 15-second opener separates "works" from "clean" — lost a Cerebras edge-case round to skipping it.
+
 | Topic | Reflex |
 |---|---|
 | `BIT(n)` | `(UINT32_C(1) << (n))` — `UINT32_C` avoids `1 << 31` UB |
@@ -193,6 +195,8 @@ Four sentences, then stop. Let them drill.
 | Spinlock | TTAS + `acquire` on CAS, `release` on store. Never hold across a sleep |
 | SPSC ring | head/tail on **separate cache lines**; load tail relaxed, head acquire on push; no CAS needed |
 | MMIO doorbell | descriptor write → barrier → tail update → MMIO doorbell. Order is the spec |
+| Moving average (stream) | circular buffer + running sum, O(1)/sample. Re-sum every K samples to fight float drift |
+| `grep` clone (Python) | compile pattern once, stream lines (don't slurp), `-i/-n/-r/-v`, handle binary + bad regex + missing file |
 
 ---
 

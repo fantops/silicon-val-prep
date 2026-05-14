@@ -28,6 +28,50 @@ In the Layer map this is the **debug methodology + storytelling layer**.
 
 Cost-of-finding rises ~10×/stage: **RTL sim** (functional / protocol, full visibility) → **Emulation** (HW × FW integration, real FW boots) → **FPGA proto** (full SW stack at MHz) → **Post-Si** (analog, PVT, real workload). A bug found in sim is "free"; one found post-tape-out can delay a product cycle. The detailed phase view lives in Section 4.
 
+### 2a. Generic device test-plan scaffold (the Cerebras opener)
+
+*"Build a test plan for &lt;device&gt;" — PCIe, NVMe, NPU, accelerator, doesn't matter. Walk this 8-step ladder out loud; instantiate at each step with the device in question. The structure is what's being graded, not the device knowledge.*
+
+```
+1. SPEC ANCHOR        — which document, which version, which compliance suite
+                        (e.g. PCIe 6.0 base + CEM + L1SS ECN; NVMe 2.0; vendor MAS)
+2. FEATURE LIST       — enumerate from spec: every mode, every optional cap,
+                        every register field. Mark in-scope vs out-of-scope.
+3. MODES & CONFIGS    — link width/speed, queue depths, MSI/MSI-X, IOMMU on/off,
+                        ASPM enabled/disabled, host PkgC enabled/disabled.
+                        → cross-product = the matrix.
+4. STIMULUS + CHECKS  — per feature: directed test, randomised test, assertion,
+                        scoreboard. "What I drive" + "what I check" must both exist.
+5. COVERAGE AXES      — functional (cover groups), code (RTL line/branch), and
+                        for HW PM: state × transition × residency (the 3-axis
+                        frame from §3). Define done-when up front.
+6. NEGATIVE + ERROR INJECTION — illegal config, spec violation, timeout, link
+                        retrain, AER/ERR injection, hot-unplug, PERST# during
+                        traffic, SBR, FLR, ECC error, thermal trip mid-transfer.
+7. PERFORMANCE + POWER — latency p50/p99, throughput vs spec, per-state current,
+                        residency at PVT, wake latency, interaction with DVFS.
+8. PHASE SPLIT        — what closes pre-Si (FSM, registers, ordering, protocol)
+                        vs post-Si (analog, PVT, residency, interop, soak).
+                        → see Section 4 phase table.
+```
+
+**Reflex one-liner:** *"Spec → features → modes → stimulus+checks → coverage axes → negative + error injection → perf/power → pre-Si vs post-Si split. The matrix falls out of steps 2-3, the 'done-when' from step 5, the seam tests from step 6."*
+
+**Worked instantiation — PCIe (the example I used live):**
+
+| Step | PCIe |
+|---|---|
+| 1 Spec | PCIe base spec + CEM + L1SS + LTR ECNs; vendor IP MAS |
+| 2 Features | LTSSM states, ASPM L0s/L1/L1.1/L1.2, AER, hot-plug, FLR, SR-IOV, ATS, AtomicOps |
+| 3 Modes | Gen1→Gen6 × x1→x16 × RC/EP × ASPM on/off × IOMMU on/off |
+| 4 Stim+check | LTSSM directed, TLP randomised, scoreboard on completion ordering, assertions on credit underflow |
+| 5 Coverage | LTSSM cover group; ASPM × PkgC cross; line cov on PHY ctrl FSM; residency post-Si |
+| 6 Negative | Bad TLP, malformed completion, link down mid-DMA, PERST# during L1.2, surprise removal |
+| 7 Perf/Pwr | L1.2 exit < 200 µs, per-rail current per ASPM state, BW vs Gen × width |
+| 8 Phase | LTSSM + L1SS FSM → RTL sim; PkgC × L1.2 seam → emulation; exit latency → post-Si chamber; interop → plug-fest |
+
+Same scaffold instantiates for NVMe (queues, NS, ANS, sanitize, format), NPU (precision, op-coverage, mem-residency, multi-tenant), or anything else — the *structure* is the answer.
+
 ### 3. Coverage plan — CPU power management + PCIe link power (interview shape)
 
 > *Compact version for interview prep. Pick two cells you've actually owned (CPU C-state + PCIe ASPM) and answer "how do you build coverage" with the three-axis frame, then drop into the cell.*

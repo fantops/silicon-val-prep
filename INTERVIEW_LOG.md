@@ -57,6 +57,12 @@
 - **Status:** Awaiting combined-loop decision.
 - **Suggestion:** Lock in a 30-sec "why QC over Arm / why CPU core despite no prior CPU-core work" answer in [Section 0A](INTERVIEW_REVISION_GUIDE.md) — value-add = validation rigor + cross-vendor system view + ownership pattern, not domain seniority.
 
+### 13 May — Cerebras · R1 — 🟢 Cautiously positive
+- **What happened:** (1) Cerebras-context warmup — what they do (wafer-scale engine, MemoryX/SwarmX). (2) Intel work walk-through — what + how. (3) **Test-plan design from scratch** for a device — took PCIe as the example and walked: spec → features → modes → stimulus + checks → coverage axes → negative + error injection → perf/power → silicon-vs-pre-Si split. (4) Microsoft NPU work walkthrough. (5) **Coding** — implement `grep` in Python (regex + file walk + flags); moving-average in C (circular buffer / running sum). Small issues on edge cases but recovered. (6) Closing chat on team-size expansion + responsibilities scope.
+- **Learning:** Test-plan-from-spec is a recurring opener at AI-accelerator shops — having a reusable scaffold (spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si split) lands cleanly. Two-language coding (scripting + C) is becoming the norm — keep both reflexes warm. Edge-case discipline (empty input, single element, wrap-around in moving-avg, null pattern in grep) is what separated "works" from "clean."
+- **Status:** Awaiting next-round signal.
+- **Suggestion:** Promote test-plan scaffold into [Day 20 Section 5a](21day_plan/day20_debug_method_bug_polish.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00 Coding B](21day_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Section 8](INTERVIEW_REVISION_GUIDE.md).
+
 ---
 
 ## 📊 Snapshot
@@ -73,6 +79,7 @@
 | 07 May | Renesas | Automotive-leaning | ❌ Rejected | Closed — role-fit |
 | 12 May | Intel Bangalore | IP Functional Validation (F2F, 2 rounds) | 🟢 Good | Feedback pending |
 | 12 May | Qualcomm | CPU Core (Hiring Manager) | 🟢 Positive | Awaiting combined decision |
+| 13 May | Cerebras | R1 | 🟢 Cautiously positive | Awaiting next round |
 
 ---
 
