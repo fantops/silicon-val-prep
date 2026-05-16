@@ -90,24 +90,7 @@
 
 ---
 
-## 🧩 Interview intersections → revision map
-
-| Intersection | Seen in | Anchor | Source | Rehearsal |
-|---|---|---|---|---|
-| C under pressure | Intel PnP R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md), [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 00](21day_plan/day00_c_basics.md), [Day 01](21day_plan/day01_c_address_fluency.md), [Day 02](21day_plan/day02_pointers_memory_layout_alignment.md) | One Day 0 C exercise daily |
-| The *why* behind concepts | Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md), [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) | One what/why/how/bug-hook chain daily |
-| C-states, clock gating, leakage | Intel PnP, Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 15](21day_plan/day15_thermal_power_perf_counters.md) | Draw entry/exit + clock-gating path from memory |
-| PM coverage matrix (the one I lived) | Intel PnP, Qualcomm PnP, NVMe-SSD-flavoured roles | [Day 20 Section 5a](21day_plan/day20_debug_method_bug_polish.md#5a-coverage-plan--power-management-across-pre-si-and-post-si-the-one-i-lived) | [Day 12](21day_plan/day12_dvfs_pstates_pvt.md), [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md), [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md), [Day 15](21day_plan/day15_thermal_power_perf_counters.md) | Recite three axes (state / transition / residency) + name one owned cell per axis |
-| Cache hierarchy internals | Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 04](21day_plan/day04_cache_lines_locality_amat.md), [Day 05](21day_plan/day05_coherence_mesi_false_sharing.md) | Derive hierarchy from latency/capacity/area |
-| Generic boot flow | Qualcomm CPU R2 | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md) | POWER → ROM → PLATFORM INIT → BOOTLOADER → OS, then vendor map |
-| NPU + EdgeOptimizer | Intel Ireland, Qualcomm probes | [Revision Guide](INTERVIEW_REVISION_GUIDE.md), [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 18](21day_plan/day18_npu_ort_ep_hexagon_htp.md), [Day 19](21day_plan/day19_npu_memory_runtime_bugs.md) | Lead with six-layer stack + per-inference attribution |
-| Bug story under rapid-fire | Intel Ireland | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) | 90-sec STAR timer |
-| EE fundamentals | Intel Ireland | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 10](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 16](21day_plan/day16_pipeline_memory_consistency_simd.md) | Setup/hold, CDC, CMOS, PCIe SI one-liners |
-| Leadership / ownership | Qualcomm PnP | [Revision Guide](INTERVIEW_REVISION_GUIDE.md) | [Day 20](21day_plan/day20_debug_method_bug_polish.md), [Day 21](21day_plan/day21_final_mock_company_tailoring.md) | One real example per framework |
-
----
-
-## 🧭 Patterns
+##  Patterns
 
 **Strong:** cross-vendor NPU experience, concrete bug stories with measurable impact, EdgeOptimizer/tooling narrative, high-level concept walks.
 
