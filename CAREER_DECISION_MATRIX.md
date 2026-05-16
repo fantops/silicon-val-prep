@@ -35,17 +35,58 @@ Weights: Tech 25, Learning 20, AI-defensibility 15, Stability 15, Value-adder 10
 
 ---
 
-## Decision
+## Role content (what you actually build)
 
-1. **Qualcomm Staff** if TC ≥ ₹78L and not downgraded → take it.
-2. **AMD MTS** if QC stalls or downgrades → adjacent, defensible.
-3. **Amazon Lab126** if breadth or stability dominates.
-4. **Intel** only as leverage / floor.
-5. **Cerebras** only with written equity beating AMD by ≥ ₹15L.
+| Company | Role | Skill being built |
+| --- | --- | --- |
+| Qualcomm | CPU pipeline / corner-case validation | Compute-arch intuition, pipeline trace, direct CPU-team exposure |
+| AMD | Post-Si CPU core power & perf | Freq-V curves, power delivery debug → **maps directly to AI inference perf/W** |
+| Amazon Lab126 | AZ1 Gen-2 NPU full cycle (Zebu + HAPS + post-Si + baremetal) | Full-cycle custom-ASIC breadth on a shipping ML accelerator |
+| Cerebras | Wafer-scale silicon | Training (not edge); different problem class entirely |
+| Intel | Server accelerator IP (PCIe Gen5/6 + power mgmt) | Systems/interconnect depth; capped by Intel process overhead |
+
+---
+
+## Scenario decision matrix
+
+| Scenario | Action |
+| --- | --- |
+| QC Staff lands at ≥ ₹78L | **Take it.** Stop optimising. |
+| QC offers Senior, no written promo path | **Reject.** Level reset = 2–3y wait + lost negotiating leverage. |
+| QC offers Senior + written Staff promo ≤ 18 mo + ≥ ₹75L | Take only if AMD/Amazon haven't closed. |
+| QC stalls; AMD ≥ ₹70L lands | **Take AMD.** Adjacent skill, not consolation. |
+| Both QC and AMD stall; Amazon lands | **Take Amazon** if AZ1 NPU pull is real or stability matters most. |
+| Only Intel lands | Counter with AMD/Amazon number; take only if ≥ ₹75L all-in with RSU match. |
+| Cerebras alone, no written equity | **Pass.** Stability + customer-concentration risk too high. |
+| Cerebras beats AMD by ≥ ₹15L, written equity | Take only if you can absorb startup variance. |
+
+---
+
+## Tradeoff limits — how much salary can you absorb for tech?
+
+| Option | Min acceptable all-in | Required condition |
+| --- | --- | --- |
+| QC Staff | ₹78L | None — just don't accept Senior |
+| QC Senior | ₹75L | **Written** Staff promo ≤ 18 mo |
+| AMD MTS | ₹70L | None — perf/W specialisation justifies parity |
+| Amazon L5 | ₹85L steady-state (not Y1-only) | Push grant size, not sign-on |
+| Cerebras | ₹85L | IPO/runway clarity in writing |
+| Intel G7/8 | ₹65L | Only as floor / leverage |
+
+---
+
+## What you lose if you don't go to QC (4-yr lens)
+
+| Skipping QC for… | Tech delta | Ongoing TC delta | 4-yr expertise cost | Verdict |
+| --- | --- | --- | --- | --- |
+| AMD | –1 pt on arch depth | –₹15–20L/yr | Roughly **even** — different specialisation, equally defensible | Take it |
+| Amazon | –1 pt on depth, +1 pt on breadth | –₹5–10L/yr | Lose pipeline depth, gain full-cycle ASIC + best stability | Take if stability/breadth wins |
+| Intel | –2 pts | –₹20–25L/yr | Significant skill compounding loss | Only as floor |
+| Cerebras | –1 pt + stability hit | ±0 | Concentration + execution risk | Only with written terms |
 
 **Hard rules:**
 - Reject QC Senior unless written Staff-promo path within 18 mo.
-- Reject any offer that doesn't address the ₹40L unvested.
+- Reject any offer that doesn't address the ₹40L unvested explicitly.
 - Y1 cash isn't the differentiator once buyout is in — decide on level, skill, stability.
 
 ---
