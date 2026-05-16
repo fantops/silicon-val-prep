@@ -92,15 +92,17 @@
 
 ##  Patterns
 
-**Strong:** cross-vendor NPU experience, concrete bug stories with measurable impact, EdgeOptimizer/tooling narrative, high-level concept walks.
+**Strong:** cross-vendor NPU experience, concrete bug stories with measurable impact, EdgeOptimizer/tooling narrative, high-level concept walks, **test-plan-from-spec scaffold**, **multi-SoC PnP design scaffold**, role-fit framing in HM/behavioural rounds.
 
-**Weak:** the *why* behind concepts (layer 2-3 depth), live C under pressure, bug-story discipline under rapid-fire, EE fundamentals, leadership framing.
+**Still soft (watch):** layer-3 textbook depth under "probe-then-push", live-C edge-case discipline (mention cases *before* coding), EE fundamentals refresh, leadership/ownership framing under pace.
 
-**Meta-skill being tested:** "probe-then-push" — *what → why → how → connected concept*. First layer fluent, second thin, third empty. Bug stories survive the push because owned end-to-end; textbook topics don't because learned as facts, not derivations. **Fix: rehearse the chain out loud, not read it.**
+**Role-fit shift (mid-May):** the loop has converged on roles that match what I actually own — IP/platform functional validation, post-Si PnP, multi-SoC + accelerator power/perf, AI-accelerator validation. Intel Bangalore (✅ selected, offer in progress), AMD Core PnP Post-Si (🟢), Cerebras (🟢), Qualcomm CPU Core HM (🟢) all sit in this band. Mismatched shapes (pure DV / pre-Si, automotive protocol-heavy) are filtered upstream and no longer worth prepping for.
 
-**Improving:** role-fit filtering (forced misfit → early recognition → upstream filter), domain-fit clarity, same-day self-diagnosis.
+**Meta-skill being tested:** "probe-then-push" — *what → why → how → connected concept*. Bug stories and design-scaffold answers (test-plan, multi-SoC PnP) survive the push because they're structured derivations; flat-fact recall (textbook C-state ladder, cache hierarchy verbatim) doesn't. **Fix: every concept lives as a scaffold to walk, not a paragraph to recite.**
 
-**Strategic principle:** build on what I own (NPU validation, post-Si platform, power/perf, system debug). Defend PCIe/NVMe and automotive at story depth only — don't grow new limbs for adjacent role families.
+**Improving:** role-fit filtering (mismatch detected same-day, not after 3 rounds), behavioural framing (why-switching / prep-vs-CV / cross-offer answers now reflex), design-question scaffolds (test-plan, multi-SoC PnP) replacing ad-hoc answers.
+
+**Strategic principle (revised for offer-stage):** with Intel offer in hand and 3 active loops in the aligned band, **prep narrows to the rounds actually scheduled**, not the full Day 0-21 spread. Drill: (1) the design scaffolds (test-plan, multi-SoC PnP) for AMD/Cerebras follow-ups, (2) C edge-case pre-amble for any coding round, (3) HM-style behavioural answers for QC combined-loop decision. Defend PCIe/NVMe and automotive at story depth only — don't grow new limbs.
 
 ---
 

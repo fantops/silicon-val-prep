@@ -3,6 +3,8 @@
 > Generic reflex sheet. Read once in the 30 minutes before any silicon validation / SoC / pre-Si / post-Si / NPU interview. Topic pointers and one-liners only — depth lives in the [21-day plan](21day_plan/README.md). Personal narrative + per-company tailoring lives in [day21_final_mock_company_tailoring.md](21day_plan/day21_final_mock_company_tailoring.md) (Section 3 + Section "Personal Narrative").
 >
 > Rule: **lead with the tradeoff, then the mechanism, then the validation hook.** One concrete example beats three textbook bullets. Don't know? Say so cleanly and pivot to the closest thing you do know.
+>
+> **Offer-stage mode (mid-May 2026):** Intel BLR selected, 3 aligned loops active (AMD / Cerebras / QC-HM). Don't oversell, don't over-prep the full Day 0-21 spread — drill **only what the next scheduled round will probe**. Lead questions about scope, team, programme phase. If asked about other offers, name them factually + lead with fit reasoning, never comp.
 
 ---
 
@@ -15,6 +17,7 @@
 | Platform, end-to-end, cross-IP, integration, driver/FW | **System** | Cross-stack triage, layer attribution |
 | NPU, ORT, EP, Hexagon, OpenVINO, XDNA, DirectML | **NPU/AI** | Graph partition, EP fallback, energy/inference |
 | Power, thermal, DVFS, C-state, RAPL, MSR | **PnP** | Tj math, throttle reasons, residency, governor logic |
+| "Design a test plan for X" / "how would you architect" / open-ended | **Architect / scaffold** | Walk a named scaffold out loud; structure is the answer, not the device knowledge |
 
 If mixed → ask: *"Pre-Si in emulation, post-Si on a board, or end-to-end on a platform?"*
 
@@ -101,6 +104,7 @@ Four sentences, then stop. Let them drill.
 |---|---|
 | Sporadic emul / silicon fail | Lock seed → minimise repro → bisect (RTL/FW/test) → waveform window around divergence → don't touch design until failure is deterministic and minimal |
 | Coverage plan | Spec → state space → functional coverpoints + crosses → directed corners → CR fill → SVA for protocols → review with arch+design → exit criteria up front |
+| **Test plan from spec (any device)** | 8-step scaffold: **spec → features → modes → stimulus+checks → coverage axes → negative+error injection → perf/power → pre-Si/post-Si split**. Matrix falls out of steps 2-3, done-when from 5, seam tests from 6. [Day 20 §2a](21day_plan/day20_debug_method_bug_polish.md) |
 | Functional vs code coverage | Code = "did the line execute"; functional = "did the *intended scenario* fire". Functional is the real metric |
 | Failing assertion triage | Reproduce → re-read assertion vs spec → check test preconditions → check RTL under legal stimulus → loop in arch when ambiguous; **never silently disable** |
 | New problem | Restate in one sentence → define done → known vs assumed → cheapest disambiguating signal → minimum reproducer → write plan → timebox |
@@ -170,6 +174,7 @@ Four sentences, then stop. Let them drill.
 | ADR (server) | Loss-of-power → IO quiesce ack → fabric quiesce → WPQ flush ack → DRAM self-refresh → NVDIMM save. Order matters; ack matters |
 | eADR | LLC writeback added to ADR sequence — makes the cache persistent under power loss |
 | Top-down (TMA) | Frontend bound / Bad spec / Retiring / Backend (Memory or Core). 4 buckets by what cycles spent |
+| **Multi-SoC PnP design** | 6-step: **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**. Two hard tradeoffs: rail sharing (cheap+leakage vs freedom+VRM cost) and DVFS arbiter (single=simpler-bottlenecks vs distributed=scales-ordering-bugs). Bugs live at SoC seams. [Day 12 §8a](21day_plan/day12_dvfs_pstates_pvt.md) + [Day 15 §5a](21day_plan/day15_thermal_power_perf_counters.md) |
 
 ---
 
@@ -233,7 +238,7 @@ Four sentences, then stop. Let them drill.
 | "Why switching again" / "left Intel, why come back" | Honest arc: what I went to learn (NPU runtime + edge tooling at MS) → what I built (EdgeOptimizer, cross-vendor NPU validation) → why now (consolidate that breadth back into deep silicon validation). Don't apologise for the move; frame it as a loop that closed |
 | "Most work is prep, only 5-10% translates to CV" pushback | Agree without flinching: that's the nature of validation — the 90% is what *prevents* the bug; the 10% that ships is the visible tip. The skill is owning the 90% so the 10% lands. Cite one prep-heavy effort (PM coverage matrix / ADR characterisation) that *became* the bug story |
 | "No CPU-core experience — why hire you / value-add?" | Three things: (1) validation rigor + system view from post-Si platform + NPU — transfers cleanly to core val; (2) cross-vendor exposure (Intel uncore, Qualcomm Hexagon, Arm SoCs) gives me the *contrast* most core-only engineers lack; (3) ownership pattern — own end-to-end, escalate fast, write the tool. Close on hard work + dedication — that framing is what's being listened for |
-| "Design NPU + CPU + multi-SoC PnP tradeoff" (AMD/Cerebras-tier) | 6-step scaffold: **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**. Call out the two hard tradeoffs: rail sharing (cheap + leakage waste vs per-IP freedom + VRM cost) and DVFS arbiter (single master simpler but bottlenecks; distributed scales but ordering bugs). Bugs live at SoC seams, not inside one. [Day 12 §8a](21day_plan/day12_dvfs_pstates_pvt.md) + [Day 15 §5a](21day_plan/day15_thermal_power_perf_counters.md) |
+| "Design NPU + CPU + multi-SoC PnP tradeoff" (AMD/Cerebras-tier) | Technical scaffold lives in [§7 Multi-SoC PnP design](#7-power--thermal--dvfs--c-states-concise-backup). Behavioural framing: *"happy to walk the scaffold — workload → budget split → rail topology → DVFS coord → thermal envelope → validation matrix — and drill any step you want."* |
 | "If switching for money, don't come" / cross-offer probe | Lead with fit, not leverage. "I'm choosing for engineering scope and the team I'd learn from" — then if pressed on a specific other offer (Arm vs QC), pick on *technical reason* ("QC's CPU + NPU + modem stack gives a wider system surface to validate against"), never on comp |
 
 ---
