@@ -4,6 +4,42 @@
 
 ---
 
+## 📈 Cycle scoreboard (as of 16 May 2026)
+
+**Total rounds: 15** across **8 companies** / **10 distinct role-loops**.
+
+Round-by-round breakdown:
+
+| Loop | Rounds | Detail |
+|---|---|---|
+| Intel · Power & Perf (Apr) | 2 | R1 + R2 — ❌ |
+| Arm · Verification | 1 | 🟡 mismatch |
+| Qualcomm · Pre-Si Verification | 1 | 🟡 mismatch |
+| Qualcomm · CPU Core | 3 | R1 + R2 + HM — 🟢 awaiting combined |
+| Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds same day — 🟢 pending |
+| Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — 🟢 pending |
+| Renesas | 1 | R1 — ❌ role-fit |
+| Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer in progress** |
+| Cerebras | 1 | R1 — 🟢 awaiting next |
+| AMD · Core PnP Post-Si | 1 | R1 — 🟢 awaiting next |
+| **Total** | **15** | |
+
+Loop status:
+
+| Bucket | Count | Loops |
+|---|---|---|
+| ✅ Selected (offer in progress) | **1** | Intel Bangalore |
+| 🟢 Active / awaiting next or combined decision | **5** | QC CPU Core · QC PnP/Thermal · Intel Ireland NPU · Cerebras · AMD |
+| ❌ Rejected / closed | **2** | Intel Power & Perf (Apr) · Renesas |
+| 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
+| **Total loops** | **10** | |
+
+**Conversion (loops, not rounds):** 6 / 10 landed (1 selected + 5 active strong-positive) = **60%**.
+
+**Velocity:** 15 rounds over ~33 days (13 Apr → 16 May) ≈ **one round every 2.2 days**.
+
+---
+
 ## 📅 Timeline
 
 ### 13 Apr — Intel · Power & Performance — ❌ Rejected
@@ -68,25 +104,6 @@
 - **Learning:** Multi-SoC PnP design questions are the new shape at AMD/Cerebras-tier shops — the answer scaffold is **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**, in that order. Role pitch ("execution + debug + architecture exposure") is exactly what my CV reads as — lean into it in the next round.
 - **Status:** Awaiting next-round signal.
 - **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](21day_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Section 0A](INTERVIEW_REVISION_GUIDE.md) on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
-
----
-
-## 📊 Snapshot
-
-| Date | Company | Role | Outcome | Status |
-|---|---|---|---|---|
-| 13 Apr | Intel | Power & Perf | ❌ Rejected | Closed |
-| 15 Apr | Arm | Verification | 🟡 Mismatch | Closed |
-| 20 Apr | Qualcomm | Pre-Si Verification | 🟡 Mismatch | Closed |
-| 28 Apr | Qualcomm | CPU Core (R1) | 🟢 Cleared | Advanced to R2 |
-| 28 Apr | Qualcomm | PnP / Thermal | 🟢 Good | Feedback pending |
-| 29 Apr | Intel Ireland | NPU | 🟢 Strong | Feedback pending |
-| 30 Apr | Qualcomm | CPU Core (R2) | � Weak fundamentals, advanced anyway | Advanced to HM |
-| 07 May | Renesas | Automotive-leaning | ❌ Rejected | Closed — role-fit |
-| 12 May | Intel Bangalore | IP Functional Validation (F2F, 2 rounds) | ✅ Selected | Offer discussion in progress |
-| 12 May | Qualcomm | CPU Core (Hiring Manager) | 🟢 Positive | Awaiting combined decision |
-| 13 May | Cerebras | R1 | 🟢 Cautiously positive | Awaiting next round |
-| 14 May | AMD | Core PnP Post-Si (R1) | 🟢 Positive | Awaiting next round |
 
 ---
 
