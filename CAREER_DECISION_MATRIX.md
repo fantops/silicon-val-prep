@@ -18,13 +18,13 @@ _Last refreshed: 17 May 2026. Synced with [INTERVIEW_LOG.md](INTERVIEW_LOG.md) (
 | **Qualcomm — PnP / Thermal (Hyderabad)** | power/perf/thermal sys debug | 🟢 both rounds same day | Feedback pending |
 | **Intel Ireland — NPU** | pre-Si + post-Si NPU validation | 🟢 R1 done (rapid-fire) | Feedback pending |
 | **Cerebras — WSE** | wafer-scale bringup + perf opt | 🟢 R1 cleared cautiously+ | Next round pending |
-| **Amazon Lab126 — AZ1 ML accel SoC** | SoC val pre-Si + post-Si | ⏸ **NOT STARTED** | Need referral before applying |
+| **Amazon Lab126 — AZ1 ML accel SoC** | SoC val pre-Si + post-Si | 🟡 **Recruiter call done — fit-screen in progress** | Awaiting recruiter to confirm match → schedule R1 |
 | Intel Power & Perf (Apr) | different Intel team | ❌ rejected R2 | — |
 | Renesas | automotive | ❌ R1 — role-fit miss | — |
 | Arm Verification | pure DV | 🟡 mismatch | — |
 | QC Pre-Si Verification | pure DV | 🟡 mismatch | — |
 
-**Real shape of the decision:** 1 offer in hand + 5 active loops + 1 cold prospect. The matrix below is now scoring **which active loop to push hardest on**, with Intel Bangalore as the locked-in floor.
+**Real shape of the decision:** 1 offer in hand + 5 active loops + 1 recruiter-screen pending. The matrix below is now scoring **which active loop to push hardest on**, with Intel Bangalore as the locked-in floor.
 
 ---
 
@@ -214,27 +214,35 @@ _Last refreshed: 17 May 2026. Synced with [INTERVIEW_LOG.md](INTERVIEW_LOG.md) (
 
 ---
 
-### 7. Amazon Lab126 — AZ1 ML Accel SoC · ⏸ NOT STARTED
-**Source:** [offers/amazon.md](offers/amazon.md) · **Log:** none yet
+### 7. Amazon Lab126 — AZ1 ML Accel SoC · 🟡 RECRUITER FIT-SCREEN IN PROGRESS
+**Source:** [offers/amazon.md](offers/amazon.md) · **Log:** recruiter call received 17 May, fit-match assessment in progress
 
 | Axis | Read |
 |---|---|
-| JD-fit | **8.0** — ML accelerator SoC + Zebu + pre→post lifecycle. **BUT: UVM is BASIC qual (4+ yrs), you have 0.** |
+| JD-fit | **8.0** — ML accelerator SoC + Zebu + pre→post lifecycle. **UVM is BASIC qual (4+ yrs), you have 0** — but recruiter already called, so the resume-keyword filter is already past. |
 | Depth upgrade vs MSFT | 8.0 |
 | TC expectation | 8.0 — ₹78–85L |
 | Stability | 9.0 |
 | Growth | 9.0 (AWS) |
 | Brand | 9.5 |
-| Round risk now | **Highest** — UVM keyword screen will likely drop you without referral |
+| Round risk now | **Medium** — recruiter screen passed; HM fit-match next. UVM gap will surface there. |
 
-**The wall:** Amazon's HR/keyword screen will filter on "SystemVerilog/UVM 4+ yrs." Cambria was C++ transactors on Zebu, not UVM testbenches. You can pitch *"same role, different language"* to a sympathetic hiring manager — but only if you bypass the keyword filter via referral.
+**Status update (17 May):** recruiter reached out, evaluating fit-match → will schedule R1 if positive. The keyword-screen wall I previously flagged is **partially behind you** — they already have your profile and want to talk. Referral hunt no longer required for entry.
 
-**Cost/benefit at this stage of the cycle:**
-- You already have Intel offer in hand + AMD/QC active.
-- Amazon adds: AWS brand + Lab126 ML accel charter + TC bump over Intel + better stability than Cerebras.
-- Amazon costs: referral hunt (time), interview prep (weeks), real reject risk after the work.
+**The remaining wall:** the fit-screen and HM round will probe **SystemVerilog/UVM 4+ yrs**. Your real story:
+- Cambria = **C++ transactors on Zebu** (same role-shape, different language — UVM-equivalent IP-level pre-Si).
+- MSFT = post-Si NPU val across 3 vendors (closest commercial analog to AZ1).
+- Pitch: *"I've shipped pre-Si IP val via C++ transactors on Zebu and post-Si ML-accel val across Intel/AMD/QC NPUs. UVM is the methodology I haven't authored in, but the IP-val problem-shape is identical and I can ramp."*
 
-**Action:** **only pursue if a Lab126 referral is genuinely available within 1 week.** Otherwise the marginal value vs the AMD/QC loops already in motion isn't worth it — concentrate on the loops with momentum.
+**Cost/benefit now (recruiter is engaged):**
+- Marginal cost dropped sharply — no referral hunt needed, just take the call.
+- Marginal value unchanged — AWS brand + Lab126 ML accel + TC bump + stability.
+- Real risk: time-sink if HM-screen drops you on UVM. Mitigate by being **upfront about UVM gap in the recruiter fit-call** — let them filter before you invest interview prep cycles.
+
+**Action:** 
+1. **Take the recruiter call.** Be explicit: *"I've done IP-level pre-Si val with C++ on Zebu, not UVM. If that's a hard requirement, let's not waste each other's time."* Forces the gate early.
+2. If they proceed → request **2-week scheduling buffer** so it doesn't collide with AMD R2 / QC decision window.
+3. Prep AZ1-specific story: ML accel pipelines + DMA + Zebu emulation flow.
 
 ---
 
@@ -248,7 +256,7 @@ _Last refreshed: 17 May 2026. Synced with [INTERVIEW_LOG.md](INTERVIEW_LOG.md) (
 | Stability | 6.0 | 8.5 | 8.5 | 8.5 | 6.0 | 4.0 | 9.0 |
 | Growth | 7.0 | 9.5 | 7.5 | 7.5 | 7.0 | 9.0 | 9.0 |
 | Brand | 9.0 | 9.0 | 9.0 | 9.0 | 9.0 | 7.0 | 9.5 |
-| **Round-risk now** | **0** (offer) | low-med | low (decision pending) | low (decision pending) | medium | low | **high (no referral)** |
+| Round-risk now | **0** (offer) | low-med | low (decision pending) | low (decision pending) | medium | low | medium (recruiter engaged) |
 
 *QC Oryon: 9.0 if Staff, 7.5 if Senior without promo path.
 
@@ -262,7 +270,7 @@ _Last refreshed: 17 May 2026. Synced with [INTERVIEW_LOG.md](INTERVIEW_LOG.md) (
 | 2 | **QC PnP Hyd** | **8.30** | Sleeper — day-1 fit + Staff level likely |
 | 3 | **QC Oryon (if Staff)** | **8.25** | Highest ceiling — IF Staff. Drops to 7.50 if Senior w/o promo path |
 | 4 | **Intel Bangalore** | **7.55** | Offer in hand — the floor |
-| 5 | **Amazon Lab126** | **7.40** | Discounted heavily for round risk + UVM gap |
+| 5 | **Amazon Lab126** | **7.65** | Recruiter engaged; UVM gap still real at HM screen |
 | 6 | **Intel Ireland NPU** | **7.20** | Reloc decision dominates |
 | 7 | **Cerebras** | **6.95** | Post-IPO chart penalty |
 
@@ -284,9 +292,10 @@ Priority order based on score × momentum × time-to-decision:
 3. **Cerebras next round** — anchor negotiation to base + cash, not RSU.
 4. **Intel Ireland next round** — **only if relocation is yes.** Otherwise close politely.
 
-### Step 3 — Amazon decision gate
-- **If a Lab126 referral materializes by 24 May → apply.**
-- **If not → skip.** The marginal value vs concentrating on AMD/QC isn't worth the referral hunt + UVM keyword risk.
+### Step 3 — Amazon recruiter gate
+- **Take recruiter call this week.** Disclose UVM gap upfront — let them filter early.
+- If they schedule R1 → **request 2-week buffer** so it doesn't crash into AMD R2 / QC decision window.
+- If they pass → no loss; concentrate on AMD/QC.
 
 ### Step 4 — Final compare (when 2+ offers in hand)
 
@@ -338,7 +347,7 @@ Do you have AMD offer in hand?
 | QC 12+ yr basic qual will reject you | Cleared R1+R2+HM with 8 yrs | QC Oryon back in play, downlevel risk replaces reject risk |
 | Single QC role tracked | Two QC loops active (CPU Core + PnP Hyderabad) | PnP Hyderabad = sleeper |
 | Intel = aspirational | Intel = offer in hand | Floor locked, leverage active |
-| Amazon = pursuable | Amazon = needs referral, not started | Deprioritized unless referral lands |
+| Amazon = needs referral, not started | Amazon recruiter called 17 May, fit-screen in progress | Round risk Medium not High; no referral hunt needed |
 | AMD x86-asm gap = high risk | R1 cleared positive without it being a blocker | Lower risk; still rehearse |
 | Intel Ireland = separate option | Confirmed active; reloc decision dominates | Gate on family decision |
 | Cerebras = pre-IPO lottery | Post-IPO crash | RSU value penalized; cash matters more |
@@ -350,8 +359,9 @@ Do you have AMD offer in hand?
 **You are in a strong position:**
 - 1 offer in hand at a JD-perfect match (Intel BLR)
 - 2 high-scoring loops near decision (AMD R1+, QC combined pending)
-- 2 secondary loops active (QC PnP Hyd, Cerebras, Intel Ireland)
-- Cycle conversion: 6/10 loops landed = 60%
+- 3 secondary loops active (QC PnP Hyd, Cerebras, Intel Ireland)
+- 1 recruiter screen in progress (Amazon Lab126)
+- Cycle conversion: 6/10 loops landed + 1 new inbound = strong
 
 **The decision is no longer "where to apply" — it's "which active offer to accept and how to negotiate."**
 
@@ -362,7 +372,7 @@ Do you have AMD offer in hand?
 
 **Don't:**
 - Sign Intel BLR before AMD and QC decisions land (you're throwing away leverage).
-- Pursue Amazon cold without a referral (opportunity cost vs prepping AMD R2).
+- Invest deep Amazon prep before disclosing UVM gap to their recruiter (let them filter first).
 - Optimize for QC Oryon prestige if they downlevel without a promo path (the math doesn't work).
 - Take Intel Ireland for the role alone if relocation is family-no.
 - Anchor Cerebras negotiation on RSU notional value.
