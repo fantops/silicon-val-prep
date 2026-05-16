@@ -21,6 +21,18 @@ Shifted from the prior TC-heavy 30/25/20/15/10 toward JD-fit because:
 - The 2026 cycle rewards being on the right silicon team, not just the highest-paying
 - Day-to-day satisfaction over 3 yrs > one-time signing-bonus delta
 
+## Actual role scope (per user clarification, 17 May 2026)
+
+| Co. | Role | Domain |
+|---|---|---|
+| Qualcomm | Staff Engineer — **Oryon CPU core instruction-pipeline validation** | Custom Arm CPU (ex-Nuvia), Snapdragon X / Compute / Auto |
+| AMD | MTS L7 — **Zen CPU core validation** | Flagship x86 core, EPYC + Ryzen |
+| Intel | G7/G8 — **server validation (Xeon / DCAI)** | Server-class CPU + platform |
+| Amazon | Lab126 L5 — devices / SoC integration | Echo / Kindle / Fire silicon integration |
+| Cerebras | Wafer-scale validation | WSE / CS-3 systems |
+
+**Important context for JD-fit scoring:** your 8 yrs is NPU validation. QC Oryon / AMD Zen / Intel Xeon are all **CPU pipeline pivots**, not NPU continuations. Skills transfer well (pipeline hazards, OoO, branch pred, perf counters, memory ordering) but it is genuinely a level-up in core-μarch depth, not a lateral move.
+
 ---
 
 ## 2026 Market Sentiment Snapshot (IR / CNBC, May 2026)
@@ -40,7 +52,7 @@ Shifted from the prior TC-heavy 30/25/20/15/10 toward JD-fit because:
 | Axis | Qualcomm Staff | AMD MTS L7 | Amazon Lab126 L5 | Cerebras | Intel G7/G8 |
 |---|---:|---:|---:|---:|---:|
 | **TC** (₹ all-in vs ₹57L base) | 9.0 (₹85–91L) | 7.0 (₹65–75L) | 8.0 (₹78–85L) | 7.5 (₹70–80L) | 6.5 (₹60–70L) |
-| **JD-fit** (silicon val, NPU/SoC bringup) | 9.0 (Snapdragon NPU / Hexagon HTP direct) | 9.0 (Instinct + Ryzen AI; MTS = strong IC ladder) | 6.5 (Lab126 = devices/SoC integration, less core SV) | 7.5 (wafer-scale; world-class but niche) | 9.0 (DCAI + Foundry; deepest SV culture) |
+| **JD-fit** (CPU pipeline val pivot from NPU bg) | 8.5 (Oryon custom Arm core, ex-Nuvia, hot team but young) | 9.0 (Zen flagship x86, biggest scope, mature org) | 6.5 (Lab126 = devices/SoC integration, weakest fit) | 7.5 (wafer-scale; world-class but niche) | 8.5 (Xeon server val; broad scope but less core-μarch than Zen/Oryon) |
 | **Stability** (2026-refreshed) | 8.5 ($20B buyback) | 8.5 (blowout exec) | 9.0 (AWS funds everything) | 4.0 (post-IPO crash + 2-customer concentration) | 6.0 (turnaround real, layoffs ongoing) |
 | **Growth** (2026 momentum) | 7.5 (Auto/IoT diversification) | 9.5 (+38% rev, +57% DCAI) | 9.0 (AWS AI $15B run-rate) | 9.0 (highest upside if survives) | 7.0 (6 beats but bumpy) |
 | **Brand** | 9.0 | 9.0 | 9.5 | 7.0 | 9.0 |
@@ -51,13 +63,13 @@ Shifted from the prior TC-heavy 30/25/20/15/10 toward JD-fit because:
 
 | Rank | Offer | Weighted | Notes |
 |---:|---|---:|---|
-| 1 | **Qualcomm Staff** | **8.60** | TC + JD-fit + India AI fund + buyback = best-balanced |
-| 2 | **AMD MTS L7** | **8.50** | JD-perfect; TCS Helios India sovereign-AI deal is the tiebreaker vs Intel |
-| 3 | **Amazon Lab126 L5** | **8.18** | High TC + Brand, but JD-fit is the weak link |
-| 4 | **Intel G7/G8** | **7.38** | Best JD-fit on paper, dragged down by TC + headcount cuts |
+| 1 | **AMD MTS L7 (Zen)** | **8.50** | Flagship x86 core, maximum scope, +38% rev tailwind, TCS Helios India deal |
+| 2 | **Qualcomm Staff (Oryon)** | **8.48** | Custom Arm core, ex-Nuvia prestige; lower growth axis than AMD pulls it down 0.02 |
+| 3 | **Amazon Lab126 L5** | **8.18** | High TC + Brand, but JD-fit weak (devices ≠ CPU core) |
+| 4 | **Intel G7/G8 (Xeon server)** | **7.25** | Server scope is broad; TC + headcount cuts still drag |
 | 5 | **Cerebras** | **7.05** | Highest growth axis; stability collapsed post-IPO |
 
-**Margin #1 → #2 is only 0.10.** Team + manager + scope details should decide, not the score.
+**#1 → #2 margin is 0.02 — effectively a tie.** Decide on team / manager / scope, not the score.
 
 ---
 
@@ -72,17 +84,17 @@ Shifted from the prior TC-heavy 30/25/20/15/10 toward JD-fit because:
 
 ## Scenarios
 
-### A) Maximize lifetime EV (risk-tolerant)
-**AMD MTS L7** — JD-perfect, India strategy explicit (TCS Helios sovereign-AI), strongest exec of the bunch. The ₹15–20L TC gap vs QC is recoverable in 2 promo cycles given DCAI momentum.
+### A) Maximize lifetime EV + craft depth (risk-tolerant)
+**AMD MTS L7 (Zen)** — flagship x86 core val is the most prestigious CPU-μarch seat in the industry right now. TCS Helios India deal makes local investment explicit. ₹15–20L TC gap vs QC is recoverable in 2 promo cycles given +38% rev momentum.
 
-### B) Maximize stability + brand + TC (risk-averse)
-**Qualcomm Staff** — Highest weighted score. $20B buyback signals capital discipline; India AI fund signals continued local investment. Staff title carries.
+### B) Maximize TC + brand + capital safety (risk-averse)
+**Qualcomm Staff (Oryon)** — virtual tie with AMD on score, wins on TC by ₹15–20L. Oryon is ex-Nuvia talent; pipeline-val seat on a young custom Arm core is rare and high-leverage. $20B buyback + India AI fund = strong local commitment.
 
 ### C) Best resume + horizontal optionality
-**Amazon Lab126 L5** — AWS halo + Amazon L5 filter. Accept JD-fit hit; pays off if you ever pivot to AWS Silicon (Trainium/Inferentia) internally.
+**Amazon Lab126 L5** — AWS halo + Amazon L5 filter. Accept the JD-fit hit; pays off if you ever pivot to AWS Silicon (Trainium/Inferentia) internally. Weakest pure-CPU fit of the five.
 
-### D) Mission / craft / depth-of-silicon
-**Intel G7/G8** — Only if (i) team is on Foundry / DCAI roadmap, (ii) TC negotiated to ≥₹72L, (iii) you can tolerate restructuring noise.
+### D) Server-class breadth
+**Intel G7/G8 (Xeon server)** — broadest validation scope (platform + core + memory + IO). Only sign if (i) team is on Xeon 6+ / Rubin-host roadmap, (ii) TC negotiated to ≥₹72L, (iii) you can tolerate restructuring noise.
 
 ### E) Lottery ticket
 **Cerebras** — Only if sign-on fully de-risks unvested AND you genuinely want wafer-scale exposure. Equity is no longer the moonshot it was 60 days ago.
@@ -106,6 +118,14 @@ Shifted from the prior TC-heavy 30/25/20/15/10 toward JD-fit because:
 
 ## Verdict
 
-- **Primary: Qualcomm Staff (8.60)** — best balanced score, best India signal, best capital position.
-- **Strong alternate: AMD MTS L7 (8.50)** — if QC stalls on Staff title or sign-on, AMD is the better long-term day-job bet.
-- **Walk-away floor: Intel (7.38)** — only sign if TC AND team are both negotiated up.
+- **Primary: AMD MTS L7 — Zen core val (8.50)** — best JD scope; AI cycle puts DCAI/EPYC in the spotlight for 3+ yrs.
+- **Virtual tie: Qualcomm Staff — Oryon pipeline val (8.48)** — wins on TC by ₹15–20L; choose this if you weight cash > scope, or if QC team/manager interview impresses more.
+- **Tiebreaker between AMD vs QC:** ask each team to walk you through a recent core-pipeline bug they shipped a fix for. Whoever gives the more honest, technical answer is your team.
+- **Walk-away floor: Intel Xeon server (7.25)** — only sign if TC AND team are both negotiated up.
+
+## Pivot risk note (NPU → CPU core)
+
+QC Oryon, AMD Zen, and Intel Xeon all move you off the NPU track. That is fine — pipeline-val skills transfer — but be deliberate:
+- After 2–3 yrs in CPU-core val, returning to NPU val is easy; the reverse pivot is harder.
+- If long-term you want to stay in AI accelerator silicon (NPU/GPU/wafer-scale), **AMD** keeps that door open (Instinct adjacency) better than **QC Oryon** (CPU-only) or **Intel server** (CPU-only).
+- Cerebras is the only offer that is purely AI-accelerator. If AI-accel is the long-term identity, Cerebras + a hard sign-on becomes more interesting than its raw score suggests.
