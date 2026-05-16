@@ -45,7 +45,7 @@
 - **Learning:** Role likely wanted automotive protocol fluency (CAN/LIN/FlexRay/AVB/SOME-IP) + live PCIe/NVMe — neither is current stack.
 - **Suggestion:** Do **not** add automotive track. Filter Renesas-shape roles upstream. Keep PCIe/NVMe at bug-story + first-principles depth ([Day 10 enumeration / boot-flow placement](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 09 Section 12a PCIe in boot flow](21day_plan/day09_arm_qualcomm_platform_vocabulary.md), [Day 11 NVMe bring-up + HMB-throttle bug](21day_plan/day11_nvme_queues_bringup.md), [Day 20 Section 5a CPU+PCIe coverage matrix + Stories 6/7](21day_plan/day20_debug_method_bug_polish.md)).
 
-### 12 May — Intel Bangalore · IP Functional Validation (F2F, 2 rounds) — 🟢 Feedback pending
+### 12 May — Intel Bangalore · IP Functional Validation (F2F, 2 rounds) — ✅ Selected — offer discussion in progress
 - **What happened (R1, 2 engineers):** Msft/Intel walkthrough + how I narrow down a model regression. CPU core states — pushed on **negative scenarios** (e.g. requested C3 not achieved, peripheral blocking entry — what can happen, not specific). ISRs. Page table / page fault / MMU. C storage classes + usage. Program memory layout. C coding: **reverse a string using pointers, no extra variable**.
 - **What happened (R2):** Explain **ADR flow** — how to decide *which data* needs to be copied (answered: maintain a table of regions / persistent-state descriptors). ISRs — *when* served, *where* the data is stored, what mechanism is used (context save / stack / vector table). Behavioural: why left Intel, why switching again; interviewer framed *"most work everywhere is prep activity, only 5-10% translates to CV"* — testing if I'd flinch. Each topic ran long.
 - **Learning:** Negative-scenario framing for C-states (blocker → why entry denied → who owns the veto) is a recurring probe — needs a reflex chain. ADR "what gets copied" needs a crisp answer: persistent-region table + flush list + ordering, not hand-wavy. ISR storage answer needs the **hardware (vector table, stack, banked regs) + software (context frame)** split. Behavioural push on "prep vs CV work" needs an honest, non-defensive answer.
@@ -63,6 +63,12 @@
 - **Status:** Awaiting next-round signal.
 - **Suggestion:** Promote test-plan scaffold into [Day 20 Section 5a](21day_plan/day20_debug_method_bug_polish.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00 Coding B](21day_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Section 8](INTERVIEW_REVISION_GUIDE.md).
 
+### 14 May — AMD · Core Power & Performance Post-Si (R1) — 🟢 Positive
+- **What happened:** (1) Walk through every prior role with a deep-dive at each — what I did, issues hit, how I unblocked. (2) Open-ended design probe: *how would I design an NPU + CPU + multi-SoC power/perf tradeoff?* — answered with workload-driven budget split, shared rail vs independent rail tradeoff, DVFS coordination across SoCs (single PMIC arbiter vs distributed), thermal-envelope sharing, and the validation-side coverage matrix that falls out. (3) Role framing from interviewer: **core PnP post-Si team — heavy execution + heavy debug after data lands; needs architecture exposure + system understanding.** Direct fit with my Intel PnP + MS NPU arc.
+- **Learning:** Multi-SoC PnP design questions are the new shape at AMD/Cerebras-tier shops — the answer scaffold is **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**, in that order. Role pitch ("execution + debug + architecture exposure") is exactly what my CV reads as — lean into it in the next round.
+- **Status:** Awaiting next-round signal.
+- **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](21day_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Section 0A](INTERVIEW_REVISION_GUIDE.md) on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
+
 ---
 
 ## 📊 Snapshot
@@ -77,9 +83,10 @@
 | 29 Apr | Intel Ireland | NPU | 🟢 Strong | Feedback pending |
 | 30 Apr | Qualcomm | CPU Core (R2) | � Weak fundamentals, advanced anyway | Advanced to HM |
 | 07 May | Renesas | Automotive-leaning | ❌ Rejected | Closed — role-fit |
-| 12 May | Intel Bangalore | IP Functional Validation (F2F, 2 rounds) | 🟢 Good | Feedback pending |
+| 12 May | Intel Bangalore | IP Functional Validation (F2F, 2 rounds) | ✅ Selected | Offer discussion in progress |
 | 12 May | Qualcomm | CPU Core (Hiring Manager) | 🟢 Positive | Awaiting combined decision |
 | 13 May | Cerebras | R1 | 🟢 Cautiously positive | Awaiting next round |
+| 14 May | AMD | Core PnP Post-Si (R1) | 🟢 Positive | Awaiting next round |
 
 ---
 
