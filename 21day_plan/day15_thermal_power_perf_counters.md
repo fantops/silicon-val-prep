@@ -98,6 +98,32 @@ Step 4: QoS validation       — enable QoS; repeat 2 + 3; verify guarantees del
 
 Skipping step 1 is the #1 mistake — without baseline you can't measure interference.
 
+### 5a. Multi-SoC thermal envelope sharing (the AMD design probe, part 2)
+
+*Continuing the scaffold from [Day 12 §8a](day12_dvfs_pstates_pvt.md). Steps 5-6 of the "design NPU + CPU + multi-SoC PnP tradeoff" answer.*
+
+```
+5. THERMAL ENVELOPE SHARING   — one chassis, many hotspots
+     Per-SoC Tj limit + system skin-temp limit + ambient envelope; the smaller wins.
+     Cross-SoC thermal coupling: SoC-A hot → SoC-B ambient rises → SoC-B headroom shrinks.
+     Throttle priority: which agent gives up frequency first under shared thermal pressure?
+        - Latency-sensitive (CPU foreground) protected; throughput (NPU batch) yields.
+     Sensor topology: per-SoC DTS + skin thermistor + virtual sensor (estimated from RAPL + thermal model).
+     Control-loop bandwidth: too fast = oscillation across SoCs; too slow = trip the cap.
+6. VALIDATION COVERAGE MATRIX  — what falls out of steps 1-5
+     Axes: per-IP P-state × per-SoC PM-state × rail topology × ambient corner × workload mix.
+     Seam tests (planned, not hoped-for):
+        - SoC-A turbo + SoC-B deep idle → wake-coupling delay
+        - NPU sustained + CPU burst → budget reallocation latency
+        - Thermal trip on SoC-A → SoC-B throttle response time
+        - Single-PMIC failure → fallback rail behaviour
+     Done-when: every seam covered, no QoS violation under worst-case mix, perf-per-watt within ±X%.
+```
+
+**Reflex one-liner (steps 5-6):** *"Thermal envelope is shared across the chassis — one SoC's hotspot eats the next SoC's headroom, so throttle priority must be workload-aware (latency-sensitive protected, throughput yields). Validation is the cross-product of per-IP P-state × per-SoC PM-state × ambient × workload mix, with explicit seam tests at every boundary — wake-coupling, budget reallocation, cross-SoC throttle response."*
+
+**Full 6-step answer in one breath:** *"Workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix. Each step constrains the next; the bugs live at the seams between SoCs, not inside one."*
+
 ### 7. PMU — performance monitoring unit
 
 Every modern CPU has hardware counters that increment on architectural events.

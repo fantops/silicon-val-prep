@@ -136,6 +136,32 @@ On Snapdragon (Day 9 anchor), DVFS is voted into **RPMh**:
 
 **The catch on big.LITTLE / DynamIQ:** cores often share a voltage rail by cluster. Per-core *frequency* is real; per-core *voltage* is not — rail V = max across that rail's cores. Validation: characterise actual V = `max(per-core requests)` and find waste.
 
+### 8a. Multi-SoC / multi-IP DVFS coordination (the AMD design probe)
+
+*"Design the power/perf tradeoff for an NPU + CPU + multi-SoC system" — walk this 6-step scaffold. Steps 1-4 land here; steps 5-6 land in [Day 15 §5a](day15_thermal_power_perf_counters.md).*
+
+```
+1. WORKLOAD CHARACTERISATION  — who is hot when?
+     CPU-bound bursts vs NPU sustained inference vs concurrent.
+     Duty cycle, peak vs avg, latency-sensitive vs throughput-sensitive.
+2. POWER BUDGET SPLIT          — TDP carved per agent
+     Static split (fixed % per IP) vs dynamic (DTPM — the budget floats to who needs it).
+     Per-SoC envelope + system envelope; the smaller wins.
+3. RAIL TOPOLOGY               — shared vs independent
+     Shared rail = fewer VRMs, cheaper, but rail-V = max(requesters) → leakage waste.
+     Independent rail = per-IP DVFS freedom, more VRMs, more board area, more bugs.
+     Per-SoC PMIC vs platform PMIC; cross-SoC handshake cost.
+4. DVFS COORDINATION           — who arbitrates?
+     Single arbiter (one PCU / RPMh / SMU as master, others as voters) — simpler, single bottleneck.
+     Distributed (per-SoC arbiter + cross-SoC PM-channel) — scales, ordering bugs.
+     Vote aggregation rule: max for performance-floor votes, min for power-cap votes.
+     Wake/idle ordering across SoCs (one SoC waking can't be blocked by another in deep sleep).
+```
+
+**Reflex one-liner (steps 1-4):** *"Workload → budget split → rail topology → DVFS coordination. The hard tradeoff is rail-sharing: cheap silicon + leakage waste vs per-IP freedom + VRM/bug cost. The hard coordination question is arbiter centralisation — single master is simpler but bottlenecks at scale; distributed scales but introduces cross-SoC ordering bugs."*
+
+Validation matrix that falls out: cross-product of (per-IP P-state) × (per-SoC PM-state) × (rail topology mode), with seam tests at every boundary — see [Day 20 §2a](day20_debug_method_bug_polish.md).
+
 ### 9. Perf counters and IPC (forward to Day 15)
 
 $$\text{IPC} = \frac{\text{instructions retired}}{\text{cycles}}$$
