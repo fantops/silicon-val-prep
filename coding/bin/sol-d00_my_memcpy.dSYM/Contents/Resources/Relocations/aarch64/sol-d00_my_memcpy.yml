@@ -1,5 +1,0 @@
----
-triple:          'arm64-apple-darwin'
-binary-path:     'bin/sol-d00_my_memcpy'
-relocations:     []
-...
