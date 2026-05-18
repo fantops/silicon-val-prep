@@ -2,7 +2,9 @@
 
 _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Accept Intel as committed floor (Layer B) — **beats realistic MS-stay by +₹59–77 L** over 5 yrs (MS joining-RSU cliff Y3 + L63 ≥2.5y + vendor-loop drag). Renege only for QC/AMD/Amazon (+₹112–141 L). Don't resign MSFT until final.
+**Decision:** Accept Intel as committed floor (Layer B) — **beats realistic MS-stay by +₹59–77 L** over 5 yrs (MS joining-RSU cliff Y3 + L63 ≥2.5y + vendor-loop drag). Renege only for QC Sr Lead / AMD MTS L7 / Amazon AZ1 (+₹99–134 L). Don't resign MSFT until final.
+
+_Level realism (18 May): QC most likely **Senior Lead** (not Staff) at ₹72–80 L Y1. AMD = **MTS L7** (SMTS L8 is next promo, not entry level)._
 
 ---
 
@@ -11,7 +13,7 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 | Role | Status | Next |
 |---|---|---|
 | **Intel BLR** — IP Func Val (G7) | ✅ **Verbal offer 18 May** | Counter Tue, accept-then-renege if better lands |
-| **QC CPU Core** (Oryon μarch) | 🟢 R1+R2+HM done, decision pending | **#1 leverage email Tue** |
+| **QC CPU Core** (Oryon μarch, Sr Lead expected) | 🟢 R1+R2+HM done, decision pending | **#1 leverage email Tue** |
 | **AMD** — Zen P&P Post-Si | 🟢 R1 positive | Push expedite (leverage email Tue) |
 | **Amazon Lab126** — AZ1 ML SoC | 🟡 Recruiter fit-screen | Schedule this week; disclose UVM upfront |
 | **Cerebras** — WSE | 🟢 R1 cleared | Deprioritized (post-IPO risk) |
@@ -38,13 +40,15 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
 | Rank | Role | Score | 5-yr Δ vs MS | Key note |
 |---:|---|---:|---:|---|
-| 1 | **AMD** L7 | 8.40 | **+₹112 L** | Best 3-yr trajectory, AI tailwind, day-1 fit |
-| 2 | **QC CPU Core** Staff | 8.25 | **+₹141 L** | Highest depth + TC ceiling. *(7.50 if Senior w/o promo path)* |
+| 1 | **AMD** MTS L7 | 8.40 | **+₹112 L** | Best 3-yr trajectory, AI tailwind, day-1 fit. SMTS L8 = next promo. |
+| 2 | **QC CPU Core** Sr Lead | 8.10 | **+₹99 L** | Highest depth (μarch). *(Staff = 8.25/+₹141L if leveled up; Sr w/o promo path = 7.50)* |
 | 3 | **Amazon** AZ1 | 7.65 | **+₹134 L** | Brand + stability; UVM gap is the gate |
 | 4 | **Intel BLR** G7 | 7.45 | **+₹59–77 L** | Floor; zero risk, lateral depth, no joining RSU |
 | 5 | **Cerebras** | 6.95 | +₹50 to +₹200 L | Post-IPO variance; deprioritized |
 
 _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
+
+**Tech depth ranking (independent of comp):** QC 9.5 > AMD 8.5 > Amazon 8.0 > Cerebras 8.5 > Intel 7.5. **Level shift to Sr Lead changes QC's TC, not its depth.**
 
 **Only hard skill gap: Amazon UVM/SystemVerilog.** AMD x86-asm and QC μarch/Verilog are soft (rehearsable).
 
@@ -52,19 +56,22 @@ _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Br
 
 ## 4. 5-year TC paths
 
-| Path | Y1 | Y2 | Y3 | Y4 | Y5 | **5-yr** |
-|---|---|---|---|---|---|---|
-| MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** |
-| MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 |
-| Intel G7→G8 (2-yr promo) | 74 | 76 | 75 | 75 | 78 | **378** (+77) |
-| Intel G7→G8 (3-yr promo) | 74 | 76 | 70 | 66 | 74 | **360** (+59) |
-| AMD L7 | 75 | 80 | 85 | 85 | 88 | **413** (+112) |
-| QC Staff | 80 | 85 | 90 | 92 | 95 | **442** (+141) |
-| Amazon AZ1 | 80 | 85 | 88 | 90 | 92 | **435** (+134) |
+| Path | Y1 | Y2 | Y3 | Y4 | Y5 | **5-yr** | Source / confidence |
+|---|---|---|---|---|---|---|---|
+| MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** | Your grants + refresher cadence · 🟢 high |
+| MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 | Same · 🟢 high |
+| Intel G7→G8 (2-yr promo, optimistic) | 74 | 76 | 75 | 75 | 78 | **378** (+77) | Verbal offer · 🟢 high |
+| Intel G7→G8 (3-yr promo, realistic) | 74 | 76 | 70 | 66 | 74 | **360** (+59) | Verbal offer · 🟢 high |
+| AMD MTS L7 (→ SMTS L8 at Y3) | 75 | 80 | 85 | 85 | 88 | **413** (+112) | Levels.fyi midpoint · 🟡 ±₹25L |
+| **QC Sr Lead (realistic level)** | **75** | **78** | **82** | **82** | **83** | **400** (+99) | Levels.fyi midpoint · 🟡 ±₹25L |
+| QC Staff (if leveled up — low prob) | 80 | 85 | 90 | 92 | 95 | 442 (+141) | Levels.fyi midpoint · 🟡 ±₹25L |
+| Amazon AZ1 (5/15/40/40 RSU vest) | 80 | 85 | 88 | 90 | 92 | **435** (+134) | Levels.fyi midpoint · 🟡 ±₹25L |
 
-_MS path assumes: L62 refresh grant +4 mo, vest starts +6 mo (half-year capture Y1); joining RSU cliff after Y2; L63 promo → base ₹45 L; refreshers (L61 $12k/5yr + L62 $15k/5yr + future) stack to ~₹10–12 L by Y5._
+_All numbers are all-in TC (base + bonus + RSU vest + amortized one-times: JB, buyout, reloc). Pre-offer estimates assume sign-on/buyout ≈ ₹20–25 L (negotiable to backfill MSFT unvested), no promo within 3 yrs. All deltas still hold at low end._
 
-**Probability-weighted expected 5-yr TC: ~₹410 L** vs MS-stay ₹301 L → **+₹109 L expected pivot gain.**
+_MS path: L62 refresh grant +4 mo, vest +6 mo; joining RSU cliff after Y2; L63 → base ₹45 L; refreshers stack to ~₹10–12 L by Y5._
+
+**Probability-weighted expected 5-yr TC: ~₹395 L** vs MS-stay ₹301 L → **+₹94 L expected pivot gain.**
 
 ---
 
@@ -74,8 +81,8 @@ _MS path assumes: L62 refresh grant +4 mo, vest starts +6 mo (half-year capture 
 |---|---|
 | **Any offer** | ≥₹34 L sign-on/buyout (backfills MSFT unvested) |
 | Intel BLR | Team scope letter + manager confirms not in HC-cut cohort. Push start +8 wk. Counter: JB ₹22L / LTRCA ₹3L / base ₹46L / buyout 40/35/25. |
-| AMD | **MTS L7** in writing + Zen5/6 team scope |
-| QC CPU Core | If Senior → **written Staff-promo path ≤18 mo**, else walk |
+| QC CPU Core | Target **Sr Lead** (realistic) at ₹75L+ Y1 + **written Staff-promo path ≤18 mo**. Walk if downleveled to Senior w/o promo clause. |
+| AMD | **MTS L7** confirmed in writing (SMTS L8 = next promo, not entry) + Zen5/6 team scope |
 | Amazon | Disclose UVM gap upfront; let recruiter filter |
 | Cerebras | 100% sign-on for unvested + refresh trigger if stock −30% Y1 |
 
@@ -131,11 +138,11 @@ Best-case counter outcome: Y1 ₹81.5 L, steady ₹62 L.
 
 ### Layer C — when 2+ offers in hand
 ```
-QC Staff + team scope        → take QC,  renege Intel
-AMD L7 ≥ ₹70 L               → take AMD, renege Intel
-Amazon clears HM + ≥ ₹80 L   → take Amazon, renege Intel
-QC Senior w/o promo path     → keep Intel, reject QC
-All silicon fail             → honor Intel
+QC Sr Lead ≥ ₹75L + Staff-promo path  → take QC,  renege Intel
+AMD MTS L7 ≥ ₹70L + Zen scope         → take AMD, renege Intel
+Amazon clears HM + ≥ ₹80L              → take Amazon, renege Intel
+QC Senior w/o promo path               → keep Intel, reject QC
+All silicon fail                       → honor Intel
 ```
 
 ### Renege rules
