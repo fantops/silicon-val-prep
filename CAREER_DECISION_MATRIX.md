@@ -33,41 +33,19 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
 ---
 
-## 3. Master matrix
+## 3. Ranking
 
-Scoring 1–10. **Bold = best in row.**
+| Rank | Role | Score | 5-yr Δ vs MS | Key note |
+|---:|---|---:|---:|---|
+| 1 | **AMD** L7 | 8.40 | +₹62 L | Best 3-yr trajectory, AI tailwind, day-1 fit |
+| 2 | **QC CPU Core** Staff | 8.25 | +₹91 L | Highest depth + TC ceiling. *(7.50 if Senior w/o promo path)* |
+| 3 | **Amazon** AZ1 | 7.65 | +₹84 L | Brand + stability; UVM gap is the gate |
+| 4 | **Intel BLR** G7 | 7.45 | +₹9–27 L | Floor; zero risk, lateral depth, stock at peak |
+| 5 | **Cerebras** | 6.95 | −₹1 to +₹149 L | Post-IPO variance; deprioritized |
 
-| Axis | Intel BLR | AMD | QC CPU Core | Amazon | Cerebras |
-|---|---:|---:|---:|---:|---:|
-| TC Y1 (₹) | 70L · 6.5 | 70–75L · 7.0 | **85L Staff · 9.0** | 78–85L · 8.0 | 70–80L · 7.5 |
-| TC steady (Y4+) | 57–60L · 5.5 ⚠ | 75–85L · 8.0 | **85–95L · 9.0** | 80–90L · 8.5 | 70–90L · 7.0 |
-| **5-yr Δ vs realistic MS** | **+₹9–27 L** | +₹62 L | **+₹91 L** | +₹84 L | −₹1 to +₹149 L |
-| JD-fit | **9.5** | 9.0 | 8.0 | 8.0 | 7.5 |
-| Depth upgrade | 7.5 lateral | 8.5 | **9.5** | 8.0 | 8.5 |
-| Stability | 6.0 | 8.5 | 8.5 | **9.0** | 4.0 |
-| Growth (3-yr) | 7.0 | **9.5** | 7.5 | 9.0 | 9.0 |
-| Stock risk | 3.0 ⚠ | 6.0 | 7.0 | **8.5** | 2.0 |
-| Round-risk | **0** | low-med | low | medium (UVM) | low |
-| Time-to-offer | **now** | 3–4 wk | 1–2 wk | 4–6 wk | 3–4 wk |
+_Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
 
-### Weighted score (TC .20 · JD .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-inv .05)
-
-| Rank | Role | Score |
-|---:|---|---:|
-| 1 | **AMD** | 8.40 |
-| 2 | **QC CPU Core** (Staff) | 8.25 *(7.50 if Senior)* |
-| 3 | **Amazon** | 7.65 |
-| 4 | **Intel BLR** | 7.45 |
-| 5 | **Cerebras** | 6.95 |
-
-### Gaps
-
-| Skill | Intel | AMD | QC | Amazon | Cerebras |
-|---|:-:|:-:|:-:|:-:|:-:|
-| SystemVerilog / UVM | — | — | — | **❌ hard** | ⚠ |
-| x86 asm | — | ⚠ soft | — | — | — |
-| ARM/Oryon μarch | — | — | ⚠ soft | — | — |
-| Verilog RTL | — | — | ⚠ soft | — | ⚠ soft |
+**Only hard skill gap: Amazon UVM/SystemVerilog.** AMD x86-asm and QC μarch/Verilog are soft (rehearsable).
 
 ---
 
