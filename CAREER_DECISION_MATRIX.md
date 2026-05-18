@@ -1,10 +1,10 @@
-# Career Decision Matrix — 5 Active Roles
+# Career Decision Matrix — 4 Active Roles
 
 _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Accept Intel as committed floor (Layer B) — **beats realistic MS-stay by +₹59–77 L** over 5 yrs (MS joining-RSU cliff Y3 + L63 ≥2.5y + vendor-loop drag). Renege only for **QC Sr Lead / AMD MTS L7 (pending depth check) / Amazon AZ1 / Cerebras (if comp clears bar)** (+₹99–200 L). Don't resign MSFT until final.
+**Decision:** Accept Intel as committed floor (Layer B) — **beats realistic MS-stay by +₹59–77 L** over 5 yrs (MS joining-RSU cliff Y3 + L63 ≥2.5y + vendor-loop drag). Renege only for **QC Sr Lead / AMD MTS L7 (pending depth check) / Amazon AZ1** (+₹99–134 L). Don't resign MSFT until final.
 
-_Level realism (18 May): QC most likely **Senior Lead** (not Staff) at ₹72–80 L Y1. AMD = **MTS L7** (friend's signal: more execution/debug than expected, **magnitude unverified — ask HM**). **Cerebras BLR = arch-team adjacent + bringup + small team** — chaotic but high-ownership, faster ladder; meaningful upside if comp clears the bar. Intel = standard IP func val for servers; internal scope unknown._
+_Level realism (18 May): QC most likely **Senior Lead** at ₹72–80 L Y1. AMD = **MTS L7** (verify arch/exec time-split with HM). Intel = standard IP func val for servers; internal scope unknown._
 
 ---
 
@@ -16,7 +16,6 @@ _Level realism (18 May): QC most likely **Senior Lead** (not Staff) at ₹72–8
 | **QC CPU Core** (Oryon μarch, Sr Lead expected) | 🟢 R1+R2+HM done, decision pending | **#1 leverage email Tue** |
 | **AMD** — Zen P&P Post-Si | 🟢 R1 positive | Push expedite (leverage email Tue) |
 | **Amazon Lab126** — AZ1 ML SoC | 🟡 Recruiter fit-screen | Schedule this week; disclose UVM upfront |
-| **Cerebras** — WSE (BLR, arch-adjacent) | 🟢 R1 cleared; role = arch-team feedback + bringup + debug, small team | **Upgraded** — small team = ownership + ladder; pursue if comp clears bar |
 
 ---
 
@@ -40,17 +39,16 @@ _Level realism (18 May): QC most likely **Senior Lead** (not Staff) at ₹72–8
 
 | Rank | Role | Score | 5-yr Δ vs MS | Key note |
 |---:|---|---:|---:|---|
-| 1 | **AMD** MTS L7 | **8.30** | **+₹112 L** | Best AI tailwind + comp. *Friend's signal: more execution/debug than expected — magnitude unknown, verify with HM.* |
-| 2 | **QC CPU Core** Sr Lead | 8.10 | +₹99 L | Highest depth (μarch). *(Staff = 8.25/+₹141L if leveled up; Sr w/o promo path = 7.50)* |
-| 3 | **Cerebras** WSE (BLR) | **7.70** ⬆ | +₹50 to +₹200 L | **Upgraded** from 6.95. Arch-team adjacent + bringup + small team = faster ladder, high ownership, chaotic learning. *Gated on comp clearing post-IPO variance.* |
-| 4 | **Amazon** AZ1 | 7.65 | +₹134 L | Brand + stability; UVM gap is the gate |
-| 5 | **Intel BLR** G7 | 7.45 | +₹59–77 L | Floor; standard IP func val (servers); zero risk, no joining RSU |
+| 1 | **AMD** MTS L7 | **8.30** | **+₹112 L** | Best AI tailwind + comp. Verify arch/exec time-split with HM. |
+| 2 | **QC CPU Core** Sr Lead | 8.10 | +₹99 L | Highest depth (μarch). Sr Lead = up-level vs Intel G7. |
+| 3 | **Amazon** AZ1 | 7.65 | +₹134 L | Brand + stability; UVM gap is the gate |
+| 4 | **Intel BLR** G7 | 7.45 | +₹59–77 L | Floor; standard IP func val (servers); zero risk, no joining RSU |
 
 _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
 
-**Tech depth ranking:** QC 9.5 > **Cerebras 8.5** (arch-adjacent + bringup) > AMD 8.0–8.5 (pending HM check) > Amazon 8.0 > Intel 7.5.
+**Tech depth ranking:** QC 9.5 > AMD 8.0–8.5 (pending HM check) > Amazon 8.0 > Intel 7.5.
 
-**Growth-velocity ranking (small-team + chaos premium):** **Cerebras 8.5** > AMD 8.5 > Amazon 7.5 > Intel 7.0 > QC 7.0.
+**Growth-velocity ranking:** AMD 8.5 > Amazon 7.5 > Intel 7.0 > QC 7.0.
 
 **Only hard skill gap: Amazon UVM/SystemVerilog.** AMD x86-asm and QC μarch/Verilog are soft (rehearsable).
 
@@ -83,10 +81,9 @@ _MS path: L62 refresh grant +4 mo, vest +6 mo; joining RSU cliff after Y2; L63 �
 |---|---|
 | **Any offer** | ≥₹34 L sign-on/buyout (backfills MSFT unvested) |
 | Intel BLR | Team scope letter + manager confirms not in HC-cut cohort. Push start +8 wk. Counter: JB ₹22L / LTRCA ₹3L / base ₹46L / buyout 40/35/25. |
-| AMD | **MTS L7** in writing (SMTS L8 = next promo, not entry) + Zen5/6 team scope. **Ask HM for time-split:** arch/methodology vs lab/triage/content. Friend flagged execution-heavy but magnitude unknown — walk only if <20% arch + no path to ownership. |
-| QC CPU Core | Target **Sr Lead** (realistic) at ₹75L+ Y1 + **written Staff-promo path ≤18 mo**. Walk if downleveled to Senior w/o promo clause. |
+| AMD | **MTS L7** in writing + Zen5/6 team scope. Ask HM for arch/methodology vs lab/triage time-split. Walk if <20% arch + no ownership path. |
+| QC CPU Core | Target **Sr Lead** at ₹75L+ Y1. Walk only if downleveled to Senior at flat TC. |
 | Amazon | Disclose UVM gap upfront; let recruiter filter |
-| Cerebras | ≥₹85L Y1 TC, cash-heavy sign-on (≥70% cash, not RSU), double-trigger acceleration on equity. Small-team thesis already validated. |
 
 **Intel dead levers (don't waste capital):** G8 level · joining RSU · buyout >₹34 L · vest <3 yr · refresher in writing.
 
@@ -142,12 +139,11 @@ Best-case counter outcome: Y1 ₹81.5 L, steady ₹62 L.
 
 ### Layer C — when 2+ offers in hand
 ```
-QC Sr Lead ≥ ₹75L + Staff-promo path        → take QC,  renege Intel
+QC Sr Lead ≥ ₹75L                           → take QC,  renege Intel
 AMD MTS L7 ≥ ₹70L + workable arch/exec mix  → take AMD, renege Intel
 AMD MTS L7 if <20% arch + no ownership path → lean Intel
-Cerebras ≥ ₹85L cash-heavy + WSE charter   → take Cerebras, renege Intel
 Amazon clears HM + ≥ ₹80L                   → take Amazon, renege Intel
-QC Senior w/o promo path                    → keep Intel, reject QC
+QC Senior (downlevel) at flat TC            → keep Intel, reject QC
 All silicon fail                            → honor Intel
 ```
 

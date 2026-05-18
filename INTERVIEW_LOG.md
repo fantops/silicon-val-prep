@@ -20,7 +20,7 @@ Round-by-round breakdown:
 | Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — 🟢 pending |
 | Renesas | 1 | R1 — ❌ role-fit |
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer in progress** |
-| Cerebras | 1 | R1 — 🟢 awaiting next |
+| Cerebras | 1 | R1 — ❌ not fit for role |
 | AMD · Core PnP Post-Si | 1 | R1 — 🟢 awaiting next |
 | **Total** | **15** | |
 
@@ -29,12 +29,12 @@ Loop status:
 | Bucket | Count | Loops |
 |---|---|---|
 | ✅ Selected (offer in progress) | **1** | Intel Bangalore |
-| 🟢 Active / awaiting next or combined decision | **5** | QC CPU Core · QC PnP/Thermal · Intel Ireland NPU · Cerebras · AMD |
-| ❌ Rejected / closed | **2** | Intel Power & Perf (Apr) · Renesas |
+| 🟢 Active / awaiting next or combined decision | **4** | QC CPU Core · QC PnP/Thermal · Intel Ireland NPU · AMD |
+| ❌ Rejected / closed | **3** | Intel Power & Perf (Apr) · Renesas · Cerebras |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **10** | |
 
-**Conversion (loops, not rounds):** 6 / 10 landed (1 selected + 5 active strong-positive) = **60%**.
+**Conversion (loops, not rounds):** 5 / 10 landed (1 selected + 4 active strong-positive) = **50%**.
 
 **Velocity:** 15 rounds over ~33 days (13 Apr → 16 May) ≈ **one round every 2.2 days**.
 
@@ -93,10 +93,10 @@ Loop status:
 - **Status:** Awaiting combined-loop decision.
 - **Suggestion:** Lock in a 30-sec "why QC over Arm / why CPU core despite no prior CPU-core work" answer in [Section 0A](INTERVIEW_REVISION_GUIDE.md) — value-add = validation rigor + cross-vendor system view + ownership pattern, not domain seniority.
 
-### 13 May — Cerebras · R1 — 🟢 Cautiously positive
+### 13 May — Cerebras · R1 — ❌ Not fit for role
 - **What happened:** (1) Cerebras-context warmup — what they do (wafer-scale engine, MemoryX/SwarmX). (2) Intel work walk-through — what + how. (3) **Test-plan design from scratch** for a device — took PCIe as the example and walked: spec → features → modes → stimulus + checks → coverage axes → negative + error injection → perf/power → silicon-vs-pre-Si split. (4) Microsoft NPU work walkthrough. (5) **Coding** — implement `grep` in Python (regex + file walk + flags); moving-average in C (circular buffer / running sum). Small issues on edge cases but recovered. (6) Closing chat on team-size expansion + responsibilities scope.
 - **Learning:** Test-plan-from-spec is a recurring opener at AI-accelerator shops — having a reusable scaffold (spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si split) lands cleanly. Two-language coding (scripting + C) is becoming the norm — keep both reflexes warm. Edge-case discipline (empty input, single element, wrap-around in moving-avg, null pattern in grep) is what separated "works" from "clean."
-- **Status:** Awaiting next-round signal.
+- **Status:** ❌ **Closed 18 May — not fit for role.** No further rounds.
 - **Suggestion:** Promote test-plan scaffold into [Day 20 Section 5a](21day_plan/day20_debug_method_bug_polish.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00 Coding B](21day_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Section 8](INTERVIEW_REVISION_GUIDE.md).
 
 ### 14 May — AMD · Core Power & Performance Post-Si (R1) — 🟢 Positive
@@ -113,7 +113,7 @@ Loop status:
 
 **Still soft (watch):** layer-3 textbook depth under "probe-then-push", live-C edge-case discipline (mention cases *before* coding), EE fundamentals refresh, leadership/ownership framing under pace.
 
-**Role-fit shift (mid-May):** the loop has converged on roles that match what I actually own — IP/platform functional validation, post-Si PnP, multi-SoC + accelerator power/perf, AI-accelerator validation. Intel Bangalore (✅ selected, offer in progress), AMD Core PnP Post-Si (🟢), Cerebras (🟢), Qualcomm CPU Core HM (🟢) all sit in this band. Mismatched shapes (pure DV / pre-Si, automotive protocol-heavy) are filtered upstream and no longer worth prepping for.
+**Role-fit shift (mid-May):** the loop has converged on roles that match what I actually own — IP/platform functional validation, post-Si PnP, multi-SoC + accelerator power/perf. Intel Bangalore (✅ selected, offer in progress), AMD Core PnP Post-Si (🟢), Qualcomm CPU Core HM (🟢) all sit in this band. Mismatched shapes (pure DV / pre-Si, automotive protocol-heavy, Cerebras role-fit) are filtered out and no longer worth prepping for.
 
 **Meta-skill being tested:** "probe-then-push" — *what → why → how → connected concept*. Bug stories and design-scaffold answers (test-plan, multi-SoC PnP) survive the push because they're structured derivations; flat-fact recall (textbook C-state ladder, cache hierarchy verbatim) doesn't. **Fix: every concept lives as a scaffold to walk, not a paragraph to recite.**
 
