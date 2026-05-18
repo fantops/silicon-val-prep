@@ -2,7 +2,7 @@
 
 _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Accept Intel as committed floor (Layer B) — beats realistic MS-stay by +₹9–27 L over 5 yrs. Renege only for QC/AMD/Amazon (+₹62–91 L). Don't resign MSFT until final.
+**Decision:** Accept Intel as committed floor (Layer B) — **beats realistic MS-stay by +₹59–77 L** over 5 yrs (MS joining-RSU cliff Y3 + L63 ≥2.5y + vendor-loop drag). Renege only for QC/AMD/Amazon (+₹112–141 L). Don't resign MSFT until final.
 
 ---
 
@@ -24,12 +24,13 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 |---|---|
 | Base / Bonus / RSU | ₹34.7 + ₹5.2 + ₹19.5 L |
 | **Y1 TC** | **₹59.4 L** |
-| L63 promo | **≥30 months** (vendor-loop work = thin promo packet) |
+| L63 promo | **≥30 months** (vendor-loop work = thin promo packet) → **base ₹45 L** |
 | Unvested RSU forfeited on leave | **$42k ≈ ₹40.4 L over 2 yrs** (risk-adj ₹34.3 L) |
+| **RSU cliff Y3** ⚠️ | $21k/yr vest = $17.5k joining RSU (ends Y2) + ~$3.5k refreshers. **From Y3: RSU drops to ~$6–10k = ₹6–10 L/yr** (refreshers only). L61 grant $12k/5yr; L62 this yr $15k/5yr — **grant lands +4 mo, vest starts +6 mo** (so Y1 captures only half-year of L62 refresh). |
 
 **Intel ₹34 L cash buyout (3 yrs) vs MSFT ₹40.4 L RSU forfeit (2 yrs):** risk-adjusted match (₹34 vs ₹34.3). Cash-for-stock swap is fair. **Buyout not a blocker.**
 
-**INTC stock:** $108.77 (+475% YoY), beta 2.19, analyst target $85.84 (−22%). Intel RSU granted at peak.
+**INTC stock exposure:** minimal — no joining RSU (India policy), buyout is **cash**, refreshers ~₹6–10 L/yr start Y2+. Only the future refreshers carry INTC stock risk ($108.77, analyst target $85.84 = −22% downside).
 
 ---
 
@@ -37,11 +38,11 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
 | Rank | Role | Score | 5-yr Δ vs MS | Key note |
 |---:|---|---:|---:|---|
-| 1 | **AMD** L7 | 8.40 | +₹62 L | Best 3-yr trajectory, AI tailwind, day-1 fit |
-| 2 | **QC CPU Core** Staff | 8.25 | +₹91 L | Highest depth + TC ceiling. *(7.50 if Senior w/o promo path)* |
-| 3 | **Amazon** AZ1 | 7.65 | +₹84 L | Brand + stability; UVM gap is the gate |
-| 4 | **Intel BLR** G7 | 7.45 | +₹9–27 L | Floor; zero risk, lateral depth, stock at peak |
-| 5 | **Cerebras** | 6.95 | −₹1 to +₹149 L | Post-IPO variance; deprioritized |
+| 1 | **AMD** L7 | 8.40 | **+₹112 L** | Best 3-yr trajectory, AI tailwind, day-1 fit |
+| 2 | **QC CPU Core** Staff | 8.25 | **+₹141 L** | Highest depth + TC ceiling. *(7.50 if Senior w/o promo path)* |
+| 3 | **Amazon** AZ1 | 7.65 | **+₹134 L** | Brand + stability; UVM gap is the gate |
+| 4 | **Intel BLR** G7 | 7.45 | **+₹59–77 L** | Floor; zero risk, lateral depth, no joining RSU |
+| 5 | **Cerebras** | 6.95 | +₹50 to +₹200 L | Post-IPO variance; deprioritized |
 
 _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
 
@@ -53,15 +54,17 @@ _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Br
 
 | Path | Y1 | Y2 | Y3 | Y4 | Y5 | **5-yr** |
 |---|---|---|---|---|---|---|
-| MS-stay (realistic, vendor-drag) | 59 | 63 | 67 | 78 | 84 | **351** |
-| MS-stay (optimistic L63 Y2) | 59 | 64 | 75 | 82 | 89 | 369 |
-| Intel G7→G8 (2-yr promo) | 74 | 76 | 75 | 75 | 78 | **378** (+27) |
-| Intel G7→G8 (3-yr promo) | 74 | 76 | 70 | 66 | 74 | **360** (+9) |
-| AMD L7 | 75 | 80 | 85 | 85 | 88 | **413** (+62) |
-| QC Staff | 80 | 85 | 90 | 92 | 95 | **442** (+91) |
-| Amazon AZ1 | 80 | 85 | 88 | 90 | 92 | **435** (+84) |
+| MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** |
+| MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 |
+| Intel G7→G8 (2-yr promo) | 74 | 76 | 75 | 75 | 78 | **378** (+77) |
+| Intel G7→G8 (3-yr promo) | 74 | 76 | 70 | 66 | 74 | **360** (+59) |
+| AMD L7 | 75 | 80 | 85 | 85 | 88 | **413** (+112) |
+| QC Staff | 80 | 85 | 90 | 92 | 95 | **442** (+141) |
+| Amazon AZ1 | 80 | 85 | 88 | 90 | 92 | **435** (+134) |
 
-**Probability-weighted expected 5-yr TC: ~₹400 L** vs MS-stay ₹351 L → **+₹49 L expected pivot gain.**
+_MS path assumes: L62 refresh grant +4 mo, vest starts +6 mo (half-year capture Y1); joining RSU cliff after Y2; L63 promo → base ₹45 L; refreshers (L61 $12k/5yr + L62 $15k/5yr + future) stack to ~₹10–12 L by Y5._
+
+**Probability-weighted expected 5-yr TC: ~₹410 L** vs MS-stay ₹301 L → **+₹109 L expected pivot gain.**
 
 ---
 
