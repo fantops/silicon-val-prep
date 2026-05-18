@@ -61,10 +61,8 @@ _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Br
 | MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** | Your grants + refresher cadence · 🟢 high |
 | MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 | Same · 🟢 high |
 | Intel G7→G8 (2-yr promo, optimistic) | 74 | 76 | 75 | 75 | 78 | **378** (+77) | Verbal offer · 🟢 high |
-| Intel G7→G8 (3-yr promo, realistic) | 74 | 76 | 70 | 66 | 74 | **360** (+59) | Verbal offer · 🟢 high |
 | AMD MTS L7 (→ SMTS L8 at Y3) | 75 | 80 | 85 | 85 | 88 | **413** (+112) | Levels.fyi midpoint · 🟡 ±₹25L |
 | **QC Sr Lead (realistic level)** | **75** | **78** | **82** | **82** | **83** | **400** (+99) | Levels.fyi midpoint · 🟡 ±₹25L |
-| QC Staff (if leveled up — low prob) | 80 | 85 | 90 | 92 | 95 | 442 (+141) | Levels.fyi midpoint · 🟡 ±₹25L |
 | Amazon AZ1 (5/15/40/40 RSU vest) | 80 | 85 | 88 | 90 | 92 | **435** (+134) | Levels.fyi midpoint · 🟡 ±₹25L |
 
 _All numbers are all-in TC (base + bonus + RSU vest + amortized one-times: JB, buyout, reloc). Pre-offer estimates assume sign-on/buyout ≈ ₹20–25 L (negotiable to backfill MSFT unvested), no promo within 3 yrs. All deltas still hold at low end._
