@@ -2,9 +2,7 @@
 
 _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Accept Intel as committed floor (Layer B) — **beats realistic MS-stay by +₹59–77 L** over 5 yrs (MS joining-RSU cliff Y3 + L63 ≥2.5y + vendor-loop drag). Renege only for **QC Sr Lead / AMD MTS L7 (pending depth check) / Amazon AZ1** (+₹99–134 L). Don't resign MSFT until final.
-
-_Level realism (18 May): QC most likely **Senior Lead** at ₹72–80 L Y1. AMD = **MTS L7** (verify arch/exec time-split with HM). Intel = standard IP func val for servers; internal scope unknown._
+**Decision:** Accept Intel as committed floor (Layer B). **TC recalibration (19 May):** With base-growth + Y3 G8 promo modeled, Intel 5-yr lifts to ₹410 L (+₹109 vs MS-stay). QC/AMD/Amazon rows in §4 still on flat-base model — apples-to-apples they likely also rise ₹50–80 L. **Decision still optimizes for technical trajectory + ownership + team quality**, not raw TC. Don't resign MSFT until final.
 
 ---
 
@@ -31,18 +29,18 @@ _Level realism (18 May): QC most likely **Senior Lead** at ₹72–80 L Y1. AMD 
 
 **Intel ₹34 L cash buyout (3 yrs) vs MSFT ₹40.4 L RSU forfeit (2 yrs):** risk-adjusted match (₹34 vs ₹34.3). Cash-for-stock swap is fair. **Buyout not a blocker.**
 
-**INTC stock exposure:** minimal — no joining RSU (India policy), buyout is **cash**, refreshers ~₹6–10 L/yr start Y2+. Only the future refreshers carry INTC stock risk ($108.77, analyst target $85.84 = −22% downside).
-
 ---
 
 ## 3. Ranking
 
 | Rank | Role | Score | 5-yr Δ vs MS | Key note |
 |---:|---|---:|---:|---|
-| 1 | **AMD** MTS L7 | **8.30** | **+₹112 L** | Best AI tailwind + comp. Verify arch/exec time-split with HM. |
-| 2 | **QC CPU Core** Sr Lead | 8.10 | +₹99 L | Highest depth (μarch). Sr Lead = up-level vs Intel G7. |
-| 3 | **Amazon** AZ1 | 7.65 | +₹134 L | Brand + stability; UVM gap is the gate |
-| 4 | **Intel BLR** G7 | 7.45 | +₹59–77 L | Floor; standard IP func val (servers); zero risk, no joining RSU |
+| 1 | **Intel BLR** G7→G8 | **7.96** | **+₹109 L** ↑ | Recalibrated with base-growth + Y3 G8 promo: 5-yr ₹410 L. Strongest guaranteed cash + promo certainty. |
+| 2 | **AMD** MTS L7 | 8.22 | +₹81 L† | Best balanced growth + AI tailwind. Verify arch/exec time-split with HM. |
+| 3 | **Amazon** AZ1 | 7.98 | +₹84 L† | Highest RSU ceiling; UVM gap is the gate. Back-loaded vest. |
+| 4 | **QC CPU Core** Sr Lead | 8.08 | +₹47 L† | Deepest μarch prestige. RSU $50k/4yr confirmed. |
+
+_† QC/AMD/Amazon rows still on flat-base model — add merit + promo and they likely jump ₹50–80 L too. Apples-to-apples recalibration pending. Score column unchanged (not just TC-driven)._
 
 _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
 
@@ -50,26 +48,22 @@ _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Br
 
 **Growth-velocity ranking:** AMD 8.5 > Amazon 7.5 > Intel 7.0 > QC 7.0.
 
-**Only hard skill gap: Amazon UVM/SystemVerilog.** AMD x86-asm and QC μarch/Verilog are soft (rehearsable).
+**Guaranteed-cash ranking:** Intel > AMD > QC > Amazon (RSU-heavy).
 
 ---
 
-## 4. 5-year TC paths
+## 4. 5-year TC paths (recalibrated to India bands, 19 May)
+
+_Normalized recurring TC (base + bonus + RSU vest + amortized sign-on/buyout). One-time relocation excluded from yearly._
 
 | Path | Y1 | Y2 | Y3 | Y4 | Y5 | **5-yr** | Source / confidence |
 |---|---|---|---|---|---|---|---|
 | MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** | Your grants + refresher cadence · 🟢 high |
 | MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 | Same · 🟢 high |
-| Intel G7→G8 (2-yr promo, optimistic) | 74 | 76 | 75 | 75 | 78 | **378** (+77) | Verbal offer · 🟢 high |
-| AMD MTS L7 (→ SMTS L8 at Y3) | 75 | 80 | 85 | 85 | 88 | **413** (+112) | Levels.fyi midpoint · 🟡 ±₹25L |
-| **QC Sr Lead (realistic level)** | **75** | **78** | **82** | **82** | **83** | **400** (+99) | Levels.fyi midpoint · 🟡 ±₹25L |
-| Amazon AZ1 (5/15/40/40 RSU vest) | 80 | 85 | 88 | 90 | 92 | **435** (+134) | Levels.fyi midpoint · 🟡 ±₹25L |
-
-_All numbers are all-in TC (base + bonus + RSU vest + amortized one-times: JB, buyout, reloc). Pre-offer estimates assume sign-on/buyout ≈ ₹20–25 L (negotiable to backfill MSFT unvested), no promo within 3 yrs. All deltas still hold at low end._
-
-_MS path: L62 refresh grant +4 mo, vest +6 mo; joining RSU cliff after Y2; L63 → base ₹45 L; refreshers stack to ~₹10–12 L by Y5._
-
-**Probability-weighted expected 5-yr TC: ~₹395 L** vs MS-stay ₹301 L → **+₹94 L expected pivot gain.**
+| Intel G7→G8 (Y3 promo + 6% merit, recalibrated) | 78 | 84 | 86 | 78 | 84 | **410** (+109) | Verbal offer + realistic growth · 🟢 high |
+| QC Sr Lead (RSU $50k/4yr confirmed) | 67 | 68 | 70 | 71 | 72 | **348** (+47) | India band + RSU data point · 🟢 medium-high |
+| AMD MTS L7 (→ SMTS L8 at Y3) | 70 | 72 | 78 | 80 | 82 | **382** (+81) | India band midpoint · 🟡 ±₹15L |
+| Amazon AZ1 (back-loaded 5/15/40/40 RSU vest) | 70 | 75 | 85 | 80 | 75 | **385** (+84) | Levels.fyi midpoint · 🟡 ±₹15L |
 
 ---
 
@@ -78,12 +72,11 @@ _MS path: L62 refresh grant +4 mo, vest +6 mo; joining RSU cliff after Y2; L63 �
 | Role | Non-negotiable |
 |---|---|
 | **Any offer** | ≥₹34 L sign-on/buyout (backfills MSFT unvested) |
-| Intel BLR | Team scope letter + manager confirms not in HC-cut cohort. Push start +8 wk. Counter: JB ₹22L / LTRCA ₹3L / base ₹46L / buyout 40/35/25. |
+| Intel BLR | Team scope letter + manager confirms not in HC-cut cohort. Push start +8 wk. Counter: **JB ₹22L only** (LTRCA at policy cap; Base bump blocks Y2 merit headroom). |
 | AMD | **MTS L7** in writing + Zen5/6 team scope. Ask HM for arch/methodology vs lab/triage time-split. Walk if <20% arch + no ownership path. |
 | QC CPU Core | Target **Sr Lead** at ₹75L+ Y1. Walk only if downleveled to Senior at flat TC. |
 | Amazon | Disclose UVM gap upfront; let recruiter filter |
 
-**Intel dead levers (don't waste capital):** G8 level · joining RSU · buyout >₹34 L · vest <3 yr · refresher in writing.
 
 ---
 
@@ -94,35 +87,41 @@ _MS path: L62 refresh grant +4 mo, vest +6 mo; joining RSU cliff after Y2; L63 �
 | Component | Value |
 |---|---|
 | Level / Base | G7 / ₹44 L |
-| LTRCA | ₹1.08 L/yr (low; market ₹2–5 L) |
+| **LTRCA** (joining grant, 3-yr vest 33/33/33) | **₹34 L total = ₹11.3 L/yr** |
+| Flex / tax allowance | ₹1.08 L/yr |
 | Bonus (QPB+APB) | 12–15% = ₹5.3–6.6 L |
-| Stock buyout | **₹34 L over 3 yrs (33/33/33)** |
 | Joining bonus | ₹15 L over 2 yrs (clawback if leave <2 yr) |
-| Joining RSU | **₹0** (India policy post-2024) |
-| Refresher (verbal) | ~₹6–10 L/yr |
+| Joining RSU | **₹0** (India policy post-2024 — LTRCA replaces it) |
+| Refresher (verbal) | ~₹6–10 L/yr LTRCA top-ups from Y2+ |
 | Relocation | ₹4.5 L one-time |
 
-**TC by year:** Y1 ₹74 (incl reloc) · Y2 ₹76 · Y3 ₹66 · Y4+ **₹57–60 L steady** ⚠
+
+**TC by year (recalibrated: 6% merit/yr + G8 promo Y3 +18%):**
+
+| Year | Base | Bonus 13.5% | LTRCA | JB ₹22 | Refresh | Flex | Reloc | **Total** |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Y1 | 44.0 | 5.9 | 11.3 | 11.0 | — | 1.1 | 4.5 | **₹77.8 L** |
+| Y2 | 46.6 | 6.3 | 11.3 | 11.0 | 8 | 1.1 | — | **₹84.3 L** |
+| Y3 | **55.0** | 7.4 | 11.3 | — | 11 | 1.1 | — | **₹85.8 L** ← peak (G8 promo + LTRCA tail) |
+| Y4 | 58.3 | 7.9 | — | — | 11 | 1.1 | — | **₹78.3 L** |
+| Y5 | 61.8 | 8.3 | — | — | 13 | 1.1 | — | **₹84.2 L** |
+| | | | | | | | **5-yr** | **₹410.4 L** |
 
 ### Counter asks (Tue 19 May)
 
-| Lever | Current → Target | Prob |
-|---|---|:-:|
-| Joining bonus | ₹15 → **₹22 L** | 🟢 70% |
-| LTRCA | ₹1.08 → **₹3 L/yr** | 🟢 60% |
-| Base | ₹44 → **₹46 L** | 🟡 40% |
-| Buyout front-load | 33/33/33 → **40/35/25** | 🟡 25% |
-| Start date | **+8 weeks** | 🟢 80% |
-| Refresher | **Y1 grant (not Y2)** | 🟡 40% |
+| Lever | Current → Target | Prob | Rationale |
+|---|---|:-:|---|
+| Joining bonus | ₹15 → **₹22 L** | 🟢 70% | Smallest ask, recruiter-level approval, no policy gate |
+| Start date | **+8 weeks** (MSFT 60-day notice) | 🟢 80% | Procedural, near-certain |
 
-Best-case counter outcome: Y1 ₹81.5 L, steady ₹62 L.
+**Best-case counter outcome (JB ₹22 lands):** Y1 ₹77.8 → ₹77.8 L (no Y1 change, +₹3.5 L/yr Y1–Y2 from JB delta). **5-yr lift: +₹7 L** (₹410 with counter vs ₹403 base offer).
 
 ---
 
 ## 7. Execution plan (Layer B = committed)
 
 **This week (19–22 May):**
-1. Counter Intel Wed/Thu on JB/LTRCA/base/buyout/start-date.
+1. Counter Intel Wed/Thu on JB / LTRCA / base.
 2. Fire leverage emails Tue AM to QC (#1), AMD (#2), Amazon (#3) — anchor "Intel offer in hand, deciding by X."
 3. Track responses. Don't sign anything.
 
@@ -153,13 +152,3 @@ Don't take JB pre-payment · don't start onboarding paperwork · phone+email (ne
 ## 8. MSFT-resignation gate (most important rule)
 
 **Do NOT resign MSFT until final offer signed.** Accepting Intel letter ≠ resigning MSFT. Paychecks + RSU clock keep running until you resign. Once you resign → renege options collapse.
-
----
-
-## 9. References
-
-- FX **₹96.24/USD** — xe.com (18 May 2026, +12.46% YoY)
-- Levels.fyi: Intel India G7 ₹49.7 L median · MSFT India L62 ₹56.8 L median
-- INTC: stockanalysis.com — $108.77, beta 2.19, analyst target $85.84
-- Intel India: no joining RSU post-2024 · buyout cap = 1× annual unvested · 33/33/33 vest
-- LTRCA G7 band ₹2–5 L · Bonus G7 12–18% (Blind/Glassdoor)
