@@ -2,7 +2,7 @@
 
 _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Accept Intel as committed floor (Layer B). **TC recalibration (19 May):** With base-growth + Y3 G8 promo modeled, Intel 5-yr lifts to ₹410 L (+₹109 vs MS-stay). QC/AMD/Amazon rows in §4 still on flat-base model — apples-to-apples they likely also rise ₹50–80 L. **Decision still optimizes for technical trajectory + ownership + team quality**, not raw TC. Don't resign MSFT until final.
+**Decision:** Accept Intel as committed floor (Layer B). **TC recalibration (19 May, apples-to-apples):** All four roles modeled with 6% merit + Y3 promo (Amazon excluded — L7 ≥5yr away). 5-yr range ₹383–416 L — spread collapsed to **₹33 L total**, i.e. ~₹7 L/yr average difference. **Money is neutralized; decision = technical trajectory + ownership + team quality.** Don't resign MSFT until final.
 
 ---
 
@@ -40,8 +40,6 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 | 3 | **Amazon** AZ1 | 7.98 | +₹84 L† | Highest RSU ceiling; UVM gap is the gate. Back-loaded vest. |
 | 4 | **QC CPU Core** Sr Lead | 8.08 | +₹47 L† | Deepest μarch prestige. RSU $50k/4yr confirmed. |
 
-_† QC/AMD/Amazon rows still on flat-base model — add merit + promo and they likely jump ₹50–80 L too. Apples-to-apples recalibration pending. Score column unchanged (not just TC-driven)._
-
 _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
 
 **Tech depth ranking:** QC 9.5 > AMD 8.0–8.5 (pending HM check) > Amazon 8.0 > Intel 7.5.
@@ -60,10 +58,10 @@ _Normalized recurring TC (base + bonus + RSU vest + amortized sign-on/buyout). O
 |---|---|---|---|---|---|---|---|
 | MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** | Your grants + refresher cadence · 🟢 high |
 | MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 | Same · 🟢 high |
-| Intel G7→G8 (Y3 promo + 6% merit, recalibrated) | 78 | 84 | 86 | 78 | 84 | **410** (+109) | Verbal offer + realistic growth · 🟢 high |
-| QC Sr Lead (RSU $50k/4yr confirmed) | 67 | 68 | 70 | 71 | 72 | **348** (+47) | India band + RSU data point · 🟢 medium-high |
-| AMD MTS L7 (→ SMTS L8 at Y3) | 70 | 72 | 78 | 80 | 82 | **382** (+81) | India band midpoint · 🟡 ±₹15L |
-| Amazon AZ1 (back-loaded 5/15/40/40 RSU vest) | 70 | 75 | 85 | 80 | 75 | **385** (+84) | Levels.fyi midpoint · 🟡 ±₹15L |
+| Intel G7→G8 (Y3 promo + 6% merit) | 78 | 84 | 86 | 78 | 84 | **410** (+109) | Verbal offer + realistic growth · 🟢 high |
+| QC Sr Lead→Staff (Y3 promo + 6% merit, RSU $50k/4yr) | 67 | 71 | 82 | 87 | 92 | **398** (+97) | India band + Staff promo realistic · 🟢 medium-high |
+| AMD MTS L7→SMTS L8 (Y3 promo + 6% merit) | 70 | 74 | 85 | 90 | 96 | **416** (+115) | India band + AI growth · 🟡 ±₹15 L |
+| Amazon AZ1 (L6 only, no L7 in 5yr; RSU 5/15/40/40 vest + cliff Y5) | 70 | 75 | 85 | 83 | 70 | **383** (+82) | Levels.fyi midpoint; L7 promo ≥5yr per leveling band · 🟡 ±₹15 L |
 
 ---
 
