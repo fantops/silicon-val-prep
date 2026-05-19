@@ -2,7 +2,7 @@
 
 _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Accept Intel as committed floor (Layer B). **TC recalibration (19 May, apples-to-apples):** All four roles modeled with 6% merit + Y3 promo (Amazon excluded — L7 ≥5yr away). 5-yr range ₹383–416 L — spread collapsed to **₹33 L total**, i.e. ~₹7 L/yr average difference. **Money is neutralized; decision = technical trajectory + ownership + team quality.** Don't resign MSFT until final.
+**Decision:** Accept Intel as committed floor (Layer B). **TC recalibration (19 May, apples-to-apples):** All four roles modeled with 6% merit + Y3 promo where realistic (Amazon excluded — L7 ≥5yr away; base merit still applied). 5-yr range ₹398–416 L — spread collapsed to **₹18 L total**, i.e. ~₹4 L/yr average difference. **Money is neutralized; decision = technical trajectory + ownership + team quality.** Don't resign MSFT until final.
 
 ---
 
@@ -33,12 +33,14 @@ _Updated 18 May 2026. FX: **₹96.24/USD** (xe.com)._
 
 ## 3. Ranking
 
-| Rank | Role | Score | 5-yr Δ vs MS | Key note |
-|---:|---|---:|---:|---|
-| 1 | **Intel BLR** G7→G8 | **7.96** | **+₹109 L** ↑ | Recalibrated with base-growth + Y3 G8 promo: 5-yr ₹410 L. Strongest guaranteed cash + promo certainty. |
-| 2 | **AMD** MTS L7 | 8.22 | +₹81 L† | Best balanced growth + AI tailwind. Verify arch/exec time-split with HM. |
-| 3 | **Amazon** AZ1 | 7.98 | +₹84 L† | Highest RSU ceiling; UVM gap is the gate. Back-loaded vest. |
-| 4 | **QC CPU Core** Sr Lead | 8.08 | +₹47 L† | Deepest μarch prestige. RSU $50k/4yr confirmed. |
+| Rank | Role | **Score** | 5-yr TC | Δ vs MS | Key note |
+|---:|---|---:|---:|---:|---|
+| 1 | **AMD** MTS L7→SMTS L8 | **8.22** | 416 | +115 | Top on score AND TC. AI tailwind. Verify arch/exec time-split with HM. |
+| 2 | **QC CPU Core** Sr Lead→Staff | **8.08** | 398 | +97 | Deepest μarch (depth 9.5). RSU $50k/4yr confirmed. |
+| 3 | **Amazon** AZ1 (L6 only) | **7.98** | 413 | +112 | Highest brand. UVM gap is the gate. RSU cliff Y5. |
+| 4 | **Intel BLR** G7→G8 | **7.96** | 410 | +109 | Strongest cash + promo certainty. Lowest tech depth (7.5). **Only one in hand → committed floor.** |
+
+_Scores essentially tied (spread 0.26). All four within ₹18 L of each other on 5-yr TC (₹398–416). **Intel ranks #4 by weighted score despite #3 by TC** — pulled down by Tech-depth (7.5) and Growth-velocity (7.0)._
 
 _Weights: TC .20 · JD-fit .20 · Depth .15 · Stability .15 · Growth .15 · Brand .10 · Round-risk-inv .05_
 
@@ -61,7 +63,7 @@ _Normalized recurring TC (base + bonus + RSU vest + amortized sign-on/buyout). O
 | Intel G7→G8 (Y3 promo + 6% merit) | 78 | 84 | 86 | 78 | 84 | **410** (+109) | Verbal offer + realistic growth · 🟢 high |
 | QC Sr Lead→Staff (Y3 promo + 6% merit, RSU $50k/4yr) | 67 | 71 | 82 | 87 | 92 | **398** (+97) | India band + Staff promo realistic · 🟢 medium-high |
 | AMD MTS L7→SMTS L8 (Y3 promo + 6% merit) | 70 | 74 | 85 | 90 | 96 | **416** (+115) | India band + AI growth · 🟡 ±₹15 L |
-| Amazon AZ1 (L6 only, no L7 in 5yr; RSU 5/15/40/40 vest + cliff Y5) | 70 | 75 | 85 | 83 | 70 | **383** (+82) | Levels.fyi midpoint; L7 promo ≥5yr per leveling band · 🟡 ±₹15 L |
+| Amazon AZ1 (L6 only, no L7 in 5yr; RSU 5/15/40/40 + 6% merit on base + cliff Y5) | 70 | 78 | 91 | 92 | 82 | **413** (+112) | Levels.fyi + base-merit applied; L7 promo ≥5yr per leveling band · 🟡 ±₹15 L |
 
 ---
 
