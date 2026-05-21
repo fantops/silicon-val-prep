@@ -4,7 +4,7 @@
 
 ---
 
-## 📈 Cycle scoreboard (as of 16 May 2026)
+## 📈 Cycle scoreboard (as of 21 May 2026)
 
 **Total rounds: 15** across **8 companies** / **10 distinct role-loops**.
 
@@ -17,9 +17,9 @@ Round-by-round breakdown:
 | Qualcomm · Pre-Si Verification | 1 | 🟡 mismatch |
 | Qualcomm · CPU Core | 3 | R1 + R2 + HM — 🟢 awaiting combined |
 | Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds same day — 🟢 pending |
-| Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — 🟢 pending |
+| Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — ❌ **rejected 21 May** |
 | Renesas | 1 | R1 — ❌ role-fit |
-| Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer in progress** |
+| Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, final offer 21 May** |
 | Cerebras | 1 | R1 — ❌ not fit for role |
 | AMD · Core PnP Post-Si | 1 | R1 — 🟢 awaiting next |
 | **Total** | **15** | |
@@ -28,15 +28,15 @@ Loop status:
 
 | Bucket | Count | Loops |
 |---|---|---|
-| ✅ Selected (offer in progress) | **1** | Intel Bangalore |
-| 🟢 Active / awaiting next or combined decision | **4** | QC CPU Core · QC PnP/Thermal · Intel Ireland NPU · AMD |
-| ❌ Rejected / closed | **3** | Intel Power & Perf (Apr) · Renesas · Cerebras |
+| ✅ Selected (final offer) | **1** | Intel Bangalore |
+| 🟢 Active / awaiting next or combined decision | **3** | QC CPU Core · QC PnP/Thermal · AMD |
+| ❌ Rejected / closed | **4** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **10** | |
 
-**Conversion (loops, not rounds):** 5 / 10 landed (1 selected + 4 active strong-positive) = **50%**.
+**Conversion (loops, not rounds):** 4 / 10 landed (1 selected + 3 active) = **40%**.
 
-**Velocity:** 15 rounds over ~33 days (13 Apr → 16 May) ≈ **one round every 2.2 days**.
+**Velocity:** 15 rounds over ~32 days (13 Apr → 15 May, last round) ≈ **one round every 2.1 days**.
 
 ---
 
@@ -65,10 +65,11 @@ Loop status:
 - **Learning:** Frame thermal as a control loop; tighten ownership STAR.
 - **Suggestion:** Section 0A behavioural rehearsal; Day 15 control-loop framing.
 
-### 29 Apr — Intel Ireland · NPU — 🟢 Feedback pending
+### 29 Apr — Intel Ireland · NPU — ❌ Rejected (closed 21 May)
 - **What happened:** Rapid-fire, 2 interviewers. ~70-80% landed. Cross-vendor NPU + EdgeOptimizer story strong. EE fundamentals weak; bug story tangled under pace.
-- **Learning:** Slow ~10%; STAR-strict bug stories; refresh EE basics.
-- **Suggestion:** 90-sec timer on Bug 2 / Bug 3; quick CMOS / setup-hold / CDC / SI refresh (Section 8).
+- **Learning:** Slow ~10%; STAR-strict bug stories; refresh EE basics. Confirmed: EE-fundamentals weakness + tangled bug-story-under-pace is the failure mode that closes NPU-heavy loops — same pattern that cost Intel P&P Apr R2.
+- **Status:** ❌ **Rejected 21 May.** No further rounds.
+- **Suggestion:** 90-sec timer on Bug 2 / Bug 3; quick CMOS / setup-hold / CDC / SI refresh (Section 8). Keep EE basics in rotation — this is now a 2x-closed gap.
 
 ### 30 Apr — Qualcomm · CPU Core (R2) — � Advanced despite weak fundamentals
 - **What happened:** "Probe-then-push" style — drilled C-state *why-a-ladder*, clock gating *how*, leakage as separate mechanism, cache hierarchy *why multi-level*, generic boot flow. CFC FIFO / Core C6 wake-loss bug story landed cleanly; textbook depth ran out at layer 2-3.
