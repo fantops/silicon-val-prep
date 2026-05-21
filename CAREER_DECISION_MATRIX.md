@@ -35,9 +35,9 @@ _Updated 21 May 2026. FX: **₹96.24/USD** (xe.com)._
 
 | Rank | Role | **Score** | 5-yr TC | Δ vs MS | Key note |
 |---:|---|---:|---:|---:|---|
-| 1 | **AMD** MTS L7→SMTS L8 | **8.22** | 416 | +115 | Best on score AND TC — _but stalled, no reply 5 days._ |
-| 2 | **QC CPU Core** Sr Lead→Staff | **8.08** | 398 | +97 | Deepest μarch (depth 9.5) — _but stalled, no reply 5 days._ |
-| 3 | **Intel BLR** G7→G8 | **7.96** | 401 | +100 | **Only live offer.** Strongest cash + promo certainty. Lowest tech depth (7.5). |
+| 1 | **AMD** MTS L7→SMTS L8 | **8.22** | 416 | +99 | Best on score AND TC — _but stalled, no reply 5 days._ |
+| 2 | **QC CPU Core** Sr Lead→Staff | **8.08** | 398 | +81 | Deepest μarch (depth 9.5) — _but stalled, no reply 5 days._ |
+| 3 | **Intel BLR** G7→G8 | **7.96** | 401 | +84 | **Only live offer.** Strongest cash + promo certainty. Lowest tech depth (7.5). |
 
 _Intel still ranks #3 by weighted score, but is the **only role with a real path forward**. AMD/QC silence after leverage email signals they're not moving in this window. Default = honor Intel._
 
@@ -57,11 +57,10 @@ _Normalized recurring TC (base + bonus + RSU vest + amortized sign-on/buyout). O
 
 | Path | Y1 | Y2 | Y3 | Y4 | Y5 | **5-yr** | Source / confidence |
 |---|---|---|---|---|---|---|---|
-| MS-stay (realistic: L63 at Y4, vendor-drag, RSU cliff Y3) | 59 | 63 | **52** ⚠ | 60 | 67 | **301** | Your grants + refresher cadence · 🟢 high |
-| MS-stay (optimistic: L63 at Y3) | 59 | 63 | 58 | 66 | 71 | 317 | Same · 🟢 high |
-| Intel G7→G8 (Y3 promo + 6% merit, **final offer**) | 76 | 82 | 84 | 77 | 83 | **401** (+100) | Final offer 21 May · 🟢 high |
-| QC Sr Lead→Staff (Y3 promo + 6% merit, RSU $50k/4yr) — _stalled_ | 67 | 71 | 82 | 87 | 92 | **398** (+97) | Hypothetical if landed · 🟢 medium-high |
-| AMD MTS L7→SMTS L8 (Y3 promo + 6% merit) — _stalled_ | 70 | 74 | 85 | 90 | 96 | **416** (+115) | Hypothetical if landed · 🟡 ±₹15 L |
+| MS-stay (realistic: L63 at Y3, vendor-drag accepted) | 59 | 63 | 58 | 66 | 71 | **317** | Your grants + refresher cadence + L63 Y3 promo · 🟢 high |
+| Intel G7→G8 (Y3 promo + 6% merit, **final offer**) | 76 | 82 | 84 | 77 | 83 | **401** (+84) | Final offer 21 May · 🟢 high |
+| QC Sr Lead→Staff (Y3 promo + 6% merit, RSU $50k/4yr) — _stalled_ | 67 | 71 | 82 | 87 | 92 | **398** (+81) | Hypothetical if landed · 🟢 medium-high |
+| AMD MTS L7→SMTS L8 (Y3 promo + 6% merit) — _stalled_ | 70 | 74 | 85 | 90 | 96 | **416** (+99) | Hypothetical if landed · 🟡 ±₹15 L |
 
 ---
 
@@ -109,12 +108,10 @@ _Normalized recurring TC (base + bonus + RSU vest + amortized sign-on/buyout). O
 |---|---|---|---:|
 | Joining bonus | ₹15 → ₹22 L | **Landed ₹20 L** | +₹5 L (over 2 yrs) |
 | LTRCA grant | (not asked) | held ₹34 L | 0 |
-| Base | (not asked) | **₹44 → ₹42.9 L** ⚠️ | −₹1.1 L/yr (base rev-down) |
+| Base | (not asked) | ₹42.9 L (unchanged, was never ₹44 — prior assumption corrected) | 0 |
 | Start date | +8 weeks | TBD | — |
 
-**Net counter outcome: +₹5 L from JB partially offset by base revision (−₹1.1 L × 5 yrs × 1.06 compounding ≈ −₹6 L).** Final 5-yr ₹401 L vs pre-counter modeled ₹410 L = **−₹9 L net**. Base revision likely reflects HR levelling/cohort normalization, not counter penalty.
-
-**Confirmed: LTRCA at policy cap (no movement). Base ceiling protected for promo headroom. JB was the only real lever — strategy validated.**
+**Net counter outcome: +₹5 L from JB (over 2 yrs).** Final 5-yr ₹401 L. **Confirmed: LTRCA at policy cap (no movement). JB was the only real lever — strategy validated; partial win (₹20 of ₹22 asked = 71%).**
 
 ---
 
