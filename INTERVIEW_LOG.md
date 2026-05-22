@@ -4,9 +4,9 @@
 
 ---
 
-## 📈 Cycle scoreboard (as of 21 May 2026)
+## 📈 Cycle scoreboard (as of 22 May 2026)
 
-**Total rounds: 15** across **8 companies** / **10 distinct role-loops**.
+**Total rounds: 15** across **9 companies** / **12 distinct role-loops**.
 
 Round-by-round breakdown:
 
@@ -15,13 +15,15 @@ Round-by-round breakdown:
 | Intel · Power & Perf (Apr) | 2 | R1 + R2 — ❌ |
 | Arm · Verification | 1 | 🟡 mismatch |
 | Qualcomm · Pre-Si Verification | 1 | 🟡 mismatch |
-| Qualcomm · CPU Core | 3 | R1 + R2 + HM — 🟢 awaiting combined |
-| Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds same day — 🟢 pending |
-| Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — ❌ **rejected 21 May** |
+| Qualcomm · CPU Core | 3 | R1 + R2 + HM — 🔴 stalled, no reply 6+ days |
+| Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds same day — 🔴 stalled, no reply 6+ days |
+| Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — ❌ rejected 21 May |
 | Renesas | 1 | R1 — ❌ role-fit |
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, final offer 21 May** |
 | Cerebras | 1 | R1 — ❌ not fit for role |
-| AMD · Core PnP Post-Si | 1 | R1 — 🟢 awaiting next |
+| AMD · Core PnP Post-Si | 1 | R1 — 🔴 stalled, no reply 6+ days |
+| **Amazon Lab126 · AZ1 ML SoC** | 0 | 🟢 **Revived 22 May** — loop scheduled next week |
+| **Nvidia · role TBD** | 0 | 🟡 **Recruiter call 22 May** — loop pending scheduling |
 | **Total** | **15** | |
 
 Loop status:
@@ -29,14 +31,15 @@ Loop status:
 | Bucket | Count | Loops |
 |---|---|---|
 | ✅ Selected (final offer) | **1** | Intel Bangalore |
-| 🟢 Active / awaiting next or combined decision | **3** | QC CPU Core · QC PnP/Thermal · AMD |
+| 🟢 Active — loop scheduled / inbound | **2** | Amazon Lab126 · Nvidia |
+| 🔴 Stalled (no reply 6+ days after leverage email) | **3** | QC CPU Core · QC PnP/Thermal · AMD |
 | ❌ Rejected / closed | **4** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
-| **Total loops** | **10** | |
+| **Total loops** | **12** | |
 
-**Conversion (loops, not rounds):** 4 / 10 landed (1 selected + 3 active) = **40%**.
+**Conversion (loops, not rounds):** 3 / 12 landed (1 selected + 2 active inbound) = **25%** (denominator grew from 10 → 12 with Amazon-revive + Nvidia-add; stalled-3 not counted as landed).
 
-**Velocity:** 15 rounds over ~32 days (13 Apr → 15 May, last round) ≈ **one round every 2.1 days**.
+**Velocity:** 15 rounds over ~32 days (13 Apr → 15 May, last round). Pipeline reopened 22 May — 2 new loops queued; first round of new wave likely week of 26 May.
 
 ---
 

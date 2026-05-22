@@ -1,8 +1,8 @@
-# Career Decision Matrix — Intel + 2 Stalled
+# Career Decision Matrix — Intel + 3 Active (Pool Revived)
 
-_Updated 21 May 2026. FX: **₹96.24/USD** (xe.com)._
+_Updated 22 May 2026. FX: **₹96.24/USD** (xe.com)._
 
-**Decision:** Intel **final offer locked 21 May** (Layer B floor secured). **Pool collapsed (21 May):** Amazon dropped (recruiter screen never scheduled). QC + AMD **silent 5 days post leverage email** — likely no expedite; functionally out of the active window. **Intel is now the only live offer.** Default trajectory = **honor Intel** unless QC/AMD revive concretely.
+**Decision:** Intel **final offer locked 21 May** (Layer B floor secured). **Pool revived (22 May):** Amazon called for interview next week; Nvidia recruiter called (loop TBD). Both informed "Intel offer in hand, please expedite." QC + AMD remain silent. **Strategy: stall Intel formal acceptance 7–10 days, run Amazon + Nvidia loops, decide on full picture.** Don't resign MSFT.
 
 ---
 
@@ -10,10 +10,11 @@ _Updated 21 May 2026. FX: **₹96.24/USD** (xe.com)._
 
 | Role | Status | Next |
 |---|---|---|
-| **Intel BLR** — IP Func Val (G7) | ✅ **Final offer 21 May** (JB ₹20 L landed) | Decide accept/honor by [target date]; don't resign MSFT |
-| **QC CPU Core** (Oryon μarch, Sr Lead expected) | 🔴 **Stalled — no reply 5 days** after leverage email | One last nudge email; else dead |
-| **AMD** — Zen P&P Post-Si | 🔴 **Stalled — no reply 5 days** after leverage email | One last nudge email; else dead |
-| ~~Amazon Lab126 — AZ1 ML SoC~~ | ❌ **Dropped 21 May** — recruiter screen never scheduled | — |
+| **Intel BLR** — IP Func Val (G7) | ✅ **Final offer 21 May** (JB ₹20 L landed) | Stall formal accept 7–10 days; team-scope letter; don't resign MSFT |
+| **Amazon Lab126** — AZ1 ML SoC | 🟢 **Revived 22 May** — interview scheduled next week | Prep: UVM gap framing, test-plan scaffold, multi-SoC PnP design |
+| **Nvidia** — role TBD | 🟡 **Recruiter call 22 May**, loop not yet scheduled | Get role/level/team scope from recruiter before loop; ask expedite |
+| **QC CPU Core** (Oryon μarch) | 🔴 Stalled — no reply 6+ days | One last nudge with hard deadline; else dead |
+| **AMD** — Zen P&P Post-Si | 🔴 Stalled — no reply 6+ days | One last nudge with hard deadline; else dead |
 
 ---
 
