@@ -145,17 +145,6 @@ To keep "what do you mean by bring-up" from being a vague hand-wave, every day i
 
 This is the part the original plan glossed over and is the most underrated topic at IP Functional Val interviews.
 
-## What Got Dropped (and why)
-
-| Dropped | Reason |
-|---|---|
-| Old Day 9 (ARM/Snapdragon vocab) | Not in IP Functional Val scope. ARM↔x86 sidebars survive as one-table reminders in D9/D17. |
-| Old Day 11 (NVMe queues + bring-up) | Outside the three tracks. NVMe will be re-learned on-the-job if needed. |
-| Old Day 17 DSA half | Not on the IP Functional Val coding bar. Coding is now systems-C only. |
-| Old Days 18-19 (NPU stack + bugs) | Collapsed into D23 (1-day pointer list + one retained bug story). |
-| Old Day 20 (debug method + 5 stories) | 7-step framework folded into D17; ADR/C6 stories live in D17; QNN story lives in D23. |
-| Old Day 21 (multi-company tailoring: QC/Intel-Ireland/MSFT) | Replaced by D24 (generic timed mock loop — no per-company tailoring). |
-
 ## Tailoring & Acceleration
 
 If your loop is in <14 days, prioritise: D4 (cache/AMAT) → D5 (MESI) → D11 (bring-up) → D13 (C-states) → D17 (post-Si PM + ADR/C6 stories) → D18 (LTSSM) → D22 (PCIe×PM) → D24 (mock). Skip Phase 0 days you already know cold. The night-before re-read order is the **Exit Check** of every day in that chain.
