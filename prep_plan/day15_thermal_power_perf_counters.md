@@ -326,20 +326,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Sliding Window Maximum (LC 239) — counter-burst peak detector
-
-```python
-from collections import deque
-def maxSlidingWindow(nums, k):
-    dq, out = deque(), []
-    for i, x in enumerate(nums):
-        while dq and dq[0] <= i - k: dq.popleft()
-        while dq and nums[dq[-1]] < x: dq.pop()
-        dq.append(i)
-        if i >= k - 1: out.append(nums[dq[0]])
-    return out
-```
-
 ---
 
 ## System Thinking — Why thermal management is a *control loop*, not a setting

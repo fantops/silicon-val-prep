@@ -345,19 +345,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Number of 1 Bits (LC 191)
-
-Kernighan's `n & (n-1)` — exactly the popcount in your bit-trick table.
-
-```python
-def hammingWeight(n):
-    c = 0
-    while n:
-        n &= n - 1
-        c += 1
-    return c
-```
-
 ---
 
 ## System Thinking — Why hardware access is *not* normal C

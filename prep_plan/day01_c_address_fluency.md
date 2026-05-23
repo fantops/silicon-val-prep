@@ -269,19 +269,6 @@ int main(void) {
 
 Compile: `gcc -Wall -std=c11 -o reg_poke reg_poke.c && ./reg_poke`.
 
-## Coding B — Interview DS&A: Two Sum (LC 1)
-
-The hash-map one-pass canonical. Insight: as you scan, ask "have I already seen `target - x`?".
-
-```python
-def twoSum(nums, target):
-    seen = {}
-    for i, x in enumerate(nums):
-        if target - x in seen:
-            return [seen[target - x], i]
-        seen[x] = i
-```
-
 ---
 
 ## System Thinking — Why C looks like this

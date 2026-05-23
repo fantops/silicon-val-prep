@@ -209,24 +209,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Merge Two Sorted Lists (LC 21)
-
-Two-pointer merge — same shape as draining a CQ across two ring buffers.
-
-```python
-class ListNode:
-    def __init__(self, v=0, n=None): self.val, self.next = v, n
-
-def mergeTwoLists(a, b):
-    dummy = tail = ListNode()
-    while a and b:
-        if a.val <= b.val: tail.next, a = a, a.next
-        else:              tail.next, b = b, b.next
-        tail = tail.next
-    tail.next = a or b
-    return dummy.next
-```
-
 ---
 
 ## System Thinking — Why CPU↔device handoff has its own physics

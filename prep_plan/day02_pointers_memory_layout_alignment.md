@@ -320,21 +320,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Reverse Linked List (LC 206)
-
-3-pointer iterative; the same shape recurs in interview pointers.
-
-```python
-def reverseList(head):
-    prev, curr = None, head
-    while curr:
-        nxt = curr.next
-        curr.next = prev
-        prev = curr
-        curr = nxt
-    return prev
-```
-
 ---
 
 ## System Thinking — Why memory has a *layout*

@@ -1,6 +1,6 @@
 # Interview Log — Apr 2026 Cycle
 
-> One row per round. Keep it light: what happened, what I learned, status, next action. Detailed prep frameworks live in [INTERVIEW_REVISION_GUIDE.md](INTERVIEW_REVISION_GUIDE.md) and the [21-day plan](21day_plan/).
+> One row per round. Keep it light: what happened, what I learned, status, next action. Detailed prep frameworks live in the [25-day plan](prep_plan/) (Day 24 = final mock loop / flashcard sweep).
 
 ---
 
@@ -83,31 +83,31 @@ Loop status:
 ### 07 May — Renesas · R1 — ❌ Rejected (role-fit miss)
 - **What happened:** L&T PCIe/NVMe + MS NPU walkthrough flowed; PCIe/NVMe protocol depth rusty (5-6 yrs since daily use). Bug story itself landed.
 - **Learning:** Role likely wanted automotive protocol fluency (CAN/LIN/FlexRay/AVB/SOME-IP) + live PCIe/NVMe — neither is current stack.
-- **Suggestion:** Do **not** add automotive track. Filter Renesas-shape roles upstream. Keep PCIe/NVMe at bug-story + first-principles depth ([Day 10 enumeration / boot-flow placement](21day_plan/day10_pcie_fundamentals_ltssm.md), [Day 09 Section 12a PCIe in boot flow](21day_plan/day09_arm_qualcomm_platform_vocabulary.md), [Day 11 NVMe bring-up + HMB-throttle bug](21day_plan/day11_nvme_queues_bringup.md), [Day 20 Section 5a CPU+PCIe coverage matrix + Stories 6/7](21day_plan/day20_debug_method_bug_polish.md)).
+- **Suggestion:** Do **not** add automotive track. Filter Renesas-shape roles upstream. Keep PCIe/NVMe at bug-story + first-principles depth ([Day 18 LTSSM fundamentals](prep_plan/day18_pcie_fundamentals_ltssm.md), [Day 19 enumeration / config / MSI](prep_plan/day19_pcie_enumeration_config_msi.md), [Day 21 PCIe bring-up + functional val](prep_plan/day21_pcie_bringup_functional_val.md), [Day 22 PCIe × PM intersection](prep_plan/day22_pcie_pm_intersection.md)). *(NVMe-specific day dropped from plan; pre-existing bug-story narrative is sufficient.)*
 
 ### 12 May — Intel Bangalore · IP Functional Validation (F2F, 2 rounds) — ✅ Selected — offer discussion in progress
 - **What happened (R1, 2 engineers):** Msft/Intel walkthrough + how I narrow down a model regression. CPU core states — pushed on **negative scenarios** (e.g. requested C3 not achieved, peripheral blocking entry — what can happen, not specific). ISRs. Page table / page fault / MMU. C storage classes + usage. Program memory layout. C coding: **reverse a string using pointers, no extra variable**.
 - **What happened (R2):** Explain **ADR flow** — how to decide *which data* needs to be copied (answered: maintain a table of regions / persistent-state descriptors). ISRs — *when* served, *where* the data is stored, what mechanism is used (context save / stack / vector table). Behavioural: why left Intel, why switching again; interviewer framed *"most work everywhere is prep activity, only 5-10% translates to CV"* — testing if I'd flinch. Each topic ran long.
 - **Learning:** Negative-scenario framing for C-states (blocker → why entry denied → who owns the veto) is a recurring probe — needs a reflex chain. ADR "what gets copied" needs a crisp answer: persistent-region table + flush list + ordering, not hand-wavy. ISR storage answer needs the **hardware (vector table, stack, banked regs) + software (context frame)** split. Behavioural push on "prep vs CV work" needs an honest, non-defensive answer.
-- **Suggestion:** Add C-state negative-path drill (peripheral veto, broadcast-block, LTR, demotion) to [Day 13](21day_plan/day13_cstates_pkgc_s0ix.md). Tighten ADR "copy table" framing in [Day 14](21day_plan/day14_adr_pcu_core_c6_bugs.md). ISR context-save chain into [Day 03](21day_plan/day03_bits_mmio_volatile_polling.md) / [Day 09](21day_plan/day09_arm_qualcomm_platform_vocabulary.md). Reverse-string-in-place into [Day 00](21day_plan/day00_c_basics.md) reflex set. Rehearse "why switching" / "prep-vs-CV" answer in [Section 0A](INTERVIEW_REVISION_GUIDE.md).
+- **Suggestion:** Add C-state negative-path drill (peripheral veto, broadcast-block, LTR, demotion) to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md). Tighten ADR "copy table" framing in [Day 17 (post-Si PM val + ADR/C6)](prep_plan/day17_post_si_pm_validation.md). ISR context-save chain into [Day 03](prep_plan/day03_bits_mmio_volatile_polling.md). Reverse-string-in-place into [Day 00](prep_plan/day00_c_basics.md) reflex set. Rehearse "why switching" / "prep-vs-CV" answer in [Day 24 final mock](prep_plan/day24_final_mock.md) §5 behavioural STAR.
 
 ### 12 May — Qualcomm · CPU Core (Hiring Manager) — 🟢 Positive signal
 - **What happened:** Basics on what I did and how, then mostly behavioural. Pushed on *no CPU-core experience — why hire you?* and *what value-add after joining?* (expecting "hard work + dedication" framing). Direct ask: *if switching for money, don't come to QC*. Asked about other offers — said Arm in discussion. *Arm vs QC?* → answered QC for engineering scope. Overall positive; they will combine all interview outputs.
 - **Learning:** HM rounds at QC weight **intent + attitude** over depth — "hard work / dedication / scope" framing lands; money-led framing is an instant red flag. Cross-offer question is a real signal probe — answer with *fit reasoning*, not leverage.
 - **Status:** Awaiting combined-loop decision.
-- **Suggestion:** Lock in a 30-sec "why QC over Arm / why CPU core despite no prior CPU-core work" answer in [Section 0A](INTERVIEW_REVISION_GUIDE.md) — value-add = validation rigor + cross-vendor system view + ownership pattern, not domain seniority.
+- **Suggestion:** Lock in a 30-sec "why QC over Arm / why CPU core despite no prior CPU-core work" answer in [Day 24 final mock](prep_plan/day24_final_mock.md) §5 — value-add = validation rigor + cross-vendor system view + ownership pattern, not domain seniority.
 
 ### 13 May — Cerebras · R1 — ❌ Not fit for role
 - **What happened:** (1) Cerebras-context warmup — what they do (wafer-scale engine, MemoryX/SwarmX). (2) Intel work walk-through — what + how. (3) **Test-plan design from scratch** for a device — took PCIe as the example and walked: spec → features → modes → stimulus + checks → coverage axes → negative + error injection → perf/power → silicon-vs-pre-Si split. (4) Microsoft NPU work walkthrough. (5) **Coding** — implement `grep` in Python (regex + file walk + flags); moving-average in C (circular buffer / running sum). Small issues on edge cases but recovered. (6) Closing chat on team-size expansion + responsibilities scope.
 - **Learning:** Test-plan-from-spec is a recurring opener at AI-accelerator shops — having a reusable scaffold (spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si split) lands cleanly. Two-language coding (scripting + C) is becoming the norm — keep both reflexes warm. Edge-case discipline (empty input, single element, wrap-around in moving-avg, null pattern in grep) is what separated "works" from "clean."
 - **Status:** ❌ **Closed 18 May — not fit for role.** No further rounds.
-- **Suggestion:** Promote test-plan scaffold into [Day 20 Section 5a](21day_plan/day20_debug_method_bug_polish.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00 Coding B](21day_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Section 8](INTERVIEW_REVISION_GUIDE.md).
+- **Suggestion:** Promote test-plan scaffold into [Day 17 post-Si PM val](prep_plan/day17_post_si_pm_validation.md) and [Day 11 CPU bring-up + functional val](prep_plan/day11_cpu_bringup_functional_val.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00](prep_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Day 24 final mock](prep_plan/day24_final_mock.md) §5 default-answer shape.
 
 ### 14 May — AMD · Core Power & Performance Post-Si (R1) — 🟢 Positive
 - **What happened:** (1) Walk through every prior role with a deep-dive at each — what I did, issues hit, how I unblocked. (2) Open-ended design probe: *how would I design an NPU + CPU + multi-SoC power/perf tradeoff?* — answered with workload-driven budget split, shared rail vs independent rail tradeoff, DVFS coordination across SoCs (single PMIC arbiter vs distributed), thermal-envelope sharing, and the validation-side coverage matrix that falls out. (3) Role framing from interviewer: **core PnP post-Si team — heavy execution + heavy debug after data lands; needs architecture exposure + system understanding.** Direct fit with my Intel PnP + MS NPU arc.
 - **Learning:** Multi-SoC PnP design questions are the new shape at AMD/Cerebras-tier shops — the answer scaffold is **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**, in that order. Role pitch ("execution + debug + architecture exposure") is exactly what my CV reads as — lean into it in the next round.
 - **Status:** Awaiting next-round signal.
-- **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](21day_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](21day_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Section 0A](INTERVIEW_REVISION_GUIDE.md) on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
+- **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](prep_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](prep_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Day 24 final mock](prep_plan/day24_final_mock.md) §5 on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
 
 ---
 
@@ -131,8 +131,8 @@ Loop status:
 
 1. **Same day:** add row to timeline above — what happened, learning, status, suggestion.
 2. **Within 24h:** map each "didn't land" to a Day file Architect Drill — add one if missing.
-3. **Within 48h:** ensure [Revision Guide](INTERVIEW_REVISION_GUIDE.md) Section 0B / 4B / 8 covers the gap.
-4. **Before next interview:** run [Revision Guide](INTERVIEW_REVISION_GUIDE.md) with the new gap-fill in rotation.
+3. **Within 48h:** ensure the relevant Day file's drills + Exit Check cover the gap.
+4. **Before next interview:** run [Day 24 final mock](prep_plan/day24_final_mock.md) flashcard sweep with the new gap-fill in rotation.
 
 ---
 

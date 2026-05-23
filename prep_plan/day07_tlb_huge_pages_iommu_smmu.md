@@ -235,20 +235,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: First Bad Version (LC 278)
-
-Predicate-based binary search — same shape as scanning a sorted page table for first-set bit.
-
-```python
-def firstBadVersion(n):
-    lo, hi = 1, n
-    while lo < hi:
-        mid = lo + (hi - lo) // 2
-        if isBadVersion(mid): hi = mid
-        else:                 lo = mid + 1
-    return lo
-```
-
 ---
 
 ## System Thinking — Why translation needs its *own* cache, and why devices need it too

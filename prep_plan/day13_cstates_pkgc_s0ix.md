@@ -309,18 +309,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Climbing Stairs (LC 70) — same shape as C-state path counting
-
-```python
-def climbStairs(n):
-    a, b = 1, 1
-    for _ in range(n):
-        a, b = b, a + b
-    return a
-```
-
----
-
 ---
 
 ## Interview Reasoning Pack (system-level thinking)

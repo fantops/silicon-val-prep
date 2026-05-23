@@ -298,38 +298,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: LRU Cache (LC 146)
-
-The headline problem. Hash map for O(1) lookup + doubly-linked list for O(1) usage reorder. Move on `get`, move on `put` hit, evict tail on overflow.
-
-```python
-class Node:
-    __slots__ = ('k','v','p','n')
-    def __init__(self,k,v): self.k,self.v,self.p,self.n = k,v,None,None
-
-class LRUCache:
-    def __init__(self, cap):
-        self.cap = cap
-        self.m = {}
-        self.h = Node(0,0); self.t = Node(0,0)
-        self.h.n = self.t; self.t.p = self.h
-    def _add(self, n):
-        n.p = self.h; n.n = self.h.n
-        self.h.n.p = n; self.h.n = n
-    def _rm(self, n):
-        n.p.n = n.n; n.n.p = n.p
-    def get(self, k):
-        if k not in self.m: return -1
-        n = self.m[k]; self._rm(n); self._add(n); return n.v
-    def put(self, k, v):
-        if k in self.m: self._rm(self.m[k])
-        n = Node(k, v); self.m[k] = n; self._add(n)
-        if len(self.m) > self.cap:
-            ev = self.t.p; self._rm(ev); del self.m[ev.k]
-```
-
----
-
 ---
 
 ## Interview Reasoning Pack (system-level thinking)

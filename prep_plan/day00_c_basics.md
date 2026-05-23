@@ -16,7 +16,7 @@ This is still learn-by-doing:
 - fix every warning you understand,
 - explain the pointer movement out loud.
 
-Do this once before starting Day 1. The personal career narrative + per-company tailoring lives in [day21_final_mock_company_tailoring.md](day21_final_mock_company_tailoring.md); the 30-min generic pre-interview skim is [INTERVIEW_REVISION_GUIDE.md](../INTERVIEW_REVISION_GUIDE.md). This file is for C practice, not interview narrative.
+Do this once before starting Day 1. Interview rehearsal + mock loop lives in [day24_final_mock.md](day24_final_mock.md). This file is for C practice, not interview narrative.
 
 ---
 
@@ -27,7 +27,7 @@ Do this once before starting Day 1. The personal career narrative + per-company 
 Use the same loop every day:
 
 ```sh
-cd 21day_plan/day00
+cd prep_plan/day00
 make clean
 make
 make reverse
@@ -136,101 +136,6 @@ Use the reference solutions in [`coding/solutions/`](../coding/) (write your own
 For the Day 0 pass, the canonical exercise set is exactly the five files above. The other Day 0 files (`d00_test_macros`, `d00_mmio`, `d00_poll`, `d00_csr_model`, `d00_csr_init`, `d00_bench`) are MMIO / CSR drills used by later days — ignore them until you reach Day 1.
 
 Type each exercise again from memory after one pass. The second pass is where the learning lands.
-
-## Coding B — Interview DS&A warm-up
-
-Do these in C, not Python:
-
-1. Reverse linked list.
-2. Linked-list cycle.
-3. Remove duplicates from sorted array.
-4. Valid parentheses with a fixed-size stack.
-5. **Reverse a string in place using two pointers, no extra variable** (Intel Bangalore probe). Swap via XOR — `*l ^= *r; *r ^= *l; *l ^= *r;` — or via a single temp; the "no extra variable" framing usually means *no auxiliary buffer*, so a `char tmp` is fine. Walk `l` forward and `r` backward until they meet. Edge cases: NULL pointer, empty string, single char, even vs odd length.
-
-```c
-void reverse_in_place(char *s) {
-    if (!s) return;
-    char *l = s, *r = s;
-    while (*r) r++;          /* find terminator */
-    if (r == s) return;       /* empty */
-    r--;                      /* last real char */
-    while (l < r) {
-        char t = *l; *l = *r; *r = t;
-        l++; r--;
-    }
-}
-```
-
-6. **Moving average over a stream** (Cerebras probe). O(1) per sample using a circular buffer + running sum — don't re-sum the window each time. Edge cases: window size 0, fewer than `N` samples seen, integer overflow on the running sum, float precision drift over long streams (re-sum every `K` samples to recover).
-
-```c
-typedef struct {
-    double *buf;
-    size_t  cap;     /* window size N */
-    size_t  head;    /* next write index */
-    size_t  count;   /* samples seen, capped at cap */
-    double  sum;
-} mavg_t;
-
-int mavg_init(mavg_t *m, double *storage, size_t n) {
-    if (!m || !storage || n == 0) return -1;
-    m->buf = storage; m->cap = n; m->head = 0; m->count = 0; m->sum = 0.0;
-    return 0;
-}
-
-double mavg_push(mavg_t *m, double x) {
-    if (m->count == m->cap) m->sum -= m->buf[m->head];   /* evict oldest */
-    else                    m->count++;
-    m->buf[m->head] = x;
-    m->sum += x;
-    m->head = (m->head + 1) % m->cap;
-    return m->sum / (double)m->count;
-}
-```
-
-7. **`grep` clone in Python** (Cerebras probe). Walk paths, compile pattern once, stream lines (don't slurp), support `-i` / `-n` / `-r` / `-v`. Edge cases: binary files, missing file, empty pattern, regex compile error, very long lines, recursive symlink loops.
-
-```python
-import argparse, os, re, sys
-
-def grep_file(pat, path, opts):
-    try:
-        with open(path, "r", errors="replace") as f:
-            for i, line in enumerate(f, 1):
-                hit = bool(pat.search(line))
-                if hit ^ opts.invert:
-                    prefix = f"{path}:" if opts.show_path else ""
-                    if opts.line_no: prefix += f"{i}:"
-                    sys.stdout.write(prefix + line if line.endswith("\n") else prefix + line + "\n")
-    except (OSError, UnicodeDecodeError) as e:
-        print(f"grep: {path}: {e}", file=sys.stderr)
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("pattern"); ap.add_argument("paths", nargs="+")
-    ap.add_argument("-i", dest="icase", action="store_true")
-    ap.add_argument("-n", dest="line_no", action="store_true")
-    ap.add_argument("-r", dest="recurse", action="store_true")
-    ap.add_argument("-v", dest="invert", action="store_true")
-    a = ap.parse_args()
-    try:
-        pat = re.compile(a.pattern, re.IGNORECASE if a.icase else 0)
-    except re.error as e:
-        sys.exit(f"grep: bad regex: {e}")
-    a.show_path = a.recurse or len(a.paths) > 1
-    for p in a.paths:
-        if os.path.isdir(p) and a.recurse:
-            for root, _, files in os.walk(p, followlinks=False):
-                for fn in files: grep_file(pat, os.path.join(root, fn), a)
-        elif os.path.isfile(p):
-            grep_file(pat, p, a)
-        else:
-            print(f"grep: {p}: no such file", file=sys.stderr)
-
-if __name__ == "__main__": main()
-```
-
-Keep the solutions boring and correct. State time and space complexity out loud.
 
 ---
 

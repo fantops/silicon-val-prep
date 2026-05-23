@@ -289,23 +289,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Evaluate Reverse Polish Notation (LC 150)
-
-Stack walk over tokens.
-
-```python
-def evalRPN(tokens):
-    st, ops = [], {'+': lambda a,b:a+b, '-': lambda a,b:a-b,
-                   '*': lambda a,b:a*b, '/': lambda a,b:int(a/b)}
-    for t in tokens:
-        if t in ops:
-            b = st.pop(); a = st.pop()
-            st.append(ops[t](a, b))
-        else:
-            st.append(int(t))
-    return st[0]
-```
-
 ---
 
 ## System Thinking — Why queues are the universal fabric primitive

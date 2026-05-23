@@ -276,19 +276,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Best Time to Buy and Sell Stock (LC 121)
-
-Single-pass min tracking — same shape as a power-counter rolling baseline.
-
-```python
-def maxProfit(prices):
-    lo, best = float('inf'), 0
-    for p in prices:
-        if p < lo: lo = p
-        elif p - lo > best: best = p - lo
-    return best
-```
-
 ---
 
 ## System Thinking — Why frequency and voltage are linked

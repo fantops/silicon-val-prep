@@ -226,21 +226,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Binary Search (LC 704)
-
-The canonical `lo + (hi-lo)/2` form, overflow-safe.
-
-```python
-def search(nums, target):
-    lo, hi = 0, len(nums) - 1
-    while lo <= hi:
-        mid = lo + (hi - lo) // 2
-        if nums[mid] == target: return mid
-        if nums[mid] < target:  lo = mid + 1
-        else:                   hi = mid - 1
-    return -1
-```
-
 ---
 
 ## System Thinking — Why virtual memory exists at all

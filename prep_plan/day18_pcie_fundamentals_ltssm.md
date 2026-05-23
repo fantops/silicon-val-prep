@@ -391,18 +391,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Climbing Stairs (LC 70)
-
-DP / Fibonacci — same shape as counting LTSSM substate paths.
-
-```python
-def climbStairs(n):
-    a, b = 1, 1
-    for _ in range(n):
-        a, b = b, a + b
-    return a
-```
-
 ---
 
 ## System Thinking — Why PCIe looks like a network

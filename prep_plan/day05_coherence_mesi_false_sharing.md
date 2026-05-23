@@ -256,20 +256,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Linked-List Cycle (LC 141, Floyd)
-
-Two pointers, different speeds — same intuition as snoop races.
-
-```python
-def hasCycle(head):
-    slow = fast = head
-    while fast and fast.next:
-        slow = slow.next
-        fast = fast.next.next
-        if slow is fast: return True
-    return False
-```
-
 ---
 
 ## System Thinking — Why coherence is the *price* of multicore

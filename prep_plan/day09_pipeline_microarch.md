@@ -326,18 +326,6 @@ int main(void) {
 }
 ```
 
-## Coding B — Interview DS&A: Counting Bits (LC 338)
-
-DP with bit trick.
-
-```python
-def countBits(n):
-    bits = [0] * (n + 1)
-    for i in range(1, n + 1):
-        bits[i] = bits[i >> 1] + (i & 1)
-    return bits
-```
-
 ---
 
 ## System Thinking — Why CPUs cheat (and tell you they did)
