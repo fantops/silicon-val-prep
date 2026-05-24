@@ -1,8 +1,8 @@
 # 25-Day Silicon Validation Prep Plan
 
-> Restructured 23 May 2026 for **CPU IP Functional Validation** loops. The old plan covered too many surfaces (ARM vocab, NVMe, NPU stack, DSA grinding). This version sticks to **three tracks** that map directly to what an IP Functional Val engineer ramps on: **CPU Architecture**, **CPU Power Management (pre-Si + post-Si)**, and **PCIe (functional + PM + bring-up)**. The aim is "join with context" — be able to follow the team's whiteboard on day one, not ask "what is L1.2."
+> A 25-day plan for **CPU IP Functional Validation** loops. Three tracks that map directly to what an IP Functional Val engineer ramps on: **CPU Architecture**, **CPU Power Management (pre-Si + post-Si)**, and **PCIe (functional + PM + bring-up)**. The aim is "join with context" — be able to follow the team's whiteboard on day one, not ask "what is L1.2."
 
-This is the primary study plan: **25 sequential days** — Day 0 (C-basics ramp) + Days 1-24 (interview prep), every phase incremental on the previous one. **No DSA / LeetCode** — every coding exercise is systems-C tied to the day. Current-role / NPU content is collapsed to a single exit-pointer day.
+This is the primary study plan: **25 sequential days** — Day 0 (C-basics ramp) + Days 1-24 (interview prep), every phase incremental on the previous one. **No DSA / LeetCode** — every coding exercise is systems-C tied to the day. Current-role / NPU content is one exit-pointer day (D23).
 
 ## Daily Structure — 2 hours (revised)
 
@@ -143,7 +143,7 @@ To keep "what do you mean by bring-up" from being a vague hand-wave, every day i
   - **Pre-Si**: VCS / Xcelium / Verdi (FSDB) / Zebu / Palladium / HAPS / Perspec / JasperGold / VC Formal / UVM / SVA / UPF (Synopsys VC-LP, Cadence Conformal-LP) / FastModel
   - **Post-Si**: JTAG / Lauterbach / SVTools / DCI / ITP / Lecroy/Teledyne PCIe analyser / `lspci` / `setpci` / sysfs / `turbostat` / `socwatch` / `perf` / `rdmsr/wrmsr` / RAPL / Quarch / Monsoon / scope + rail probes
 
-This is the part the original plan glossed over and is the most underrated topic at IP Functional Val interviews.
+This is the most underrated topic at IP Functional Val interviews.
 
 ## Tailoring & Acceleration
 

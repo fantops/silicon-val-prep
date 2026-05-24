@@ -2,7 +2,7 @@
 
 ## Concept
 
-Before Day 1's MMIO/register work, spend one day getting comfortable with ordinary embedded C: compile/run discipline, scalar types, arrays, strings, pointers, structs, linked lists, byte copy, overlap handling, and alignment. This day is deliberately basic. It removes syntax friction so the 21-day plan can focus on silicon concepts.
+Before Day 1's MMIO/register work, spend one day getting comfortable with ordinary embedded C: compile/run discipline, scalar types, arrays, strings, pointers, structs, linked lists, byte copy, overlap handling, and alignment. This day is deliberately basic. It removes syntax friction so the rest of the plan can focus on silicon concepts.
 
 ## Why this day in the flow
 
