@@ -41,7 +41,7 @@ Modeling: 6% annual merit · Y3 promo +18% (silicon roles, Amazon excluded). MSF
 | Role | 5-yr expected | Volatility | Stock exposure |
 |---|---:|---|---|
 | **MS-stay (L62→L63 Y3)** | **₹333 L** | **±5%** (promo timing) | Medium (MSFT mature) |
-| **Intel G7→G8** | **₹407 L** | **±3%** | **🟢 Near-zero (LTRCA cash)** |
+| **Intel G7→G8** | **₹401 L** | **±3%** | **🟢 Near-zero (LTRCA cash)** |
 | QC Sr Lead → Staff | ₹398 L | ±5% | Low-mid |
 | Amazon AZ1 L6 | ₹413 L | ±10% | High (AMZN RSU) |
 | AMD MTS L7 | ₹416 L | ±12% | Mid-high |
@@ -49,7 +49,7 @@ Modeling: 6% annual merit · Y3 promo +18% (silicon roles, Amazon excluded). MSF
 
 **MSFT Y-by-Y:** Y1 61.7 · Y2 66.7 · **Y3 61.4 ⚠️ RSU cliff (joining ends, promo grant only half-year, refresher stack still ramping)** · Y4 67.8 · Y5 75.6 (Sept-hike half-year realized; bonus 12% Y1-Y2 → 15% at L63)
 
-**Intel premium over MS-stay:** +₹74 L. Intel hikes modeled at 11%/yr + 16% G8 promo, flex ₹1.08→₹1.5L at G8. MSFT Y3 cliff (₹61.4 L) vs Intel Y3 (₹82.7 L). Intel Y5 = ₹86 L (compounding base).
+**Intel premium over MS-stay:** +₹68 L. Intel hikes modeled at 11%/yr + 16% G8 promo, flex ₹1.08→₹1.5L at G8. MSFT Y3 cliff (₹61.4 L) vs Intel Y3 (₹84.4 L). Intel Y5 = ₹82.6 L (compounding base).
 
 **Nvidia premium over Intel:** base +₹90 L, bear -₹40 L, bull +₹154 L. Risk-discounted ≈ +₹50 L.
 
