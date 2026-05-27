@@ -2,11 +2,13 @@
 
 > One row per round. Keep it light: what happened, what I learned, status, next action. Detailed prep frameworks live in the [25-day plan](prep_plan/) (Day 24 = final mock loop / flashcard sweep).
 
+**Intel BLR joining date:** **27 July 2026** (confirmed). Active-loop deadline = any offer must land + clear ≥ bar before this date.
+
 ---
 
-## 📈 Cycle scoreboard (as of 22 May 2026)
+## 📈 Cycle scoreboard (as of 28 May 2026)
 
-**Total rounds: 15** across **9 companies** / **12 distinct role-loops**.
+**Total rounds: 16** across **9 companies** / **12 distinct role-loops**.
 
 Round-by-round breakdown:
 
@@ -19,27 +21,28 @@ Round-by-round breakdown:
 | Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds same day — 🔴 stalled, no reply 6+ days |
 | Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — ❌ rejected 21 May |
 | Renesas | 1 | R1 — ❌ role-fit |
-| Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, final offer 21 May** |
+| Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, final offer 21 May · joining 27 Jul** |
 | Cerebras | 1 | R1 — ❌ not fit for role |
 | AMD · Core PnP Post-Si | 1 | R1 — 🔴 stalled, no reply 6+ days |
-| **Amazon Lab126 · AZ1 ML SoC** | 0 | 🟢 **Revived 22 May** — loop scheduled next week |
+| **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — 🟡 **soft-negative signal** (HW-depth gap), awaiting decision |
 | **Nvidia · role TBD** | 0 | 🟡 **Recruiter call 22 May** — loop pending scheduling |
-| **Total** | **15** | |
+| **Total** | **16** | |
 
 Loop status:
 
 | Bucket | Count | Loops |
 |---|---|---|
-| ✅ Selected (final offer) | **1** | Intel Bangalore |
-| 🟢 Active — loop scheduled / inbound | **2** | Amazon Lab126 · Nvidia |
+| ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
+| 🟢 Active — loop in progress / inbound | **1** | Nvidia (scheduling) |
+| 🟡 Active — soft-negative pending decision | **1** | Amazon Lab126 (R1 done, HW-depth gap flagged) |
 | 🔴 Stalled (no reply 6+ days after leverage email) | **3** | QC CPU Core · QC PnP/Thermal · AMD |
 | ❌ Rejected / closed | **4** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **12** | |
 
-**Conversion (loops, not rounds):** 3 / 12 landed (1 selected + 2 active inbound) = **25%** (denominator grew from 10 → 12 with Amazon-revive + Nvidia-add; stalled-3 not counted as landed).
+**Conversion (loops, not rounds):** 3 / 12 still in play (1 selected + 1 active + 1 awaiting Amazon decision) = **25%**.
 
-**Velocity:** 15 rounds over ~32 days (13 Apr → 15 May, last round). Pipeline reopened 22 May — 2 new loops queued; first round of new wave likely week of 26 May.
+**Velocity:** 16 rounds over ~44 days (13 Apr → 26 May). Pipeline window closes at Intel joining (27 Jul) — ~9 weeks for Amazon + Nvidia to convert or close.
 
 ---
 
@@ -103,6 +106,19 @@ Loop status:
 - **Status:** ❌ **Closed 18 May — not fit for role.** No further rounds.
 - **Suggestion:** Promote test-plan scaffold into [Day 17 post-Si PM val](prep_plan/day17_post_si_pm_validation.md) and [Day 11 CPU bring-up + functional val](prep_plan/day11_cpu_bringup_functional_val.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00](prep_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Day 24 final mock](prep_plan/day24_final_mock.md) §5 default-answer shape.
 
+### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — 🟡 Soft-negative (HW-depth gap)
+- **What happened:** Loop is for **Echo full silicon validation** (not just SoC-level test). Round was HW-bug-heavy — drilled into prior bug stories with deep follow-ups. Big design probe: **"design a core C-state for a PC from scratch"** — entry/exit conditions, residency targets, break-even latency, wake sources, demotion logic (why + how: recent-wake-history weighting, predicted-residency vs measured-residency feedback, governor-side vs HW-side demotion split, interaction with LTR / peripheral blockers). Coding: **digital root** — sum digits repeatedly until single digit (e.g. `9875 → 29 → 11 → 2`).
+- **Coding detail:** Wrote recursive-sum `add()` and an outer loop. **Small bug:** outer-loop condition was `while (sum % 10)` — that loops while the last digit ≠ 0, which is wrong (e.g. `20 → 2` would exit early; `19 → 10` would also exit). **Correct condition: `while (sum >= 10)`** (or equivalently `while (sum / 10)`). Caught the spirit of the algorithm; edge-case discipline slipped on the termination condition.
+- **Learning:**
+  - Echo full-Si val is a **HW-heavier** role than my Intel BLR / Cerebras / AMD shape — they're probing for board / lab / debug-fluency, not just architecture + system-level val. Soft signal that prior-bug depth landed but **HW exposure breadth** (board bring-up, scope/LA usage, signal integrity, RF-adjacent) is the gap they're sizing.
+  - C-state design-from-scratch is now a **second occurrence** of the design-scaffold probe (after AMD's multi-SoC PnP). Scaffold: **entry triggers → eligibility checks → save/restore set → power/clock action → wake sources → exit sequence → demotion + governor feedback → measurement (residency, wake latency, break-even) → validation matrix.** Lock this as a reflex.
+  - Coding edge-case discipline: **terminate-condition** is the bug class I keep hitting. `while (sum % 10)` vs `while (sum >= 10)` is exactly the kind of pre-amble miss the Cerebras lesson called out — *"before I code, the cases I'll handle are…"* didn't run.
+- **Status:** 🟡 Awaiting decision. Soft-negative signal on HW depth; if they want more HW exposure for Echo full-Si, this round may close. Not counted as advanced.
+- **Suggestion:**
+  - Add **"design a C-state from scratch"** scaffold to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md) — must cover demotion *why* (false-wake penalty, break-even violation) and *how* (governor weighting + HW-side promotion-block).
+  - Add **digital-root + termination-condition discipline** to [Day 00](prep_plan/day00_c_basics.md) reflex set. Verbalise the loop invariant before writing the `while`.
+  - For follow-up rounds (if any): lean into the L&T board-bring-up + Intel post-Si lab debug arc to close the HW-exposure gap perception — these are the strongest HW-fluency signals on the CV.
+
 ### 14 May — AMD · Core Power & Performance Post-Si (R1) — 🟢 Positive
 - **What happened:** (1) Walk through every prior role with a deep-dive at each — what I did, issues hit, how I unblocked. (2) Open-ended design probe: *how would I design an NPU + CPU + multi-SoC power/perf tradeoff?* — answered with workload-driven budget split, shared rail vs independent rail tradeoff, DVFS coordination across SoCs (single PMIC arbiter vs distributed), thermal-envelope sharing, and the validation-side coverage matrix that falls out. (3) Role framing from interviewer: **core PnP post-Si team — heavy execution + heavy debug after data lands; needs architecture exposure + system understanding.** Direct fit with my Intel PnP + MS NPU arc.
 - **Learning:** Multi-SoC PnP design questions are the new shape at AMD/Cerebras-tier shops — the answer scaffold is **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**, in that order. Role pitch ("execution + debug + architecture exposure") is exactly what my CV reads as — lean into it in the next round.
@@ -113,9 +129,9 @@ Loop status:
 
 ##  Patterns
 
-**Strong:** cross-vendor NPU experience, concrete bug stories with measurable impact, EdgeOptimizer/tooling narrative, high-level concept walks, **test-plan-from-spec scaffold**, **multi-SoC PnP design scaffold**, role-fit framing in HM/behavioural rounds.
+**Strong:** cross-vendor NPU experience, concrete bug stories with measurable impact, EdgeOptimizer/tooling narrative, high-level concept walks, **test-plan-from-spec scaffold**, **multi-SoC PnP design scaffold**, **C-state design-from-scratch scaffold (Amazon 26 May)**, role-fit framing in HM/behavioural rounds.
 
-**Still soft (watch):** layer-3 textbook depth under "probe-then-push", live-C edge-case discipline (mention cases *before* coding), EE fundamentals refresh, leadership/ownership framing under pace.
+**Still soft (watch):** layer-3 textbook depth under "probe-then-push", **live-C terminate-condition discipline** (Amazon `while (sum % 10)` miss = same edge-case-preamble gap Cerebras flagged), EE fundamentals refresh, leadership/ownership framing under pace, **HW-exposure breadth** for board-level / lab-fluency roles (Amazon Echo full-Si signal).
 
 **Role-fit shift (mid-May):** the loop has converged on roles that match what I actually own — IP/platform functional validation, post-Si PnP, multi-SoC + accelerator power/perf. Intel Bangalore (✅ selected, offer in progress), AMD Core PnP Post-Si (🟢), Qualcomm CPU Core HM (🟢) all sit in this band. Mismatched shapes (pure DV / pre-Si, automotive protocol-heavy, Cerebras role-fit) are filtered out and no longer worth prepping for.
 

@@ -2,7 +2,7 @@
 
 > Decision locked. This doc tracks comp comparison + active leverage loops only. Historical counter/negotiation detail removed.
 
-**As of:** 23 May 2026 · 
+**As of:** 28 May 2026 · **Intel BLR joining date: 27 July 2026 (confirmed).**
 
 ---
 
@@ -10,11 +10,11 @@
 
 | Role | Status | Note |
 |---|---|---|
-| **Intel BLR · G7 IP Functional Val** | ✅ **Final offer accepted (21 May)** | TC ~₹413 L over 5 yrs |
+| **Intel BLR · G7 IP Functional Val** | ✅ **Final offer accepted (21 May) · joining 27 Jul 2026** | TC ~₹413 L over 5 yrs |
 | MSFT (current) | Baseline | Retention pitch rejected 22 May (no TC/team/scope change) |
-| Amazon Lab126 · AZ1 | 🟢 Loop scheduled next week | |
+| Amazon Lab126 · AZ1 (Echo full-Si val) | 🟡 R1 done 26 May, soft-negative | HW-depth gap flagged; awaiting decision |
 | Nvidia · role TBD | 🟡 Qualifying email sent | Decline if role is pre-Si DV |
-| QC CPU Core · QC PnP · AMD | 🔴 Stalled 6+ days | Treat as closed unless reply |
+| QC CPU Core · QC PnP · AMD | 🔴 Stalled 14+ days | Treat as closed unless reply |
 
 ---
 
@@ -77,12 +77,12 @@ Modeling: 6% annual merit · Y3 promo +18% (silicon roles, Amazon excluded). MSF
 
 ## 5. Active leverage gates
 
-Run Amazon + Nvidia loops **only if** they clear these gates:
+Run Amazon + Nvidia loops **only if** they clear these gates. **Hard deadline: 27 Jul 2026 (Intel join).** Any offer must land + clear bar before then.
 
-- **Amazon:** loop completes within Intel join-date window. Bar = 5-yr TC ≥ ₹450 L *and* role is silicon val (not pure SW).
-- **Nvidia:** team confirmed as post-Si / bring-up / platform val (NOT pre-Si DV). Bar = 5-yr TC ≥ ₹470 L *and* base ≥ ₹45 L (don't accept stock-heavy comp at low base).
+- **Amazon (R1 done 26 May, 🟡 soft-negative on HW depth):** Role is **Echo full-Si val** — HW-heavier than the CV reads. If they progress to R2, lean into L&T board bring-up + Intel post-Si lab debug to close the HW-exposure gap. Bar = 5-yr TC ≥ ₹450 L *and* role confirmed silicon val (not pure SW/firmware). If R1 closes negative, do not chase — mismatch is structural.
+- **Nvidia:** team confirmed as post-Si / bring-up / platform val (NOT pre-Si DV). Bar = 5-yr TC ≥ ₹470 L *and* base ≥ ₹45 L (don't accept stock-heavy comp at low base). Loop must complete before mid-July to leave negotiation runway.
 
-If neither clears → Intel join proceeds as planned.
+If neither clears → Intel join proceeds on 27 Jul as planned.
 
 ---
 
