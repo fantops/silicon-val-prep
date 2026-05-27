@@ -106,40 +106,30 @@ Loop status:
 - **Status:** ❌ **Closed 18 May — not fit for role.** No further rounds.
 - **Suggestion:** Promote test-plan scaffold into [Day 17 post-Si PM val](prep_plan/day17_post_si_pm_validation.md) and [Day 11 CPU bring-up + functional val](prep_plan/day11_cpu_bringup_functional_val.md) as a **generic device test-plan template** (not just PM coverage). Add `grep`-clone + moving-average to [Day 00](prep_plan/day00_c_basics.md) reflex set. Drill edge-case pre-amble: *"before I code, the cases I'll handle are…"* in [Day 24 final mock](prep_plan/day24_final_mock.md) §5 default-answer shape.
 
-### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — 🟡 Soft-negative (HW-depth gap)
-- **What happened:** Loop is for **Echo full silicon validation** (not just SoC-level test). Round was HW-bug-heavy — drilled into prior bug stories with deep follow-ups. Big design probe: **"design a core C-state for a PC from scratch"** — entry/exit conditions, residency targets, break-even latency, wake sources, demotion logic (why + how: recent-wake-history weighting, predicted-residency vs measured-residency feedback, governor-side vs HW-side demotion split, interaction with LTR / peripheral blockers). Coding: **digital root** — sum digits repeatedly until single digit (e.g. `9875 → 29 → 11 → 2`).
-- **Coding detail:** Wrote recursive-sum `add()` and an outer loop. **Small bug:** outer-loop condition was `while (sum % 10)` — that loops while the last digit ≠ 0, which is wrong (e.g. `20 → 2` would exit early; `19 → 10` would also exit). **Correct condition: `while (sum >= 10)`** (or equivalently `while (sum / 10)`). Caught the spirit of the algorithm; edge-case discipline slipped on the termination condition.
-- **Learning:**
-  - Echo full-Si val is a **HW-heavier** role than my Intel BLR / Cerebras / AMD shape — they're probing for board / lab / debug-fluency, not just architecture + system-level val. Soft signal that prior-bug depth landed but **HW exposure breadth** (board bring-up, scope/LA usage, signal integrity, RF-adjacent) is the gap they're sizing.
-  - C-state design-from-scratch is now a **second occurrence** of the design-scaffold probe (after AMD's multi-SoC PnP). Scaffold: **entry triggers → eligibility checks → save/restore set → power/clock action → wake sources → exit sequence → demotion + governor feedback → measurement (residency, wake latency, break-even) → validation matrix.** Lock this as a reflex.
-  - Coding edge-case discipline: **terminate-condition** is the bug class I keep hitting. `while (sum % 10)` vs `while (sum >= 10)` is exactly the kind of pre-amble miss the Cerebras lesson called out — *"before I code, the cases I'll handle are…"* didn't run.
-- **Status:** 🟡 Awaiting decision. Soft-negative signal on HW depth; if they want more HW exposure for Echo full-Si, this round may close. Not counted as advanced.
-- **Suggestion:**
-  - Add **"design a C-state from scratch"** scaffold to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md) — must cover demotion *why* (false-wake penalty, break-even violation) and *how* (governor weighting + HW-side promotion-block).
-  - Add **digital-root + termination-condition discipline** to [Day 00](prep_plan/day00_c_basics.md) reflex set. Verbalise the loop invariant before writing the `while`.
-  - For follow-up rounds (if any): lean into the L&T board-bring-up + Intel post-Si lab debug arc to close the HW-exposure gap perception — these are the strongest HW-fluency signals on the CV.
-
 ### 14 May — AMD · Core Power & Performance Post-Si (R1) — 🟢 Positive
 - **What happened:** (1) Walk through every prior role with a deep-dive at each — what I did, issues hit, how I unblocked. (2) Open-ended design probe: *how would I design an NPU + CPU + multi-SoC power/perf tradeoff?* — answered with workload-driven budget split, shared rail vs independent rail tradeoff, DVFS coordination across SoCs (single PMIC arbiter vs distributed), thermal-envelope sharing, and the validation-side coverage matrix that falls out. (3) Role framing from interviewer: **core PnP post-Si team — heavy execution + heavy debug after data lands; needs architecture exposure + system understanding.** Direct fit with my Intel PnP + MS NPU arc.
 - **Learning:** Multi-SoC PnP design questions are the new shape at AMD/Cerebras-tier shops — the answer scaffold is **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**, in that order. Role pitch ("execution + debug + architecture exposure") is exactly what my CV reads as — lean into it in the next round.
 - **Status:** Awaiting next-round signal.
 - **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](prep_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](prep_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Day 24 final mock](prep_plan/day24_final_mock.md) §5 on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
 
+### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — 🟡 Soft-negative (HW-depth gap)
+- **What happened:** Echo full silicon validation role. HW-bug-heavy — deep follow-ups on prior bug stories. Design probe: **"design a core C-state for a PC from scratch"** — entry/exit, residency, break-even, wake sources, demotion *why* (false-wake penalty, break-even violation) + *how* (governor weighting, HW-side promotion-block, LTR / peripheral blocker interaction). Coding: **digital root** (`9875 → 29 → 11 → 2`).
+- **Coding bug:** outer loop was `while (sum % 10)` — wrong (exits on any multiple of 10, e.g. `20 → 2` exits early). Correct: `while (sum >= 10)`. Termination-condition slip, same edge-case-preamble gap Cerebras flagged.
+- **Learning:** Echo full-Si is HW-heavier than Intel BLR / AMD shape — they want board / lab / debug-fluency, not just architecture. C-state design-from-scratch is the **2nd design-scaffold probe** (after AMD multi-SoC PnP); scaffold = **entry triggers → eligibility → save/restore → power/clock action → wake sources → exit → demotion + governor feedback → measurement → validation matrix**.
+- **Status:** 🟡 Awaiting decision. If they want more HW exposure for Echo full-Si, may close.
+- **Suggestion:** Add C-state design-from-scratch scaffold to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md). Add digital-root + verbalise-loop-invariant to [Day 00](prep_plan/day00_c_basics.md). For any follow-up: lean into L&T board bring-up + Intel post-Si lab debug to close HW-exposure perception.
+
 ---
 
 ##  Patterns
 
-**Strong:** cross-vendor NPU experience, concrete bug stories with measurable impact, EdgeOptimizer/tooling narrative, high-level concept walks, **test-plan-from-spec scaffold**, **multi-SoC PnP design scaffold**, **C-state design-from-scratch scaffold (Amazon 26 May)**, role-fit framing in HM/behavioural rounds.
+**Strong:** bug stories with measurable impact, cross-vendor NPU breadth, **design-from-scratch scaffolds** (test-plan, multi-SoC PnP, C-state), role-fit framing in HM rounds.
 
-**Still soft (watch):** layer-3 textbook depth under "probe-then-push", **live-C terminate-condition discipline** (Amazon `while (sum % 10)` miss = same edge-case-preamble gap Cerebras flagged), EE fundamentals refresh, leadership/ownership framing under pace, **HW-exposure breadth** for board-level / lab-fluency roles (Amazon Echo full-Si signal).
+**Still soft:** layer-3 depth under probe-then-push, live-C **terminate-condition + edge-case pre-amble** (Cerebras + Amazon both), EE fundamentals, **HW-exposure breadth** for board/lab-fluency roles (Amazon Echo signal).
 
-**Role-fit shift (mid-May):** the loop has converged on roles that match what I actually own — IP/platform functional validation, post-Si PnP, multi-SoC + accelerator power/perf. Intel Bangalore (✅ selected, offer in progress), AMD Core PnP Post-Si (🟢), Qualcomm CPU Core HM (🟢) all sit in this band. Mismatched shapes (pure DV / pre-Si, automotive protocol-heavy, Cerebras role-fit) are filtered out and no longer worth prepping for.
+**Meta-skill:** probe-then-push — *what → why → how → connected*. Scaffolds survive the push; flat-fact recall doesn't. Every concept = scaffold to walk, not paragraph to recite.
 
-**Meta-skill being tested:** "probe-then-push" — *what → why → how → connected concept*. Bug stories and design-scaffold answers (test-plan, multi-SoC PnP) survive the push because they're structured derivations; flat-fact recall (textbook C-state ladder, cache hierarchy verbatim) doesn't. **Fix: every concept lives as a scaffold to walk, not a paragraph to recite.**
-
-**Improving:** role-fit filtering (mismatch detected same-day, not after 3 rounds), behavioural framing (why-switching / prep-vs-CV / cross-offer answers now reflex), design-question scaffolds (test-plan, multi-SoC PnP) replacing ad-hoc answers.
-
-**Strategic principle (revised for offer-stage):** with Intel offer in hand and 3 active loops in the aligned band, **prep narrows to the rounds actually scheduled**, not the full Day 0-21 spread. Drill: (1) the design scaffolds (test-plan, multi-SoC PnP) for AMD/Cerebras follow-ups, (2) C edge-case pre-amble for any coding round, (3) HM-style behavioural answers for QC combined-loop decision. Defend PCIe/NVMe and automotive at story depth only — don't grow new limbs.
+**Strategic principle (offer-stage):** Intel offer in hand, joining 27 Jul. Prep narrows to scheduled rounds only — (1) design scaffolds for Amazon/Nvidia follow-ups, (2) C edge-case + loop-invariant pre-amble, (3) HW-fluency framing (L&T board bring-up + Intel post-Si lab) when role reads HW-heavy. Don't grow new limbs.
 
 ---
 
