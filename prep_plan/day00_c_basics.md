@@ -158,6 +158,24 @@ When allocation, locality, and deterministic latency matter, which is most embed
 
 ---
 
+## Pre-amble discipline (before any loop)
+
+*Cerebras 13 May + Amazon Lab126 26 May both flagged the same gap: termination-condition + edge-case slips under pressure. The fix is a 15-second verbal pre-amble before the first line of code — not a stronger debugger.*
+
+Before writing any loop, say out loud:
+
+1. **Edge cases** — empty input, single element, max/overflow, wrap-around, null pointer, all-same-value. Pick the 2-3 that apply.
+2. **Loop invariant** — what stays true at the top of every iteration. (e.g. linked-list reversal: `prev = reversed prefix`, `curr = node-to-move`, `next = unreversed suffix`.)
+3. **Termination condition** — *exactly* what makes the loop stop, and why that's correct for the edge cases above.
+
+**Anchor bug (Amazon digital root):** wrote `while (sum % 10)` — exits early on any multiple of 10 (`20 → 2` exits when it shouldn't). Correct: `while (sum >= 10)`. Termination-condition slip; the pre-amble would have caught it.
+
+**Anchor bug (Cerebras moving-avg):** wrap-around in circular buffer; empty-buffer first call. Both are edge cases the pre-amble surfaces.
+
+**Reflex one-liner:** *"Edge cases, invariant, termination — three lines out loud, then I write."*
+
+---
+
 ## Bug Anchor
 
 - Day 1 — C address fluency: macros and accessors depend on pointer/type basics.

@@ -127,9 +127,42 @@ Carry into the interview:
 
 Four sentences, then stop. Let them drill.
 
+### Coding pre-amble (before first line)
+
+*Cerebras + Amazon both lost on edge-case / termination slips. Before writing code, say out loud:*
+
+1. **Edge cases** I'll handle: empty / single / max / wrap-around / null — pick the 2-3 that apply.
+2. **Loop invariant**: one sentence — what's true at the top of every iteration.
+3. **Termination condition**: exactly what stops the loop, and why that's right for the edge cases above.
+
+*Full drill + anchor bugs (digital-root `while (sum % 10)` slip, moving-avg wrap-around) in [Day 00 — Pre-amble discipline](day00_c_basics.md).*
+
 ### Behavioural questions (90-sec STAR)
 
 *Context → Symptom → Repro → Root cause → Fix + impact → Lesson / coverage added.* End on the lesson, not the fix.
+
+### HW-fluency framing (when role reads HW-heavy)
+
+*Trigger: JD mentions board bring-up, lab debug, full-Si val, scope/LA, SI/PI, thermal chamber. Amazon Lab126 Echo 26 May closed on this gap — CV reads architecture/system-val, role wanted board/lab.*
+
+Lead-in: *"My HW-exposure anchors are L&T board bring-up (PCIe/NVMe, scope + LA + protocol analyser, SI eye margin, rail droop) and Intel post-Si PM lab (turbostat / SoCWatch / MSR sweeps, thermal chamber, SVTools, PCU blocking-reason traces)."*
+
+Bug anchors to pull:
+- **PCIe lane-polarity reversed on board** ([Day 21 Sec 7](day21_pcie_bringup_functional_val.md)) — board-level catch, spec-mandated polarity reversal coverage.
+- **Core C6 wake-vector lost via CFC FIFO race** ([Day 17](day17_post_si_pm_validation.md)) — post-Si lab debug, scope + MSR + PCU trace correlation.
+- **ADR opcode-ordering hang** ([Day 17](day17_post_si_pm_validation.md)) — post-Si signature, lab repro, opcode reorder fix.
+
+### EE basics quick-refresh (60-sec each)
+
+*2x-closed gap (Intel P&P Apr R2 + Intel Ireland NPU 21 May). Material is scattered across day files — this is the consolidated one-page recall sweep for NPU / HW-heavy loops.*
+
+- **CMOS power** — dynamic = `α·C·V²·f`, static = leakage (`V·I_leak`, grows with temp + shrinking nodes). Why DVFS targets V first (quadratic), f second (linear). Why power gating exists (kill leakage entirely).
+- **Setup / hold + clock skew** — setup = data stable before clock edge; hold = data stable after. Skew shifts the window; positive skew helps setup, hurts hold. Clock-tree synthesis (CTS) balances skew. *Anchor:* hold violations don't fix with slower clock — must add buffer delay.
+- **Metastability + 2-FF synchroniser** — async signal sampled near clock edge → output undefined for MTBF window. Fix: two cascaded flops on the destination clock; first flop may go metastable, second sees a settled value. MTBF improves exponentially per stage. *Anchor:* [Day 14 — header-on-but-logic-stuck metastability storm](day14_clock_power_gating_upf.md).
+- **CDC handshake patterns** — 2-FF sync for single-bit; req/ack 4-phase for multi-bit; gray-coded pointers for async FIFOs. Lint tool: SpyGlass-CDC. *Anchor:* [Day 13 Sec clock-gating ICG glitch protection](day13_cstates_pkgc_s0ix.md) — runt pulse on `clk & en` without level-latch.
+- **SI — eye / jitter / crosstalk** — eye diagram = overlaid bit periods; eye opening = margin. Jitter = timing variance (random + deterministic); crosstalk = aggressor-victim coupling. Mitigation: equalisation (CTLE / DFE), FEC, layout spacing. *Anchor:* [Day 21 Sec 7](day21_pcie_bringup_functional_val.md) PCIe eye-margin + lane polarity.
+
+**Reflex one-liner:** *"Dynamic = αCV²f, static = leakage; setup/hold = window around edge; 2-FF for sync; CDC handshake for multi-bit; eye opening = SI margin. Five concepts, 60 sec each."*
 
 ---
 

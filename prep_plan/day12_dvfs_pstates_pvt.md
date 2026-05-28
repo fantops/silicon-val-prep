@@ -138,7 +138,7 @@ On Snapdragon (Day 9 anchor), DVFS is voted into **RPMh**:
 
 ### 8a. Multi-SoC / multi-IP DVFS coordination (the AMD design probe)
 
-*"Design the power/perf tradeoff for an NPU + CPU + multi-SoC system" — walk this 6-step scaffold. Steps 1-4 land here; steps 5-6 land in [Day 15 §5a](day15_thermal_power_perf_counters.md).*
+*"Design the power/perf tradeoff for an NPU + CPU + multi-SoC system" — walk this 6-step scaffold. Steps 1-4 land here; steps 5-6 land in [Day 15 Sec 5a](day15_thermal_power_perf_counters.md).*
 
 ```
 1. WORKLOAD CHARACTERISATION  — who is hot when?
@@ -160,7 +160,7 @@ On Snapdragon (Day 9 anchor), DVFS is voted into **RPMh**:
 
 **Reflex one-liner (steps 1-4):** *"Workload → budget split → rail topology → DVFS coordination. The hard tradeoff is rail-sharing: cheap silicon + leakage waste vs per-IP freedom + VRM/bug cost. The hard coordination question is arbiter centralisation — single master is simpler but bottlenecks at scale; distributed scales but introduces cross-SoC ordering bugs."*
 
-Validation matrix that falls out: cross-product of (per-IP P-state) × (per-SoC PM-state) × (rail topology mode), with seam tests at every boundary — see [Day 20 §2a](day20_debug_method_bug_polish.md).
+Validation matrix that falls out: cross-product of (per-IP P-state) × (per-SoC PM-state) × (rail topology mode), with seam tests at every boundary — see [Day 20 Sec 2a](day20_debug_method_bug_polish.md).
 
 ### 9. Perf counters and IPC (forward to Day 15)
 

@@ -195,6 +195,24 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 
 **Tools to name:** PCU blocking-reason MSR, `turbostat`, `powertop`, vendor PM tracer (Intel SoCWatch / Qualcomm Trepn), PCIe LTSSM trace, `lspci -vvv` for ASPM/L1SS/LTR caps.
 
+### 14. Design a core C-state from scratch — 9-step scaffold
+
+*Amazon Lab126 26 May probe: "design a core C-state for a PC from scratch." Walk the scaffold in order; each step is a question the spec / architect has to answer before RTL exists.*
+
+1. **Entry triggers** — what causes the OS / scheduler to request this state? (`MWAIT` hint from cpuidle governor, predicted-residency calculation, OS tickless idle). Define the request interface (hint encoding, MSR, PSCI call).
+2. **Eligibility checks** — local conditions before the core PMA accepts: no pending interrupts, no IPI in flight, TSC deadline far enough out, LAPIC unmasked-pending clear. List every veto source.
+3. **Save set** — what architectural state must survive: GPRs, FP/vector regs, system regs, LAPIC state, perf counters, debug regs. Where it lives: retention SRAM (always-on rail) vs stack-in-DRAM vs banked regs. Size budget drives retention-SRAM area.
+4. **Power/clock action** — clock gate (C1/C1E) vs power gate (C6+). For power gate: order of clock-stop → state-save → isolation cells assert → power-switch off → rail collapse. Spec the sequence FSM.
+5. **Wake sources** — which interrupts/events can wake: LAPIC, IPI, timer, NMI, debug, thermal, EC heartbeat. Wake mask register defines the set. Trade depth vs latency.
+6. **Exit sequence** — wake event → rail ramp → isolation deassert → reset deassert → clock ungate → state-restore → fetch resumes at saved PC. Each substep has a settling timer.
+7. **Demotion + governor feedback** — `demoted_count` MSR; PCU rejects request if predicted residency < break-even (entry+exit energy / leakage-saved-per-µs). Governor adjusts next prediction. *Why:* false-wake penalty. *How:* HW-side promotion-block + OS-side governor weighting + LTR / peripheral-blocker interaction.
+8. **Measurement** — entry count, exit count, residency, demoted count, wake-source histogram. Tools: `turbostat`, SoCWatch, PCU blocking-reason MSR. Without counters you cannot debug.
+9. **Validation matrix** — coverage axes: state × wake-source × workload × thermal × peripheral-blocker. Negative paths: wake during save, fault during restore, rail droop, retention-SRAM ECC error. Pre-Si vs post-Si split.
+
+**Reflex one-liner:** *"Entry → eligibility → save → power/clock → wake → exit → demotion → measurement → validation. Nine steps. Same scaffold for any C-state, any vendor."*
+
+*Cross-link: ladder + ICG internals = Sec 1-2 above; PkgC6 cross-IP dance = Sec 6; negative-path debug = Sec 13; thermal + counter side = [Day 15](day15_thermal_power_perf_counters.md); post-Si lab measurement = [Day 17](day17_post_si_pm_validation.md).*
+
 ---
 
 ## Bugs in this Topic

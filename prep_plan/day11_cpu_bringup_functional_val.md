@@ -74,11 +74,11 @@ Example rows for a CPU IP:
 
 | Spec ref | Feature | Test | Coverpoint | Status |
 |---|---|---|---|---|
-| §3.4.1 | MMU 4-level walk | `mmu_walk_4lvl_directed` | `cp_mmu_levels[1..4]` | covered |
-| §3.4.2 | TLB shootdown via IPI | `tlb_shootdown_smp` | `cp_tlbi_ipi_cross[NCORES]` | covered |
-| §5.2 | Acquire-release memory model | `mem_model_acqrel_random` | `cp_mo_acqrel x cp_addr_pair` | 87% |
-| §6.1 | Exception priority | `excp_priority_directed` | `cp_excp_prio_matrix` | covered |
-| §7.3 | DVFS request via MWAIT | `mwait_cstate_directed` | `cp_cstate x cp_wake_src` | covered |
+| Sec 3.4.1 | MMU 4-level walk | `mmu_walk_4lvl_directed` | `cp_mmu_levels[1..4]` | covered |
+| Sec 3.4.2 | TLB shootdown via IPI | `tlb_shootdown_smp` | `cp_tlbi_ipi_cross[NCORES]` | covered |
+| Sec 5.2 | Acquire-release memory model | `mem_model_acqrel_random` | `cp_mo_acqrel x cp_addr_pair` | 87% |
+| Sec 6.1 | Exception priority | `excp_priority_directed` | `cp_excp_prio_matrix` | covered |
+| Sec 7.3 | DVFS request via MWAIT | `mwait_cstate_directed` | `cp_cstate x cp_wake_src` | covered |
 
 **The vplan is the contract with the architect.** If a coverpoint isn't covered, you haven't validated the feature, regardless of how many random tests passed.
 
@@ -286,6 +286,25 @@ To bring up a CPU IP in a pre-Si testbench you need:
 
 ---
 
+## Test-plan from spec — 8-step scaffold (reusable)
+
+*Cerebras 13 May probe: "design a test plan for this device from scratch." Same shape lands at any AI-accelerator / IP-val shop. Walk the scaffold in order — don't skip steps, don't reorder.*
+
+1. **Spec ingest** — read the spec; list every "shall" sentence and every mode/state diagram. This is the source of truth; every later artifact traces back to a spec line.
+2. **Feature list** — collapse the spec into a flat feature table (one row per testable behaviour). This is what the vplan rows are derived from.
+3. **Modes & configurations** — enumerate every mode (operational / debug / low-power / error) and every legal config (lane counts, speeds, cache sizes, MSI vs MSI-X). The cross-product defines the matrix size.
+4. **Stimulus + checks** — for each feature × mode, name the directed stimulus, the constrained-random stimulus, and the scoreboard / SVA / reference-model check that says "correct." No check = no test.
+5. **Coverage axes** — functional coverpoints (state × transition × residency × config), code coverage (line / branch / FSM / toggle), cross-coverage between independent axes. Coverage is the closure metric, not test count.
+6. **Negative + error injection** — illegal opcodes, protocol violations, parity/ECC injection, timeout paths, reset-during-X for every X. Spec ambiguity lives here.
+7. **Perf + power** — throughput / latency / power-state residency checks; gate on regressions, not just functional pass. PnP bugs hide in functional-pass runs.
+8. **Pre-Si vs post-Si split** — what's only catchable in RTL sim (assertion-level corners, coverage closure), what's only catchable post-Si (real workloads, SI/PI, thermal, mass-population variance). Map each feature row to one or both columns.
+
+**Reflex one-liner:** *"Spec → features → modes → stimulus + checks → coverage → negative → perf/power → pre-Si vs post-Si. Eight steps. Every device. Don't skip."*
+
+*Cross-link: same scaffold is the PM-coverage backbone in [Day 16 Sec pre-Si PM val](day16_pre_si_pm_validation.md) and [Day 17 post-Si PM val](day17_post_si_pm_validation.md). For PCIe-specific axes see [Day 19 enumeration coverage](day19_pcie_enumeration_config_msi.md) and [Day 21 PCIe bring-up](day21_pcie_bringup_functional_val.md).*
+
+---
+
 ## Architect Drills
 
 *Bring-up is a ladder because each step's correctness is a precondition for the next. Reason about why the ladder is ordered the way it is — no answer key.*
@@ -297,7 +316,7 @@ To bring up a CPU IP in a pre-Si testbench you need:
 *Constraints to weigh:* sim speed of two RTL models side-by-side, debug visibility, source-of-truth for "what the architecture says," cost of keeping two RTLs in sync. When would two RTLs be the right answer instead of RTL+SW?
 
 **D3. The vplan has one row per spec requirement. Reason about what goes wrong if you skip the vplan and just write random tests.**
-*Constraints to weigh:* coverage-without-intent, regression that proves nothing, the day the architect asks "did we validate §5.2.3?" and you can't answer. What's the smallest-vplan that still beats no-vplan?
+*Constraints to weigh:* coverage-without-intent, regression that proves nothing, the day the architect asks "did we validate Sec 5.2.3?" and you can't answer. What's the smallest-vplan that still beats no-vplan?
 
 **D4. Code coverage is 100%; functional coverage is 40%. What does this gap mean?**
 *Constraints to weigh:* every line ran, but not under the intended scenario; random tests hit easy paths repeatedly; coverpoints are tighter than line-cov. What test changes close the gap *without* gaming the coverpoint definitions?

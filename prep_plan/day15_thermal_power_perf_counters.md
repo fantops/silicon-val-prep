@@ -100,7 +100,7 @@ Skipping step 1 is the #1 mistake — without baseline you can't measure interfe
 
 ### 5a. Multi-SoC thermal envelope sharing (the AMD design probe, part 2)
 
-*Continuing the scaffold from [Day 12 §8a](day12_dvfs_pstates_pvt.md). Steps 5-6 of the "design NPU + CPU + multi-SoC PnP tradeoff" answer.*
+*Continuing the scaffold from [Day 12 Sec 8a](day12_dvfs_pstates_pvt.md). Steps 5-6 of the "design NPU + CPU + multi-SoC PnP tradeoff" answer.*
 
 ```
 5. THERMAL ENVELOPE SHARING   — one chassis, many hotspots
