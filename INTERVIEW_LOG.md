@@ -24,7 +24,7 @@ Round-by-round breakdown:
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, final offer 21 May · joining 27 Jul** |
 | Cerebras | 1 | R1 — ❌ not fit for role |
 | AMD · Core PnP Post-Si | 1 | R1 — 🔴 stalled, no reply 6+ days |
-| **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — 🟡 **soft-negative signal** (HW-depth gap), awaiting decision |
+| **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
 | **Nvidia · role TBD** | 0 | � **Stalled** — no reply 7+ days since 22 May recruiter call |
 | **Total** | **16** | |
 
@@ -33,15 +33,14 @@ Loop status:
 | Bucket | Count | Loops |
 |---|---|---|
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
-| � Active — soft-negative pending decision | **1** | Amazon Lab126 (R1 done, HW-depth gap flagged) |
 | 🔴 Stalled (no reply 7+ days after leverage email) | **4** | QC CPU Core · QC PnP/Thermal · AMD · Nvidia |
-| ❌ Rejected / closed | **4** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU |
+| ❌ Rejected / closed | **5** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · **Amazon Lab126** |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **12** | |
 
-**Conversion (loops, not rounds):** 2 / 12 still in play (1 selected + 1 awaiting Amazon decision) = **17%**.
+**Conversion (loops, not rounds):** 1 / 12 landed = **8%** (Intel Bangalore, accepted). **Cycle is closed** — all other loops stalled / rejected / mismatched.
 
-**Velocity:** 16 rounds over ~44 days (13 Apr → 26 May). Pipeline window closes at Intel joining (27 Jul) — Amazon is the only live loop.
+**Velocity:** 16 rounds over ~44 days (13 Apr → 26 May). Pipeline complete; Intel join proceeds 27 Jul.
 
 ---
 
@@ -111,11 +110,11 @@ Loop status:
 - **Status:** Awaiting next-round signal.
 - **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](prep_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](prep_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Day 24 final mock](prep_plan/day24_final_mock.md) §5 on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
 
-### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — 🟡 Soft-negative (HW-depth gap)
+### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — ❌ Rejected 28 May (HW-depth gap)
 - **What happened:** Echo full silicon validation role. HW-bug-heavy — deep follow-ups on prior bug stories. Design probe: **"design a core C-state for a PC from scratch"** — entry/exit, residency, break-even, wake sources, demotion *why* (false-wake penalty, break-even violation) + *how* (governor weighting, HW-side promotion-block, LTR / peripheral blocker interaction). Coding: **digital root** (`9875 → 29 → 11 → 2`).
 - **Coding bug:** outer loop was `while (sum % 10)` — wrong (exits on any multiple of 10, e.g. `20 → 2` exits early). Correct: `while (sum >= 10)`. Termination-condition slip, same edge-case-preamble gap Cerebras flagged.
 - **Learning:** Echo full-Si is HW-heavier than Intel BLR / AMD shape — they want board / lab / debug-fluency, not just architecture. C-state design-from-scratch is the **2nd design-scaffold probe** (after AMD multi-SoC PnP); scaffold = **entry triggers → eligibility → save/restore → power/clock action → wake sources → exit → demotion + governor feedback → measurement → validation matrix**.
-- **Status:** 🟡 Awaiting decision. If they want more HW exposure for Echo full-Si, may close.
+- **Status:** ❌ **Rejected 28 May.** Soft-negative signal from R1 confirmed — mismatch was structural (CV reads architecture + system-val, role wanted board / lab / HW-fluency for Echo full-Si). No further rounds.
 - **Suggestion:** Add C-state design-from-scratch scaffold to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md). Add digital-root + verbalise-loop-invariant to [Day 00](prep_plan/day00_c_basics.md). For any follow-up: lean into L&T board bring-up + Intel post-Si lab debug to close HW-exposure perception.
 
 ---
