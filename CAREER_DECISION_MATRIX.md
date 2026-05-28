@@ -55,13 +55,10 @@ Modeling: 6% annual merit · Y3 promo +18% (silicon roles, Amazon excluded). MSF
 | QC Sr Lead → Staff | ₹398 L | ±5% | Low-mid |
 | Amazon AZ1 L6 | ₹413 L | ±10% | High (AMZN RSU) |
 | AMD MTS L7 | ₹416 L | ±12% | Mid-high |
-| **Nvidia IC3** | **₹491 L** (base) | **₹428–555** | **🔴 ~90% NVDA-linked** |
 
 **MSFT Y-by-Y:** Y1 61.7 · Y2 66.7 · **Y3 61.4 ⚠️ RSU cliff (joining ends, promo grant only half-year, refresher stack still ramping)** · Y4 67.8 · Y5 75.6 (Sept-hike half-year realized; bonus 12% Y1-Y2 → 15% at L63)
 
 **Intel premium over MS-stay:** +₹80 L. Intel hikes modeled at 12%/yr + 20% G8 promo, refreshers per-level (G7 ₹4L → G8 ₹8L), flex ₹1.08→₹1.5L at G8. MSFT Y3 cliff (₹61.4 L) vs Intel Y3 (₹84.1 L). Intel Y5 = ₹94.9 L (compounding base + full G8 refresher stack).
-
-**Nvidia premium over Intel:** base +₹78 L, bear -₹55 L, bull +₹142 L. Risk-discounted ≈ +₹35 L.
 
 ---
 
@@ -69,14 +66,14 @@ Modeling: 6% annual merit · Y3 promo +18% (silicon roles, Amazon excluded). MSF
 
 1. **Cash certainty** — LTRCA is cash, not RSU. ~₹413 L is locked regardless of INTC stock (currently $121, ran 5x in 12 months — most upside priced in).
 2. **14A success = soft upside only** (~₹15-25 L over 5 yrs via richer refreshers if foundry executes); not a TC driver.
-3. **Skill-build > headline TC** — Intel BLR validation = 3-5 year specialization engine (PCIe/CXL, power, pre-Si methodology) that unlocks AMD/Nvidia/hyperscaler doors at +50% in Y3-4.
+3. **Skill-build > headline TC** — Intel BLR validation = 3-5 year specialization engine (PCIe/CXL, power, pre-Si methodology) that unlocks AMD/hyperscaler doors at +50% in Y3-4.
 4. **Downside floor** — no other offer guarantees ₹400+ L without stock risk. Lower-bound recalc (10% hike / 16% promo / same refreshers) still lands ~₹395 L — within ±3% band.
 
 ---
 
 ## 5. Active leverage gates
 
-**Amazon is the only live loop.** Nvidia stalled 7+ days post recruiter call — treat as closed. **Hard deadline: 27 Jul 2026 (Intel join).**
+**Amazon is the only live loop.** **Hard deadline: 27 Jul 2026 (Intel join).**
 
 - **Amazon (R1 done 26 May, 🟡 soft-negative on HW depth):** Role is **Echo full-Si val** — HW-heavier than the CV reads. If they progress to R2, lean into L&T board bring-up + Intel post-Si lab debug to close the HW-exposure gap. Bar = 5-yr TC ≥ ₹450 L *and* role confirmed silicon val (not pure SW/firmware). If R1 closes negative, do not chase — mismatch is structural.
 
