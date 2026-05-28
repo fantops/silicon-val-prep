@@ -25,7 +25,7 @@ Round-by-round breakdown:
 | Cerebras | 1 | R1 — ❌ not fit for role |
 | AMD · Core PnP Post-Si | 1 | R1 — 🔴 stalled, no reply 6+ days |
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — 🟡 **soft-negative signal** (HW-depth gap), awaiting decision |
-| **Nvidia · role TBD** | 0 | 🟡 **Recruiter call 22 May** — loop pending scheduling |
+| **Nvidia · role TBD** | 0 | � **Stalled** — no reply 7+ days since 22 May recruiter call |
 | **Total** | **16** | |
 
 Loop status:
@@ -33,16 +33,15 @@ Loop status:
 | Bucket | Count | Loops |
 |---|---|---|
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
-| 🟢 Active — loop in progress / inbound | **1** | Nvidia (scheduling) |
-| 🟡 Active — soft-negative pending decision | **1** | Amazon Lab126 (R1 done, HW-depth gap flagged) |
-| 🔴 Stalled (no reply 6+ days after leverage email) | **3** | QC CPU Core · QC PnP/Thermal · AMD |
+| � Active — soft-negative pending decision | **1** | Amazon Lab126 (R1 done, HW-depth gap flagged) |
+| 🔴 Stalled (no reply 7+ days after leverage email) | **4** | QC CPU Core · QC PnP/Thermal · AMD · Nvidia |
 | ❌ Rejected / closed | **4** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **12** | |
 
-**Conversion (loops, not rounds):** 3 / 12 still in play (1 selected + 1 active + 1 awaiting Amazon decision) = **25%**.
+**Conversion (loops, not rounds):** 2 / 12 still in play (1 selected + 1 awaiting Amazon decision) = **17%**.
 
-**Velocity:** 16 rounds over ~44 days (13 Apr → 26 May). Pipeline window closes at Intel joining (27 Jul) — ~9 weeks for Amazon + Nvidia to convert or close.
+**Velocity:** 16 rounds over ~44 days (13 Apr → 26 May). Pipeline window closes at Intel joining (27 Jul) — Amazon is the only live loop.
 
 ---
 

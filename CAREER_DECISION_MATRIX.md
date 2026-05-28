@@ -13,8 +13,7 @@
 | **Intel BLR · G7 IP Functional Val** | ✅ **Final offer accepted (21 May) · joining 27 Jul 2026** | TC ~₹413 L over 5 yrs |
 | MSFT (current) | Baseline | Retention pitch rejected 22 May (no TC/team/scope change) |
 | Amazon Lab126 · AZ1 (Echo full-Si val) | 🟡 R1 done 26 May, soft-negative | HW-depth gap flagged; awaiting decision |
-| Nvidia · role TBD | 🟡 Qualifying email sent | Decline if role is pre-Si DV |
-| QC CPU Core · QC PnP · AMD | 🔴 Stalled 14+ days | Treat as closed unless reply |
+| QC CPU Core · QC PnP · AMD · Nvidia | 🔴 Stalled 7–14+ days | Treat as closed unless reply |
 
 ---
 
@@ -77,12 +76,11 @@ Modeling: 6% annual merit · Y3 promo +18% (silicon roles, Amazon excluded). MSF
 
 ## 5. Active leverage gates
 
-Run Amazon + Nvidia loops **only if** they clear these gates. **Hard deadline: 27 Jul 2026 (Intel join).** Any offer must land + clear bar before then.
+**Amazon is the only live loop.** Nvidia stalled 7+ days post recruiter call — treat as closed. **Hard deadline: 27 Jul 2026 (Intel join).**
 
 - **Amazon (R1 done 26 May, 🟡 soft-negative on HW depth):** Role is **Echo full-Si val** — HW-heavier than the CV reads. If they progress to R2, lean into L&T board bring-up + Intel post-Si lab debug to close the HW-exposure gap. Bar = 5-yr TC ≥ ₹450 L *and* role confirmed silicon val (not pure SW/firmware). If R1 closes negative, do not chase — mismatch is structural.
-- **Nvidia:** team confirmed as post-Si / bring-up / platform val (NOT pre-Si DV). Bar = 5-yr TC ≥ ₹470 L *and* base ≥ ₹45 L (don't accept stock-heavy comp at low base). Loop must complete before mid-July to leave negotiation runway.
 
-If neither clears → Intel join proceeds on 27 Jul as planned.
+If Amazon does not clear → Intel join proceeds on 27 Jul as planned.
 
 ---
 
