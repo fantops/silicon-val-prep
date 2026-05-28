@@ -17,15 +17,15 @@ Round-by-round breakdown:
 | Intel · Power & Perf (Apr) | 2 | R1 + R2 — ❌ rejected |
 | Arm · Verification | 1 | 🟡 mismatch (filtered) |
 | Qualcomm · Pre-Si Verification | 1 | 🟡 mismatch (filtered) |
-| Qualcomm · CPU Core | 3 | R1 + R2 + HM (12 May) — 🔴 stalled, no reply since (16+ days) |
+| Qualcomm · CPU Core | 3 | R1 + R2 + HM — 🔴 stalled 16+ d |
 | Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds 28 Apr — 🔴 stalled, no reply since (30+ days) |
 | Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — ❌ rejected 21 May |
 | Renesas | 1 | R1 — ❌ role-fit miss |
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer accepted 21 May · joining 27 Jul** |
 | Cerebras | 1 | R1 — ❌ not fit for role (closed 18 May) |
 | AMD · Core PnP Post-Si | 1 | R1 (14 May) — 🔴 stalled, no reply since (14+ days) |
-| **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
 | **Nvidia · role TBD** | 0 | 🔴 Recruiter call 22 May — stalled, no scheduling reply (6+ days) |
+| **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
 | **Total** | **16** | |
 
 Loop status:
@@ -112,7 +112,7 @@ Loop status:
 - **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](prep_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](prep_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Day 24 final mock](prep_plan/day24_final_mock.md) Sec 5 on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
 
 ### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — ❌ Rejected 28 May (HW-depth gap)
-- **What happened:** Echo full silicon validation role. HW-bug-heavy — deep follow-ups on prior bug stories. Design probe: **"design a core C-state for a PC from scratch"** — entry/exit, residency, break-even, wake sources, demotion *why* (false-wake penalty, break-even violation) + *how* (governor weighting, HW-side promotion-block, LTR / peripheral blocker interaction). Coding: **digital root** (`9875 → 29 → 11 → 2`).
+- **What happened:** Echo full silicon validation role. HW-bug-heavy — deep follow-ups on prior bug stories. Design probe 1: **"design a core C-state for a PC from scratch"** — entry/exit, residency, break-even, wake sources, demotion *why* (false-wake penalty, break-even violation) + *how* (governor weighting, HW-side promotion-block, LTR / peripheral blocker interaction). Design probe 2: **"create a test plan for an IP"** — walked the spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si scaffold (same shape that landed at Cerebras). Coding: **digital root** (`9875 → 29 → 11 → 2`).
 - **Coding bug:** outer loop was `while (sum % 10)` — wrong (exits on any multiple of 10, e.g. `20 → 2` exits early). Correct: `while (sum >= 10)`. Termination-condition slip, same edge-case-preamble gap Cerebras flagged.
 - **Learning:** Echo full-Si is HW-heavier than Intel BLR / AMD shape — they want board / lab / debug-fluency, not just architecture. C-state design-from-scratch is the **2nd design-scaffold probe** (after AMD multi-SoC PnP); scaffold = **entry triggers → eligibility → save/restore → power/clock action → wake sources → exit → demotion + governor feedback → measurement → validation matrix**.
 - **Status:** ❌ **Rejected 28 May.** Soft-negative signal from R1 confirmed — mismatch was structural (CV reads architecture + system-val, role wanted board / lab / HW-fluency for Echo full-Si). No further rounds.
