@@ -44,6 +44,37 @@ Loop status:
 
 ---
 
+## 📬 Application funnel (top of cycle → offer)
+
+*Approximate — a few apps may be uncounted.*
+
+| Company | Apps | Loops opened | App→Loop % | Outcome |
+|---|---:|---:|---:|---|
+| Intel | 10 | 3 | 30% | 1 offer (BLR IFV) + 2 rejects (P&P, Ireland NPU) |
+| Qualcomm | 21 | 3 | 14% | 3 stalled (CPU Core, PnP/Thermal, Pre-Si mismatch) |
+| AMD | 14 | 1 | 7% | 1 stalled (Core PnP Post-Si) |
+| Arm | 10 | 1 | 10% | 1 mismatch (Verification) |
+| Nvidia | 7 | 1 | 14% | 1 stalled (recruiter call only, no schedule) |
+| Amazon | 2 | 1 | 50% | 1 reject (Lab126 Echo full-Si) |
+| Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
+| Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
+| Apple | 4 | 0 | 0% | no response |
+| Meta | 5 | 0 | 0% | no response |
+| Google | 4 | 0 | 0% | no response |
+| Qualinx Netherlands | 2 | 0 | 0% | no response |
+| Texas Instruments | 2 | 0 | 0% | no response |
+| Graphcore | 1 | 0 | 0% | no response |
+| NXP | 1 | 0 | 0% | no response |
+| Marvell | 1 | 0 | 0% | no response |
+| **Total** | **87** | **12** | **13.8%** | **1 offer = 1.15% app→offer, 8.3% loop→offer** |
+
+**Funnel signal:**
+- **8 of 16 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / 23% of total effort wasted on cold-apply portals where the no-referral conversion rate is ~0%.
+- **3 highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 8 loops — spray-and-pray with low per-app yield.
+- **Highest hit-rate shops** were the smaller/warm ones (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — the loops that opened easiest were where the app was targeted, not bulk.
+
+---
+
 ## 📅 Timeline
 
 ### 13 Apr — Intel · Power & Performance — ❌ Rejected
@@ -141,11 +172,11 @@ Loop status:
 
 ---
 
-## 📝 End-of-cycle retro (fill when all feedback in)
+## 📝 End-of-cycle retro
 
-- [ ] Top gap closed: _____
-- [ ] Top gap still open: _____
-- [ ] Best-fitting role: _____
-- [ ] Companies to re-approach: _____
-- [ ] Companies to deprioritise: _____
-- [ ] One thing I'd do differently: _____
+- **Top gap closed:** design-from-scratch scaffolds — multi-SoC PnP (AMD) + test-plan-from-spec (Cerebras/Amazon) now landed in [Day 11](prep_plan/day11_cpu_bringup_functional_val.md), [Day 12](prep_plan/day12_dvfs_pstates_pvt.md), [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md), [Day 15](prep_plan/day15_thermal_power_perf_counters.md).
+- **Top gap still open:** EE-fundamentals refresh — 2x-closed (Intel P&P Apr + Intel Ireland NPU). Quick-refresh now consolidated in [Day 24 Sec 5](prep_plan/day24_final_mock.md) but needs live drilling, not just text.
+- **Best-fitting role:** Intel Bangalore IP Functional Validation — spec→vplan→UVM→coverage→CR-triage matches the CV one-for-one; ADR + C-state negative-path probes were directly answerable from prior Intel work.
+- **Companies to re-approach (next cycle):** AMD Core PnP Post-Si (positive R1 signal, stall = process not skill); Qualcomm CPU Core (HM positive, combined-loop stall). Both worth a recruiter ping in 6-9 months.
+- **Companies to deprioritise:** Renesas (automotive shape) · Arm Verification · Qualcomm Pre-Si Verification — known role-shape mismatches. **Cold-apply portals at FAANG (Apple, Meta, Google, Marvell, TI, NXP)** — 0/20 yield; referral-only next time.
+- **One thing I'd do differently:** Front-load the funnel with **referrals**, not portal applications. 20 cold apps at FAANG-tier returned zero loops; even 3-4 warm referrals via LinkedIn would likely have opened 1-2 loops at the same effort. And: filter JD-shape upstream (no automotive, no pure SV-UVM) to stop burning loops on known-mismatch roles — cost 3 of 12 loops this cycle.
