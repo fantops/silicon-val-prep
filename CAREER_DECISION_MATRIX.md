@@ -2,7 +2,7 @@
 
 > Decision locked. This doc tracks comp comparison + active leverage loops only. Historical counter/negotiation detail removed.
 
-**As of:** 28 May 2026 · **Intel BLR joining date: 27 July 2026 (confirmed).**
+**As of:** 1 June 2026 · **Intel BLR joining date: 27 July 2026 (confirmed).**
 
 ---
 
@@ -12,8 +12,18 @@
 |---|---|---|
 | **Intel BLR · G7 IP Functional Val** | ✅ **Final offer accepted (21 May) · joining 27 Jul 2026** | TC ~₹413 L over 5 yrs |
 | MSFT (current) | Baseline | Retention pitch rejected 22 May (no TC/team/scope change) |
+| Qualcomm CPU Post-Silicon | Active evaluation | 3 back-to-back rounds planned 2 Jun 2026; reassess after results |
 
-> Closed loops (Amazon · QC · AMD · Nvidia · Intel Ireland NPU · Renesas · Cerebras · Arm · Intel P&P Apr) tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). Cycle done — no live leverage.
+### 1A. June 2026 compensation signal
+
+| Signal | What changed | Decision impact |
+|---|---|---|
+| **MSFT hike ceiling** | New expectation: FY hike likely capped around **3% max**; next year still unknown | Staying is financially weak unless stock appreciation materially offsets it |
+| **MSFT AI spend pressure** | More cash is being directed into AI capex/infrastructure, so salary-growth visibility is low | Do not model MSFT as a high-hike employer for the next 1-2 cycles |
+| **MSFT stock rebound** | Stock recovery can improve RSU value | Helps net worth, but it does not fix low role satisfaction, scope, or annual cash growth |
+| **Intel assumptions** | 12% hikes + 20% G8 promo are upside assumptions | Keep ₹413 L as upside case; use a lower planning band for decision sanity |
+
+> Closed / stalled loops (Amazon · AMD · Nvidia · Qualcomm CPU Core Pre-Si · Intel Ireland NPU · Renesas · Cerebras · Arm · Intel P&P Apr) tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). Qualcomm CPU Post-Silicon is a separate active role for 2 Jun 2026; evaluate only after interview result + written TC/scope clarity.
 
 ---
 
@@ -29,48 +39,48 @@
 | Refresher (Y2+) | ₹4 L/yr (G7) → ₹8 L/yr (G8), 3-yr vest | Per-level scaled; cross-checked against levels.fyi G7/G8 India stock data |
 | Relocation | ₹4.5 L one-time | |
 
-**Modelling assumptions (verified May 2026):** 12% annual base hike (upper bound of 10-12% silicon-role norm) · G8 promo Y3 = +20% (upper bound of 16-20%, mid-year half-realized) · LTRCA refreshers per-level (G7 ₹4 L → G8 ₹8 L) on 3-yr straight-line vest.
-
-**TC by year (₹ L):**
-
-| Y | Grade | Base | Initial LTRCA | Joining | Bonus | Refresh vest | Flex | **TC** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| Y1 | G7 | 42.90 | 11.33 | 10.00 | 5.79 | — | 1.08 | **71.10** |
-| Y2 | G7 | 48.05 | 11.33 | 10.00 | 6.49 | 1.33 | 1.08 | **78.28** |
-| Y3 | G7→G8 mid-yr | 59.20 | 11.33 | — | 8.29 | 4.00 | 1.30 | **84.12** |
-| Y4 | G8 | 66.30 | — | — | 9.95 | 6.67 | 1.50 | **84.42** |
-| Y5 | G8 | 74.26 | — | — | 11.14 | 8.00 | 1.50 | **94.90** |
-| **5-yr** | | | | | | | | **₹412.82 L** |
+**Signed components verified May 2026.** Detailed year-by-year TC is intentionally removed; use the scenario bands below for decision-making because hike, promo, and refresh timing are assumption-sensitive.
 
 ---
 
 ## 3. Comp comparison (5-yr TC, risk-banded)
 
-MSFT modeled with actual stack: joining residual $18.5K Y1+Y2 + L61 $12K + annual refreshers ($13K → $18K → $24K post-L63) + $20K L63 promo grant, all 5-yr Nov-anniversary vest.
+MSFT planning now assumes the known RSU stack plus a **3% max near-term hike ceiling**, with next year still uncertain. Intel planning separates conservative and upside cases because hike, promo, and refresher timing are assumption-sensitive.
 
-| Role | 5-yr expected | Volatility | Stock exposure |
+| Role / scenario | 5-yr planning view | Assumption quality | Stock exposure |
 |---|---:|---|---|
-| **MS-stay (L62→L63 Y3)** | **₹333 L** | **±5%** (promo timing) | Medium (MSFT mature) |
-| **Intel G7→G8** | **₹413 L** | **±3%** | **🟢 Near-zero (LTRCA cash)** |
+| **MSFT stay** | **₹315-325 L** | 3% hike cap, L63 timing still uncertain | Medium; upside depends on stock more than salary |
+| **Intel G7→G8 — conservative planning** | **₹381-393 L** | 6-8% hikes + 16% G8 promo | **Near-zero on initial LTRCA cash** |
+| **Intel G7→G8 — upside case** | **₹413 L** | 12% hikes + 20% G8 promo | **Near-zero on initial LTRCA cash** |
 
-**MSFT Y-by-Y:** Y1 61.7 · Y2 66.7 · **Y3 61.4 ⚠️ RSU cliff (joining ends, promo grant only half-year, refresher stack still ramping)** · Y4 67.8 · Y5 75.6 (Sept-hike half-year realized; bonus 12% Y1-Y2 → 15% at L63)
+**MSFT note:** Year 3 still carries RSU-cliff risk when the joining grant ends and refreshers are still ramping. Stock rebound can improve realized value, but base growth is constrained.
 
-**Intel premium over MS-stay:** +₹80 L. Intel hikes modeled at 12%/yr + 20% G8 promo, refreshers per-level (G7 ₹4L → G8 ₹8L), flex ₹1.08→₹1.5L at G8. MSFT Y3 cliff (₹61.4 L) vs Intel Y3 (₹84.1 L). Intel Y5 = ₹94.9 L (compounding base + full G8 refresher stack).
+**Intel premium over MS-stay:** +₹56-78 L on updated planning bands. The financially honest read is: Intel is still ahead, but the move is not a pure money-only slam dunk; it is a combined cash-floor + role-quality + skill-compounding decision.
 
 ---
 
-## 4. Why Intel is the right anchor
+## 4. Decision read
 
-1. **Cash certainty** — LTRCA is cash, not RSU. ~₹413 L is locked regardless of INTC stock (currently $121, ran 5x in 12 months — most upside priced in).
-2. **14A success = soft upside only** (~₹15-25 L over 5 yrs via richer refreshers if foundry executes); not a TC driver.
-3. **Skill-build > headline TC** — Intel BLR validation = 3-5 year specialization engine (PCIe/CXL, power, pre-Si methodology) that unlocks AMD/hyperscaler doors at +50% in Y3-4.
-4. **Downside floor** — no other offer guarantees ₹400+ L without stock risk. Lower-bound recalc (10% hike / 16% promo / same refreshers) still lands ~₹395 L — within ±3% band.
+1. **Staying at MSFT looks poor on work quality** — current work/scope is already known to be a bad fit. A 3% hike ceiling means there is not enough cash upside to compensate for that.
+2. **MSFT stock rebound is real but incomplete** — it can improve RSU value, but it does not improve base, scope, validation depth, or interview-market positioning.
+3. **Intel is still financially ahead on realistic bands** — the conservative 5-yr Intel band remains above the current MSFT stay case.
+4. **Intel's base and cash structure matter** — higher base + cash LTRCA reduce dependence on equity timing. This is cleaner than hoping MSFT stock strength offsets low hikes and low satisfaction.
+5. **The real Intel upside is career compounding** — Intel BLR validation = 3-5 year specialization engine: PCIe/CXL, power, pre-Si methodology, debug depth. That improves odds for AMD/hyperscaler/silicon exits later.
+6. **The honest caution** — if Intel team/scope disappoints, the financial upside alone may not feel life-changing. The move should be judged as an escape from a bad current role plus a stronger silicon-validation trajectory, not as a guaranteed near-term wealth jump.
+
+### 4A. Personal decision note
+
+The cleanest framing: **do not stay at MSFT just because the stock bounced.** That is a portfolio argument, not a career argument. If the work is bad and salary growth is capped, staying means accepting lower day-to-day fit for uncertain equity upside.
+
+Intel is not risk-free, so use the conservative band for planning. Even then, Intel still gives a higher cash floor, better domain alignment, and a better story for the next move. The financially rational position is: join Intel, keep spending conservative for the first 12 months, and reassess only if a clearly superior silicon role appears with written TC + stronger scope.
 
 ---
 
 ## 5. Active leverage gates
 
-**No live loops.** Amazon closed 28 May (R1 HW-depth gap confirmed). All other loops stalled / closed. **Intel join proceeds 27 Jul 2026 as planned — cycle is done.**
+**Qualcomm CPU post-silicon active gate:** 3 rounds, 3 hours back-to-back planned for **2 Jun 2026**. Reassess only after results, written TC, level, team scope, and joining constraints are clear.
+
+**Intel remains the default anchor.** Amazon closed 28 May (R1 HW-depth gap confirmed). All other loops stalled / closed. **Intel join proceeds 27 Jul 2026 unless Qualcomm produces a clearly superior written offer.**
 
 ---
 
