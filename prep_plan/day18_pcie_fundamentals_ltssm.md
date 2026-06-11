@@ -77,6 +77,32 @@ Failure mode: link looks alive but no traffic moves — credit return broken. Sy
 
 **Posted = fire-and-forget.** **Non-posted = wait for completion.** Doorbells are MWr (posted) so they don't stall the host. Reads serialise — bursts of CfgRd at probe time can dominate boot wall-time.
 
+### 4a. How a PCIe write actually happens
+
+This is the execution trace to say when asked "how does a PCIe write happen?"
+
+```
+driver writes *(volatile uint32_t *)(BAR + doorbell_off) = value
+    → CPU store enters store buffer
+    → page tables / PAT mark the BAR as MMIO / device memory
+    → uncore/root complex accepts the transaction
+    → RC packetizes it as a posted Memory Write TLP
+    → TLP carries address, length, requester ID, byte enables, payload
+    → data link adds sequence number + LCRC, consumes posted credits
+    → PHY sends it over lanes while link is in L0
+    → endpoint decodes BAR hit and updates register / doorbell
+```
+
+**Key correctness points:**
+- MMIO writes must target an enumerated BAR window; if bridge windows are wrong, the write never reaches the EP.
+- A posted Memory Write has no completion; ordering is enforced with device-memory attributes and barriers, not a return value.
+- Descriptor writes to memory must be visible before the doorbell MWr. The standard sequence is **write descriptors → memory barrier / flush as needed → MMIO doorbell write**.
+- If debugging, look at `lspci` BAR assignment, bridge memory windows, AER, root-port counters, protocol-analyser TLP trace, and endpoint doorbell CSR.
+
+**60-sec answer:**
+
+> "A PCIe write usually starts as a CPU MMIO store to an address inside the endpoint's BAR. Enumeration assigned that BAR and programmed bridge windows so the root complex knows where to route it. The CPU/uncore treats the address as device memory, the root complex converts the store into a posted Memory Write TLP with address, byte enables and payload, the data link layer adds sequence/LCRC and consumes posted credits, and the PHY sends it in L0. The endpoint decodes the BAR hit and updates its register, often a doorbell. Because it is posted there is no completion, so the validation risks are ordering and reachability: descriptors must be visible before the doorbell, and bridge/BAR programming must route the TLP to the device."
+
 ### 5. TLP header essentials
 
 A 3- or 4-DW header carries: Type, Requester ID (BDF), Tag (matches Cpl to MRd), Address, Length (in DW), Traffic Class. **Tag** is the key field for matching responses; out-of-order completions are normal.

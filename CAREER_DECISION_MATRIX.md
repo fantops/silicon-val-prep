@@ -2,7 +2,7 @@
 
 > Decision locked. This doc tracks comp comparison + active leverage loops only. Historical counter/negotiation detail removed.
 
-**As of:** 5 June 2026 · **Intel BLR joining date: 27 July 2026 (confirmed).**
+**As of:** 11 June 2026 · **Intel BLR joining date: 27 July 2026 (confirmed).**
 
 ---
 
@@ -14,6 +14,7 @@
 | MSFT (current) | Baseline | Retention pitch rejected 22 May (no TC/team/scope change) |
 | Qualcomm CPU Post-Silicon | Active evaluation | 2 rounds done 2 Jun 2026; results pending |
 | AMD CPU Post-Silicon / Core PnP | Active evaluation | R2 done 5 Jun 2026; role clarified as fixed-frequency CPU core performance + expanding power scope |
+| Nvidia · role TBD | Future warm contact | Ranjith contact retained; not a current-cycle decision input because loop timing is unlikely before Intel join |
 
 ### 1A. June 2026 compensation signal
 
@@ -24,7 +25,7 @@
 | **MSFT stock rebound** | Stock recovery can improve RSU value | Helps net worth, but it does not fix low role satisfaction, scope, or annual cash growth |
 | **Intel assumptions** | 12% hikes + 20% G8 promo are upside assumptions | Keep ₹413 L as upside case; use a lower planning band for decision sanity |
 
-> Closed / stalled loops (Amazon · Nvidia · Qualcomm CPU Core Pre-Si · Qualcomm PnP/Thermal · Intel Ireland NPU · Renesas · Cerebras · Arm · Intel P&P Apr) tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). Qualcomm CPU Post-Silicon and AMD CPU Post-Silicon are the only live external gates; evaluate only after interview result + written TC/scope clarity.
+> Closed / stalled loops (Amazon · Qualcomm CPU Core Pre-Si · Qualcomm PnP/Thermal · Intel Ireland NPU · Renesas · Cerebras · Arm · Intel P&P Apr) tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). Qualcomm CPU Post-Silicon and AMD CPU Post-Silicon are the only live offer-evaluation gates; Nvidia is kept as a future warm contact, not as current leverage.
 
 ---
 
@@ -69,7 +70,8 @@ MSFT planning now assumes the known RSU stack plus a **3% max near-term hike cei
 5. **The real Intel upside is career compounding** — Intel BLR validation = 3-5 year specialization engine: PCIe/CXL, power, pre-Si methodology, debug depth. That improves odds for AMD/hyperscaler/silicon exits later.
 6. **Qualcomm is now a real but still incomplete counter-option** — the 2 Jun loop tested PM-flow ownership and hardware-adjacent C reflexes. It is relevant, but no written offer / level / team scope exists yet.
 7. **AMD is now the most interesting career-upside gate** — R2 clarified the role as CPU core post-silicon fixed-frequency performance, with power expansion and pipeline-level / multi-IP debug. That could compound faster than generic validation if the team actually owns core perf debug.
-8. **The honest caution** — AMD's role is also the highest skill-gap risk right now: benchmark literacy, fixed-frequency perf methodology, TDP framing, and CPU pipeline counter-debug vocabulary are not yet strong. Do not over-rank it before written scope and manager expectations are clear.
+8. **Nvidia is future optionality, not July leverage** — even if I ask Ranjith after two weeks to restart, the likely scheduling + rounds + feedback + written-offer timeline cannot be counted on before Intel joining. Keep the contact warm for a later, better-prepared cycle.
+9. **The honest caution** — AMD's role is also the highest skill-gap risk right now: benchmark literacy, fixed-frequency perf methodology, TDP framing, and CPU pipeline counter-debug vocabulary are not yet strong. Do not over-rank it before written scope and manager expectations are clear.
 
 ### 4A. Personal decision note
 
@@ -99,6 +101,7 @@ This ranking is **not** based on interview excitement. It is based on written ce
 | AMD revived with R2 | AMD moves from stalled/closed to active evaluation |
 | AMD role clarified as fixed-frequency CPU performance | AMD becomes potentially stronger career compounding than Qualcomm if it truly owns CPU core perf debug |
 | AMD exposed benchmark/perf-counter gap | AMD carries higher near-term ramp risk than Intel; must be evaluated for support, expectations, and level |
+| Nvidia became future-only | Removes a distracting non-timeline gate; decision should be based on Intel confirmed + Qualcomm/AMD open outcomes only |
 
 ### Decision thresholds
 
@@ -116,7 +119,9 @@ This ranking is **not** based on interview excitement. It is based on written ce
 
 **AMD CPU post-silicon / core performance active gate:** R2 completed on **5 Jun 2026**. Treat as the highest-upside external gate, but do not emotionally price it in until written scope confirms CPU core performance ownership, not just broad validation execution.
 
-**Intel remains the default anchor.** Amazon closed 28 May (R1 HW-depth gap confirmed). All other loops stalled / closed. **Intel join proceeds 27 Jul 2026 unless Qualcomm or AMD produces a clearly superior written offer with stronger scope.**
+**Nvidia future contact:** Ranjith contact retained after 11 Jun screening. Keep the PythonSV / HW-debug prep gap in the study backlog, but exclude Nvidia from July 2026 decision modeling.
+
+**Intel remains the default anchor.** Amazon closed 28 May (R1 HW-depth gap confirmed). All other current-cycle loops are stalled / closed / future-only. **Intel join proceeds 27 Jul 2026 unless Qualcomm or AMD produces a clearly superior written offer with stronger scope.**
 
 ---
 

@@ -46,6 +46,34 @@ In the Layer map this is the **cap of Phase 1**: the CPU IP exists, you can desc
 
 Each step has a corresponding **test bucket** in the IP val plan. The principle: **"the cheapest passing test that proves this step is on"** — not a smoke test that proves nothing.
 
+### 1a. Who triggers startup code after reset?
+
+This is the Nvidia-screening trap: startup code does not run because "software starts." Hardware creates the first executable condition.
+
+**Actor chain:**
+
+```
+PMIC / platform controller
+   → rails stable + clocks valid
+   → reset controller releases CPU reset
+   → CPU hardware loads PC from reset vector / boot vector
+   → fetch unit reads Boot ROM at that address
+   → Boot ROM runs first startup code
+   → ROM initializes minimal stack/DRAM/security state
+   → ROM loads next-stage firmware / bootloader
+   → bootloader initializes richer platform state
+   → kernel entry / OS boot
+```
+
+**60-sec answer:**
+
+> "The trigger is reset release, not an OS thread. Once rails and clocks are good, the reset controller deasserts CPU reset. The CPU hardware forces the PC to the architectural reset vector and starts fetching from Boot ROM. That Boot ROM is the first startup code: it sets minimal state, may authenticate or load the next stage, initializes memory enough for the bootloader, and jumps to firmware or kernel entry. In validation I debug this as a ladder: rail/clock/reset visible, PC leaves boot vector, first instruction retires, ROM access works, then firmware handoff works. If startup code never runs, I first check reset order, boot-vector mapping, ROM visibility, and whether the fetch path is held by clock/reset gating."
+
+**Follow-up hooks:**
+- In a multi-core SoC, one boot core normally starts first; other cores stay in reset or a holding pen until released.
+- In secure boot, Boot ROM may authenticate the next image before jumping.
+- In emulation, the ROM image and reset-vector mapping are controllable; on silicon, straps/fuses, board reset timing, and ROM visibility become real failure sources.
+
 ### 2. What an IP Functional Val engineer actually owns
 
 The deliverables of a CPU IP Val team, ordered from earliest to latest in the program:

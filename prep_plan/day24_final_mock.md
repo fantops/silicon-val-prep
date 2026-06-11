@@ -87,6 +87,7 @@ Run these as 1-minute drills. Out loud. Time yourself.
 
 ### PCIe
 - LTSSM 10 states (Detect → Polling → Config → L0 → Recovery → L0s/L1/L1.1/L1.2/L2).
+- PCIe posted write path: CPU MMIO store → RC → posted MWr TLP → DLL credits/LCRC → PHY L0 → endpoint BAR decode.
 - BAR sizing trick — write all-1s, read back, invert+1.
 - Capability chain — linked list at offset 0x34.
 - MSI vs MSI-X scaling argument.
@@ -96,6 +97,16 @@ Run these as 1-minute drills. Out loud. Time yourself.
 - Gen3+ equalisation 4 phases.
 - AER categories (correctable / non-fatal / fatal).
 - L0p mid-FLIT — symptom + cause + fix.
+- PCIe emulation boundary: config/BAR/MSI/LTSSM-control/driver path covered; SI/PI, real PHY EQ/CDR/jitter, compliance eye, full-rate traffic, L1.2 analog behavior, and vendor interop not covered.
+
+### Nvidia / PythonSV-shape readiness drill
+
+*11 Jun Nvidia screening exposed this gap. Do not re-engage until these four are one-take clean, 60-90 sec each.*
+
+1. **Who triggers startup code?** Reset controller releases CPU reset → CPU PC forced to reset vector → Boot ROM fetches first instruction → ROM initializes minimal state and jumps to next-stage firmware/bootloader.
+2. **PCIe write path.** Driver MMIO store into BAR → root complex emits posted MWr TLP → endpoint BAR decode updates register/doorbell; descriptors must be visible before the doorbell.
+3. **LTSSM coverage.** Detect/Polling/Config/L0/Recovery/L1.x states, legal transitions, stuck-state diagnostics, equalization and retrain counters.
+4. **What emulation misses.** Real PHY/SI/PI, CDR/equalization margin, refclk/PERST# board timing, full-rate bandwidth, compliance eye, L1.2 analog behavior, thermal/power effects, and vendor interop.
 
 ### Tools
 - Pre-Si: VCS / Xcelium / Verdi (FSDB) / Zebu / Palladium / HAPS / Perspec / JasperGold / VC Formal / **VC-LP / Conformal-LP / UPF (IEEE 1801)** / FastModel / Spike.
@@ -144,6 +155,8 @@ Four sentences, then stop. Let them drill.
 ### HW-fluency framing (when role reads HW-heavy)
 
 *Trigger: JD mentions board bring-up, lab debug, full-Si val, scope/LA, SI/PI, thermal chamber. Amazon Lab126 Echo 26 May closed on this gap — CV reads architecture/system-val, role wanted board/lab.*
+
+*Nvidia/PythonSV-shape trigger: interviewer asks boot flow, who starts code, PCIe writes, LTSSM, emulation vs silicon. Answer as a debug trace with actors and tools, not as a concept definition.*
 
 Lead-in: *"My HW-exposure anchors are L&T board bring-up (PCIe/NVMe, scope + LA + protocol analyser, SI eye margin, rail droop) and Intel post-Si PM lab (turbostat / SoCWatch / MSR sweeps, thermal chamber, SVTools, PCU blocking-reason traces)."*
 

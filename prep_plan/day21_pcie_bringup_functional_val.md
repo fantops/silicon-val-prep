@@ -200,6 +200,24 @@ P5 — Post-Si bring-up
   └─ Long-soak + compliance + interop matrix
 ```
 
+### 9a. What PCIe emulation covers vs cannot cover
+
+This is the Nvidia/PythonSV-style boundary question. Answer in two columns: what emulation is excellent for, and what must wait for silicon/board.
+
+| Area | Emulation can cover | Not covered / weak in emulation |
+|---|---|---|
+| **FW + driver path** | Real BIOS/UEFI/Linux enumerating RTL through transactors | Real boot-time board races from straps, PERST#, refclk stability |
+| **Config / BAR / MSI** | Enumeration, cap walk, BAR sizing, MSI/MSI-X programming, AER paths | OS timing sensitivity caused by real device init latency / analog reset release |
+| **TLP/DLL protocol** | TLP types, ordering, credits, replay/error injection via VIP/transactor | True electrical bit errors, jitter-driven CRC failures, marginal receiver behavior |
+| **LTSSM logic** | State transitions, timeouts, directed stuck-state scenarios, illegal transitions | Real PHY training quality, CDR lock margin, lane skew, connector/cable effects |
+| **Traffic stress** | Real workloads at MHz speed, long software flows, cross-IP integration | Full-rate bandwidth, thermal/power stress, SI-induced intermittent retrains |
+| **Power management** | ASPM/L1/L1SS control sequencing and register programming | Actual L1.2 common-mode voltage off, CLKREQ# board routing, wake latency on real PHY |
+| **Interop** | Modelled endpoints/rootports, some speed-bridge setups | Other vendors' silicon quirks and de-facto spec interpretations |
+
+**60-sec answer:**
+
+> "Emulation is strong for HW/FW integration: real BIOS or Linux can enumerate real RTL through a PCIe transactor, program BARs, MSI/MSI-X, AER, run drivers, and exercise LTSSM/control logic at MHz speed. It is weak for what depends on the real PHY and board: eye margin, jitter, CDR lock, equalization quality, lane skew, refclk/PERST# timing on the platform, L1.2 analog behavior, full-rate traffic, thermal/power effects, and interop with other vendors' silicon. So if a bug is protocol, config, ordering, reset sequencing, or FW/driver integration, I expect emulation to catch it. If it is SI/PI, analog PHY, compliance eye, marginal retrains, or vendor interop, I expect post-Si lab tools to catch it."
+
 ### 10. Interop matrix — the real-world test
 
 A PCIe IP is exercised against **other vendors' silicon** to catch spec interpretations that differ across the industry:
