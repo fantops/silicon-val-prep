@@ -1,4 +1,4 @@
-# Day 16 — CPU Pipeline, OoO, Memory Consistency, SIMD
+# Day 09 — CPU Pipeline, OoO, Memory Consistency, SIMD
 
 ## Concept
 
@@ -6,7 +6,7 @@ Modern cores are **deeply pipelined out-of-order machines**: front-end (fetch / 
 
 ## Why this day in the flow
 
-Days 4-15 covered the platform — caches, MMU, IOMMU, DMA, PCIe, NVMe, power, thermal, perf counters. Day 16 is the **CPU itself** as a microarchitecture, the layer where IPC actually happens. You need this to talk credibly about pipeline-stall counters from Day 15, and to write the concurrency primitives on Day 17 with the right memory orders.
+Days 4-15 covered the platform — caches, MMU, IOMMU, DMA, PCIe, NVMe, power, thermal, perf counters. Day 09 is the **CPU itself** as a microarchitecture, the layer where IPC actually happens. You need this to talk credibly about pipeline-stall counters from Day 15, and to write the concurrency primitives on Day 10 with the right memory orders.
 
 In the Layer map this is **Layer 6 (CPU microarch)**.
 

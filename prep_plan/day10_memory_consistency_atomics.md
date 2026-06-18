@@ -1,4 +1,4 @@
-# Day 17 — Concurrency Primitives, Lock-free Queues, DSA Drills
+# Day 10 — Concurrency Primitives, Lock-free Queues, DSA Drills
 
 ## Concept
 
@@ -6,7 +6,7 @@ A concurrent primitive offers some combination of three independent guarantees: 
 
 ## Why this day in the flow
 
-Days 5 (MESI / false sharing) and 16 (memory model) gave you the *why*; Day 17 gives you the *write it under interview pressure* skill. Coding rounds at Qualcomm/Intel/Microsoft test both systems-C (spinlock, ring, doorbell harness) and classic DSA. Today is the rep day.
+Days 5 (MESI / false sharing) and 09 (memory model) gave you the *why*; Day 10 gives you the *write it under interview pressure* skill. Coding rounds at Qualcomm/Intel/Microsoft test both systems-C (spinlock, ring, doorbell harness) and classic DSA. Today is the rep day.
 
 In the Layer map this is the **coding-readiness layer that sits across Layers 1, 5, and 6**.
 

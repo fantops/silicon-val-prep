@@ -27,6 +27,7 @@ Round-by-round breakdown:
 | AMD · Core PnP Post-Si | 2 | R1 (14 May) + R2 (5 Jun) — 🟡 active/recent |
 | **Nvidia · role TBD** | 1 | 🔵 Technical screening done 11 Jun — future warm contact via Ranjith; not a current-cycle gate |
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
+| **Broadcom · Switch Pre-Si Validation** | 0 | 🟢 **2 roles: direct app ❌ rejected · referral 🟢 screening scheduled 22 Jun** — applied 1 role directly (rejected), friend referred for a separate switch pre-si val role; prep ask = electronics + digital design + CDC + Intel work |
 | **Total** | **20 completed** | |
 
 Loop status:
@@ -36,6 +37,7 @@ Loop status:
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
 | 🟡 Active gate | **2** | Qualcomm CPU Post-Silicon — 2 rounds done 2 Jun, results pending · AMD Core PnP Post-Si — R2 done 5 Jun |
 | 🔵 Future warm contact / next-cycle option | **1** | Nvidia — Ranjith contact retained; revisit after boot-flow + PCIe-emulation gap closes, not for July decision |
+| 🟢 Referral in — prep stage (no round yet) | **1** | Broadcom Switch Pre-Si Validation — friend referral 18 Jun; prep on electronics + digital design + CDC + Intel work before loop opens |
 | 🔴 Stalled — no reply (treat as closed) | **2** | QC CPU Core Pre-Si (16+ d) · QC PnP/Thermal (30+ d) |
 | ❌ Rejected / closed | **5** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
@@ -59,6 +61,7 @@ Loop status:
 | Arm | 10 | 1 | 10% | 1 mismatch (Verification) |
 | Nvidia | 7 | 1 | 14% | 1 technical screen; future warm contact / next-cycle option |
 | Amazon | 2 | 1 | 50% | 1 reject (Lab126 Echo full-Si) |
+| Broadcom | 2 | 0 | — | 1 reject (direct-applied role, pre-interview) + 🟢 1 referral loop opening (switch pre-si val, screening 22 Jun — not yet a completed loop) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
 | Apple | 4 | 0 | 0% | no response |
@@ -69,7 +72,7 @@ Loop status:
 | Graphcore | 1 | 0 | 0% | no response |
 | NXP | 1 | 0 | 0% | no response |
 | Marvell | 1 | 0 | 0% | no response |
-| **Total** | **87** | **13** | **14.9%** | **1 offer = 1.15% app→offer, 7.7% loop→offer** |
+| **Total** | **89** | **13** | **14.6%** | **1 offer = 1.12% app→offer, 7.7% loop→offer** |
 
 **Funnel signal:**
 - **8 of 16 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / 23% of total effort wasted on cold-apply portals where the no-referral conversion rate is ~0%.
@@ -175,13 +178,21 @@ Loop status:
 - **Learning:** The gap is not "do I know PCIe exists" — it is **system debug narration**: reset actor → ROM/firmware actor → host/RC actor → config/MMIO actor → LTSSM/tooling visibility → emulation-vs-silicon boundary. Need answer as an execution trace, not a definition.
 - **Suggestion:** Keep Ranjith as a warm future contact. Do **not** plan current-cycle decisions around Nvidia. For a later re-approach, drill four answer chains until 60-90 sec each: (1) who starts startup code after reset, (2) PCIe posted memory write / doorbell path, (3) LTSSM bring-up ladder + stuck-state debug, (4) what emulation covers vs cannot cover for PCIe. Map to [Day 11 CPU bring-up](prep_plan/day11_cpu_bringup_functional_val.md), [Day 18 PCIe LTSSM](prep_plan/day18_pcie_fundamentals_ltssm.md), [Day 21 PCIe bring-up](prep_plan/day21_pcie_bringup_functional_val.md), and [Day 24 final mock](prep_plan/day24_final_mock.md).
 
+### 18 Jun — Broadcom · Switch Pre-Si Validation — 🟢 Referral in, prep stage (no round yet)
+- **What happened:** Two separate Broadcom roles. (1) I **applied to one role directly — that one got rejected.** (2) Separately, a **friend referred me for a different role** — a **switch team pre-silicon validation** position. The referral is the live one. He asked me to **prepare on basics of electronics, digital design concepts, CDC (clock domain crossing) and similar concepts**, plus be ready to walk through my **Intel pre-silicon work**.
+- **Role signal:** Switch ASIC pre-si val (networking/Ethernet switch silicon). Expect emphasis on **RTL-adjacent fundamentals** — CMOS/logic basics, sequential design (setup/hold, metastability), **synchronizers + CDC + RDC**, FIFOs across clock domains, FSMs, reset architecture, low-power intent — framed for a **pre-Si verification/validation** seat, not just architecture recall. Intel Zebu pre-Si C-state / PM-handshake / cross-IP bug work is the strongest CV bridge.
+- **Learning:** This is the **EE-fundamentals + digital-design gap** that closed Intel P&P (Apr) and Intel Ireland NPU — now showing up as an *explicit prep ask*. Treat as the trigger to finally lock that gap. The switch-domain twist adds CDC depth (multi-clock SerDes/MAC/PHY + packet pipelines) on top of generic digital design.
+- **Status:** 🟢 Referral in. **First screening round scheduled 22 Jun 2026.** Prep window: 18–22 Jun. Standalone HTML study notes created (see [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html)) covering electronics + digital design + CDC + cross-interview gaps + coding practice.
+- **Referrer intel (Sparsh, 18 Jun) — his own interview shape (high-signal):** CDC in depth · async FIFO in depth · state machines · gate-type digital logic questions · **puzzles** · bit manipulation · **memory-subsystem verification** · **verifying a FIFO** · **DMA controller** · STA focused on **metastability, data incoherency, FIFO-pointer gray-code conversion** · **C array problems (moderate)** · scenario design: **devise a strategy to find a stuck-at fault on a memory-subsystem address line** (his team does heavy memory-subsystem verification) · scenario: **given Ethernet config/features, devise verification strategies** for different queueing methods and **how to verify a FIFO never overflows across all switches**. Process shape: **early rounds = basics, later rounds = your own work**. He worked mostly on **reset, boot, low-power flows** at Intel and got asked on those later — maps directly to my Intel Zebu PM/reset/clock-gating arc.
+- **Suggestion:** Work the dedicated HTML notes (electronics → digital design → CDC → metastability/synchronizers → switch-silicon pre-si val → Intel bridge). Rehearse a 60-90 sec answer for: *two-FF synchronizer + MTBF*, *why async FIFO + gray-code pointers*, *setup/hold + metastability*, *CDC bug classes (data loss, reconvergence, glitch)*, and *map my Intel cross-IP / PM-handshake bug to a CDC/RTL framing*. **Per referrer: add memory-subsystem verification (March/stuck-at, address-line stuck-at strategy), FIFO verification, DMA controller, gate-level logic puzzles, and C array problems; lead my own-work story with reset/boot/low-power flows for later rounds.**
+
 ---
 
 ##  Patterns
 
 **Strong:** bug stories with measurable impact, cross-vendor NPU breadth, **design-from-scratch scaffolds** (test-plan, multi-SoC PnP, C-state), role-fit framing in HM rounds.
 
-**Still soft:** layer-3 depth under probe-then-push, live-C **terminate-condition + edge-case pre-amble** (Cerebras + Amazon both), EE fundamentals, **HW-exposure breadth** for board/lab-fluency roles (Amazon Echo signal), **boot-flow + PCIe execution-trace narration** for Nvidia/PythonSV-shape debug roles.
+**Still soft:** layer-3 depth under probe-then-push, live-C **terminate-condition + edge-case pre-amble** (Cerebras + Amazon both), EE fundamentals, **HW-exposure breadth** for board/lab-fluency roles (Amazon Echo signal), **boot-flow + PCIe execution-trace narration** for Nvidia/PythonSV-shape debug roles, **digital-design + CDC fundamentals** for RTL-adjacent pre-si seats (Broadcom switch ask, 18 Jun).
 
 **Meta-skill:** probe-then-push — *what → why → how → connected*. Scaffolds survive the push; flat-fact recall doesn't. Every concept = scaffold to walk, not paragraph to recite.
 

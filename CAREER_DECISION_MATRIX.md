@@ -15,6 +15,7 @@
 | Qualcomm CPU Post-Silicon | Active evaluation | 2 rounds done 2 Jun 2026; results pending |
 | AMD CPU Post-Silicon / Core PnP | Active evaluation | R2 done 5 Jun 2026; role clarified as fixed-frequency CPU core performance + expanding power scope |
 | Nvidia · role TBD | Future warm contact | Ranjith contact retained; not a current-cycle decision input because loop timing is unlikely before Intel join |
+| Broadcom · Switch Pre-Si Validation | Referral in — prep stage | Friend referral 18 Jun; applied 1 role, referred for switch pre-si val. No round yet. Prep ask: electronics + digital design + CDC + Intel work. Not a July decision input unless loop opens fast with strong written scope |
 
 ### 1A. June 2026 compensation signal
 
@@ -120,6 +121,8 @@ This ranking is **not** based on interview excitement. It is based on written ce
 **AMD CPU post-silicon / core performance active gate:** R2 completed on **5 Jun 2026**. Treat as the highest-upside external gate, but do not emotionally price it in until written scope confirms CPU core performance ownership, not just broad validation execution.
 
 **Nvidia future contact:** Ranjith contact retained after 11 Jun screening. Keep the PythonSV / HW-debug prep gap in the study backlog, but exclude Nvidia from July 2026 decision modeling.
+
+**Broadcom referral (prep stage):** Friend referral on 18 Jun for **switch pre-silicon validation**; separately applied to one Broadcom role. No round scheduled yet. Prep ask = electronics fundamentals + digital design + CDC + Intel pre-si work (study notes in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html)). Exclude from July 2026 modeling unless the loop opens quickly and produces written scope + TC that clears the displacement bar; otherwise treat as next-cycle optionality with a referral advantage.
 
 **Intel remains the default anchor.** Amazon closed 28 May (R1 HW-depth gap confirmed). All other current-cycle loops are stalled / closed / future-only. **Intel join proceeds 27 Jul 2026 unless Qualcomm or AMD produces a clearly superior written offer with stronger scope.**
 

@@ -1,4 +1,4 @@
-# Day 10 — PCIe Fundamentals + LTSSM + Power States
+# Day 18 — PCIe Fundamentals + LTSSM + Power States
 
 ## Concept
 
@@ -6,7 +6,7 @@ PCIe is a **3-layer point-to-point serial fabric**: physical (lanes, encoding, e
 
 ## Why this day in the flow
 
-Days 4-8 built the cache/MMU/IOMMU/DMA picture. Day 10 is the **bus that carries all that traffic**. PCIe is the substrate for NVMe (Day 11), thermal events (Day 15), accelerator submission (Day 18-19) and a huge fraction of debug (Day 20). Today is also where the Day 13 PkgC6 story lives — PkgC6 needs PCIe links in **L1.2** specifically.
+Days 4-8 built the cache/MMU/IOMMU/DMA picture. Day 18 is the **bus that carries all that traffic**. PCIe is the substrate for NVMe (Day 11), thermal events (Day 15), accelerator submission (Day 18-19) and a huge fraction of debug (Day 20). Today is also where the Day 13 PkgC6 story lives — PkgC6 needs PCIe links in **L1.2** specifically.
 
 In the Layer map this is **Layer 3 (Buses)**.
 

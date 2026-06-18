@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broadcom Switch Pre-Si Validation — Prep Notes (Screening 22 Jun 2026)</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#161d2e; --panel2:#1b2438; --ink:#e6ebf5; --muted:#9aa7bd;
+    --accent:#4ea1ff; --accent2:#37d39b; --warn:#ffcc66; --bad:#ff6b6b; --good:#37d39b;
+    --line:#26314a; --code:#0c1018; --chip:#22304d;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{padding:34px 28px 26px;background:linear-gradient(135deg,#15203a,#0f1420);border-bottom:1px solid var(--line)}
+  header h1{margin:0 0 6px;font-size:1.7rem}
+  header .sub{color:var(--muted);font-size:.98rem}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:600;margin-right:6px;margin-top:8px}
+  .b-date{background:#3a2a12;color:var(--warn);border:1px solid #5a4220}
+  .b-role{background:#10324a;color:var(--accent);border:1px solid #1d4d6e}
+  .b-ref{background:#10331f;color:var(--good);border:1px solid #1d5e38}
+  .wrap{display:flex;max-width:1500px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:flex-start;width:280px;min-width:280px;height:100vh;overflow-y:auto;
+      padding:20px 14px;border-right:1px solid var(--line);background:var(--panel)}
+  nav h3{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 8px 8px}
+  nav a{display:block;padding:6px 10px;border-radius:7px;color:var(--ink);font-size:.9rem}
+  nav a:hover{background:var(--panel2);text-decoration:none}
+  main{flex:1;padding:28px 40px;max-width:1100px;min-width:0}
+  section{margin-bottom:42px;scroll-margin-top:16px}
+  h2{font-size:1.4rem;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-top:8px}
+  h3{font-size:1.12rem;color:var(--accent2);margin-top:28px}
+  h4{font-size:1rem;color:var(--ink);margin-top:20px;margin-bottom:6px}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}
+  li{margin:5px 0}
+  code{background:var(--code);padding:2px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:.88em;color:#cfe3ff}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;font-size:.86rem;line-height:1.5}
+  pre code{background:none;padding:0;color:#d7e2f3}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}nav{display:none}main{padding:20px}}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.9rem}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:var(--accent)}
+  tr:nth-child(even) td{background:#121a2b}
+  .tag{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:6px;margin-right:6px}
+  .t-must{background:#3a1820;color:#ff9aa6}
+  .t-gap{background:#3a2e12;color:var(--warn)}
+  .t-bridge{background:#10324a;color:var(--accent)}
+  .callout{border-left:4px solid var(--accent);background:var(--panel2);padding:12px 16px;border-radius:0 10px 10px 0;margin:14px 0}
+  .callout.warn{border-color:var(--warn)}
+  .callout.bad{border-color:var(--bad)}
+  .callout.good{border-color:var(--good)}
+  .callout .lbl{font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:0 16px}
+  details[open]{padding-bottom:12px}
+  summary{cursor:pointer;padding:13px 0;font-weight:600;color:var(--accent2);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▶";font-size:.7rem;margin-right:9px;color:var(--muted)}
+  details[open] summary::before{content:"▼"}
+  .q{font-weight:600;color:var(--ink)}
+  .kbd{font-family:monospace;background:#22304d;border:1px solid #33446a;border-radius:5px;padding:1px 6px;font-size:.82em}
+  .pill{font-size:.74rem;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted)}
+  hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+  .twocol{columns:2;column-gap:26px}
+  @media(max-width:900px){.twocol{columns:1}}
+  .answer-line{background:#101b15;border-left:3px solid var(--good);padding:8px 12px;border-radius:0 8px 8px 0;margin:8px 0;font-size:.92rem}
+  footer{padding:30px 40px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
+  .num{display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;background:var(--accent);color:#05121f;border-radius:50%;font-weight:700;font-size:.85rem;margin-right:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Broadcom — Switch ASIC Pre-Silicon Validation · Prep Notes</h1>
+  <div class="sub">Electronics fundamentals → Digital design → CDC → Switch pre-si validation → Cross-interview gap closure → Coding practice</div>
+  <div>
+    <span class="badge b-date">Screening: 22 Jun 2026</span>
+    <span class="badge b-role">Switch Team · Pre-Si Validation</span>
+    <span class="badge b-ref">Friend referral · 18 Jun</span>
+  </div>
+</header>
+
+<div class="wrap">
+<nav>
+  <h3>Strategy</h3>
+  <a href="#context">0 · Role & screening plan</a>
+  <a href="#gaps">0b · Gaps to close (incl. demotion)</a>
+  <h3>Fundamentals · ECE + Digital</h3>
+  <a href="#electronics">1 · Electronics basics</a>
+  <a href="#cmos">2 · CMOS & logic</a>
+  <a href="#combinational">3 · Combinational design</a>
+  <a href="#sequential">4 · Sequential & timing</a>
+  <a href="#metastability">5 · Metastability</a>
+  <h3>Fundamentals · CDC</h3>
+  <a href="#cdc-basics">6 · CDC fundamentals</a>
+  <a href="#synchronizers">7 · Synchronizers & MTBF</a>
+  <a href="#asyncfifo">8 · Async FIFO + gray code</a>
+  <a href="#cdc-bugs">9 · CDC bug classes</a>
+  <a href="#reset">10 · Reset & RDC</a>
+  <h3>Fundamentals · Ethernet</h3>
+  <a href="#ethernet">11 · Ethernet fundamentals</a>
+  <a href="#dataflow">12 · Switch data-flow path</a>
+  <h3>Core · Domain & Experience</h3>
+  <a href="#switch">13 · Switch silicon & pre-si val</a>
+  <a href="#intel-bridge">14 · Intel workflow (CDC/RTL framed)</a>
+  <a href="#pcie">15 · PCIe understanding</a>
+  <h3>Coding</h3>
+  <a href="#coding">16 · Coding problems</a>
+  <h3>Deep-dive (full-flow)</h3>
+  <a href="#deep-cdc">D1 · CDC full decision flow</a>
+  <a href="#deep-timing">D2 · Timing-closure full flow</a>
+</nav>
+
+<main>
+
+<!-- ============ 0 CONTEXT ============ -->
+<section id="context">
+<h2>0 · Role context & screening plan</h2>
+<div class="card">
+<p><strong>What this is:</strong> Two separate Broadcom roles. I <strong>applied to one directly (rejected)</strong>; separately, a friend <strong>referred me for a different role</strong> — a <strong>switch-team pre-silicon validation</strong> position. The referral is the live one. The explicit prep ask was: <em>"basics of electronics, digital design concepts, CDC and similar concepts"</em> plus a walkthrough of my <strong>Intel pre-silicon work</strong>.</p>
+</div>
+
+<h3>What "switch pre-si validation" actually means</h3>
+<p>Broadcom's switch silicon (Tomahawk / Trident / Jericho families) are large Ethernet switch ASICs: many high-speed SerDes lanes, MAC/PHY blocks, a packet-processing pipeline, packet buffers/memories, and a control/management subsystem. <strong>Pre-silicon validation</strong> = verifying the RTL/design <em>before</em> tape-out, in simulation and emulation, against the spec. So the interview leans on <strong>RTL-adjacent fundamentals</strong>, not board/lab debug.</p>
+
+<div class="callout">
+<span class="lbl">Why they asked for electronics + digital + CDC specifically</span>
+A multi-clock networking ASIC lives and dies on <strong>clock-domain crossings</strong> (SerDes recovered clock ↔ core clock ↔ MAC ↔ management bus). The single biggest class of functional bugs and the hardest to verify is CDC. They want to know you understand the silicon from the transistor up to the synchronizer up to the packet pipeline.
+</div>
+
+<h3>Likely screening shape (predict & prepare)</h3>
+<table>
+<tr><th>Segment</th><th>What to expect</th><th>My anchor</th></tr>
+<tr><td>Warm-up / intro</td><td>"Walk me through your background"</td><td>60-sec arc: L&T NVMe bring-up → Intel pre-si PM/CXL on Zebu → MS post-si AI-accelerator val</td></tr>
+<tr><td>Electronics basics</td><td>MOSFET, CMOS inverter, logic levels, noise margin, RC delay, power</td><td>§1–2 below</td></tr>
+<tr><td>Digital design</td><td>Setup/hold, FSM, combinational vs sequential, pipelining, FIFO</td><td>§3–4</td></tr>
+<tr><td>CDC (the core ask)</td><td>2-FF synchronizer, metastability/MTBF, async FIFO, gray code, handshake, CDC bug classes</td><td>§5–9</td></tr>
+<tr><td>Verification mindset</td><td>How would you verify block X / write a test plan / coverage</td><td>§13.2 reusable test-plan scaffold</td></tr>
+<tr><td>Project deep-dive</td><td>Intel pre-si bug story (PM/PCIe), framed in RTL/CDC terms</td><td>§14–15</td></tr>
+<tr><td>Coding</td><td>C / scripting; bit-ops, FIFO, FSM-like logic, arrays</td><td>§16</td></tr>
+</table>
+</section>
+
+<section id="gaps">
+<h2>0b · Cross-interview gaps to close (from the full cycle)</h2>
+<p>Consolidated from 20 rounds across 9 companies. These are the recurring "didn't land" patterns — fold them into this prep so Broadcom doesn't re-expose them.</p>
+
+<table>
+<tr><th>Gap</th><th>Where it bit me</th><th>Fix for 22 Jun</th></tr>
+<tr><td><span class="tag t-must">EE fundamentals</span></td><td><strong>2× closed:</strong> Intel P&P (Apr R2), Intel Ireland NPU (May)</td><td>This is now the <em>explicit</em> Broadcom ask. §1–2 + §5 metastability. No longer optional.</td></tr>
+<tr><td><span class="tag t-gap">Layer-3 depth under probe-then-push</span></td><td>QC CPU Core R2 — textbook depth ran out at layer 2–3</td><td>Every concept = <strong>what → why → how → connected</strong> scaffold, not a flat fact. Rehearse out loud.</td></tr>
+<tr><td><span class="tag t-gap">C edge-case + loop-terminate pre-amble</span></td><td>Cerebras (moving-avg wrap), Amazon (digital-root <code>while(sum%10)</code> bug)</td><td>Before coding, say: "the cases I'll handle are empty / single / boundary / overflow." §16 enforces this.</td></tr>
+<tr><td><span class="tag t-bridge">HW-exposure framing</span></td><td>Amazon Echo full-Si reject (wanted board/lab fluency)</td><td>Lean on L&T NVMe board bring-up (JTAG, Lecroy) when role reads HW-heavy.</td></tr>
+<tr><td><span class="tag t-gap">Execution-trace narration</span></td><td>Nvidia screen — reset→ROM→RC→config actor chain; PCIe emulation limits</td><td>Narrate as an <em>actor trace</em>, not a definition. Applies to CDC paths too.</td></tr>
+<tr><td><span class="tag t-bridge">Bug story = 90 sec, STAR-strict</span></td><td>Intel Ireland — tangled bug story under pace</td><td>Symptom → hypothesis → narrowed-how → root cause → fix → lesson. §14.2.</td></tr>
+<tr><td><span class="tag t-must">"How was demotion decided?" (PM)</span></td><td>Intel PM rounds — couldn't crisply explain the C-state/P-state <em>demotion decision logic</em></td><td>Own this now — it's my Intel domain. See <strong>0b.1</strong> below for the full decision flow + what to cover.</td></tr>
+</table>
+
+<div class="callout good">
+<span class="lbl">Meta-skill that survives the push</span>
+<strong>Scaffolds survive probe-then-push; flat-fact recall doesn't.</strong> For every topic below, the value is the <em>chain you can walk</em>, not the definition you can recite.
+</div>
+
+<h3>0b.1 ★ "How was demotion decided?" — the PM gap, closed</h3>
+<p><strong>Demotion</strong> = the hardware/firmware choosing a <em>shallower</em> low-power state than the OS requested, because the predicted idle won't pay back the deeper state's entry/exit cost. This is the exact PM question I want to answer crisply — it's my Intel C-state/P-state territory.</p>
+
+<div class="card">
+<p><strong>Why demotion exists:</strong> every deeper idle state (C-state) saves more power but costs more <strong>entry + exit latency</strong> and flushes more context (caches, voltage ramp). If the CPU wakes too soon, you paid the exit cost for no benefit — and hurt latency. So the platform <em>demotes</em>: OS asks for C6, hardware grants C1/C3 instead.</p>
+
+<p><strong>The decision inputs (what gets weighed):</strong></p>
+<ul>
+<li><strong>Predicted residency</strong> — how long the core is likely to stay idle, estimated from recent idle history (a moving prediction).</li>
+<li><strong>Break-even / target residency</strong> — each C-state's minimum idle time to recoup its entry+exit energy. Stay shorter than this → net loss.</li>
+<li><strong>Exit-latency tolerance</strong> — QoS/latency constraints (e.g. an interrupt or I/O deadline) cap how deep you can go.</li>
+<li><strong>Recent wake pattern</strong> — frequent short wakes ⇒ demote (don't keep paying deep-exit cost); long stable idle ⇒ allow/promote.</li>
+</ul>
+
+<p><strong>The decision flow (the scaffold to narrate):</strong></p>
+<pre><code>OS requests C-state X (via MWAIT hint / governor)
+        │
+   predict idle duration  ── from idle-history
+        │
+   compare to X's target residency & exit-latency limit
+        │
+ ┌──────┴───────────────────────────────┐
+ predicted idle ≥ break-even          predicted idle &lt; break-even
+ & latency OK                          OR latency too tight
+        │                                      │
+   grant X (or PROMOTE deeper)           DEMOTE → grant a shallower state
+        │                                      │
+   monitor actual residency ── if we keep mis-predicting, bias future demotion</code></pre>
+</div>
+
+<div class="callout">
+<span class="lbl">If asked deeper (P-state vs C-state demotion)</span>
+<strong>C-state demotion</strong> = idle-state depth (latency/energy break-even, above). <strong>P-state</strong> = active voltage/frequency operating point (DVFS): demotion there means not jumping to the highest frequency for a short burst because the V²·f energy + transition cost isn't worth it. Both are the same idea — <em>don't pay a transition cost you won't earn back</em>. <span class="pill">honesty</span> my Intel exposure to this was on <strong>Zebu pre-si flows</strong> (C-state entry/exit handshakes), not real voltage/frequency measurement.
+</div>
+</section>
+
+<!-- ============ 1 ELECTRONICS ============ -->
+<section id="electronics">
+<h2>1 · Electronics fundamentals</h2>
+
+<h3>1.1 Passive basics you must be reflexive on</h3>
+<table>
+<tr><th>Concept</th><th>Key relation</th><th>Why it matters in an ASIC</th></tr>
+<tr><td>Ohm's law</td><td><code>V = I·R</code></td><td>IR drop on power grid → local Vdd sag → timing failures</td></tr>
+<tr><td>Capacitor</td><td><code>I = C·dV/dt</code>; charge time ∝ <code>RC</code></td><td>Gate/wire cap dominates switching delay & dynamic power</td></tr>
+<tr><td>RC delay</td><td><code>τ = RC</code>, ~63% in 1τ, settle ~5τ</td><td>Interconnect delay; why long nets need buffering/repeaters</td></tr>
+<tr><td>Dynamic power</td><td><code>P = α·C·V²·f</code></td><td>V² is why DVFS lowers voltage first; α = activity factor</td></tr>
+<tr><td>Static/leakage</td><td><code>P = V·I_leak</code></td><td>Dominant at advanced nodes; why power gating exists</td></tr>
+</table>
+
+<div class="callout warn">
+<span class="lbl">Probe-then-push ready</span>
+<strong>"Why does lowering voltage save more power than lowering frequency?"</strong> → Dynamic power scales <em>linearly</em> with f but with the <em>square</em> of V. And max f itself depends on V (lower V → slower transistors), so DVFS drops V and f together — a roughly cubic effective benefit. <em>(This is the Intel P&P answer I missed in April — now locked.)</em>
+</div>
+
+<h3>1.2 The MOSFET in one breath</h3>
+<ul>
+<li><strong>NMOS:</strong> conducts when gate is <strong>high</strong> (passes a strong 0, weak 1). Good pull-<em>down</em>.</li>
+<li><strong>PMOS:</strong> conducts when gate is <strong>low</strong> (passes a strong 1, weak 0). Good pull-<em>up</em>.</li>
+<li>Three regions: <em>cut-off</em> (V<sub>GS</sub>&lt;V<sub>th</sub>, off), <em>triode/linear</em> (acts like a resistor), <em>saturation</em> (acts like a current source — used in analog/SerDes).</li>
+<li>Switching speed ∝ drive current / load cap. More width W → more current → faster but more area & cap.</li>
+</ul>
+
+<h3>1.3 Logic levels & noise margin</h3>
+<p>A gate guarantees outputs in <code>V<sub>OL</sub></code>/<code>V<sub>OH</sub></code> bands and accepts inputs in <code>V<sub>IL</sub></code>/<code>V<sub>IH</sub></code> bands.</p>
+<pre><code>NM_high = V_OH - V_IH     (high-side noise margin)
+NM_low  = V_IL - V_OL     (low-side noise margin)</code></pre>
+<p>Bigger noise margin → more tolerant of crosstalk, IR drop, SI noise. On a switch ASIC with thousands of fast lanes, <strong>signal integrity</strong> (crosstalk, ISI, reflections) is a first-class concern — that's why SerDes use equalization (CTLE/DFE) and differential signaling.</p>
+</section>
+
+<!-- ============ 2 CMOS ============ -->
+<section id="cmos">
+<h2>2 · CMOS & logic gates</h2>
+
+<h3>2.1 The CMOS inverter — the canonical question</h3>
+<p>PMOS on top (to Vdd), NMOS on bottom (to GND), gates tied together as input, drains tied as output.</p>
+<table>
+<tr><th>Input</th><th>PMOS</th><th>NMOS</th><th>Output</th></tr>
+<tr><td>0</td><td>ON</td><td>OFF</td><td>1 (pulled to Vdd)</td></tr>
+<tr><td>1</td><td>OFF</td><td>ON</td><td>0 (pulled to GND)</td></tr>
+</table>
+<div class="callout">
+<span class="lbl">Why CMOS won</span>
+In steady state, exactly one transistor is off, so there's <strong>no DC path</strong> from Vdd to GND → near-zero static power. Power is burned only during switching (charging C, plus brief short-circuit current when both are momentarily on). That's the whole <code>α·C·V²·f</code> story.
+</div>
+
+<h3>2.2 Pull-up / pull-down network rule</h3>
+<ul>
+<li><strong>PUN</strong> (PMOS) and <strong>PDN</strong> (NMOS) are <em>duals</em>: series in one ↔ parallel in the other.</li>
+<li>NAND: NMOS in series (pull-down only when all inputs high), PMOS in parallel.</li>
+<li>NOR: NMOS in parallel, PMOS in series.</li>
+<li>NAND is preferred in CMOS (series NMOS beats series PMOS because electrons &gt; holes mobility).</li>
+</ul>
+
+<h3>2.3 Universal gates & building blocks</h3>
+<div class="twocol">
+<ul>
+<li><strong>NAND / NOR</strong> are universal — any logic from them.</li>
+<li><strong>XOR</strong> = inequality / parity / adder sum bit.</li>
+<li><strong>MUX</strong> = select; also universal; basis of LUTs in FPGAs.</li>
+<li><strong>Half adder:</strong> <code>S = A⊕B</code>, <code>C = A·B</code>.</li>
+<li><strong>Full adder:</strong> <code>S = A⊕B⊕Cin</code>, <code>Cout = AB + Cin(A⊕B)</code>.</li>
+<li><strong>Tri-state</strong> buffer → enables shared buses.</li>
+</ul>
+</div>
+
+<h3>2.4 Propagation delay, fan-out, glitches</h3>
+<ul>
+<li><strong>t<sub>pd</sub></strong> = input change → output settle. Critical path = longest combinational t<sub>pd</sub> between registers → sets max frequency.</li>
+<li><strong>Fan-out:</strong> more loads → more cap → slower. Fix with buffering / gate sizing.</li>
+<li><strong>Glitch/hazard:</strong> transient wrong output from unequal path delays. Harmless inside pure combinational logic that's later registered; <strong>dangerous if it feeds an async input, clock, or reset.</strong> (Direct CDC relevance — §9.)</li>
+</ul>
+</section>
+
+<!-- ============ 3 COMBINATIONAL ============ -->
+<section id="combinational">
+<h2>3 · Combinational design</h2>
+<ul>
+<li><strong>Combinational</strong> = output is a pure function of current inputs, no memory. Adders, MUXes, decoders, comparators, ALUs, priority encoders.</li>
+<li>Design concerns: minimize logic depth (critical path), avoid glitches on sensitive nets, watch for unintended latches (incomplete <code>if</code>/<code>case</code> in RTL).</li>
+</ul>
+<div class="callout warn">
+<span class="lbl">Classic RTL trap (interviewers love this)</span>
+In Verilog, an incompletely-specified combinational <code>always</code> block (missing <code>else</code> or default) <strong>infers a latch</strong>, because the tool must "remember" the old value. Fix: assign a default at the top, or always cover every branch. Latches are hard to time and a verification headache.
+</div>
+<h4>Karnaugh / minimization (be able to do a 4-var K-map)</h4>
+<p>Group 1s in powers of two, wrap edges, larger groups = fewer literals. Know don't-cares (X) help minimization. Mention <strong>Quine–McCluskey</strong> as the tabular/automatable version.</p>
+</section>
+
+<!-- ============ 4 SEQUENTIAL ============ -->
+<section id="sequential">
+<h2>4 · Sequential logic & timing</h2>
+
+<h3>4.1 Latch vs flip-flop</h3>
+<table>
+<tr><th></th><th>Latch (level)</th><th>Flip-flop (edge)</th></tr>
+<tr><td>Triggers on</td><td>Clock <em>level</em> (transparent when enabled)</td><td>Clock <em>edge</em> (samples once)</td></tr>
+<tr><td>Timing</td><td>Harder (time-borrowing, transparency)</td><td>Cleaner, predictable</td></tr>
+<tr><td>Use</td><td>Low-power, time-borrow paths</td><td>Default storage element in sync design</td></tr>
+</table>
+
+<h3>4.2 Setup & hold — the heart of timing</h3>
+<div class="card">
+<p><strong>Setup time (t<sub>su</sub>):</strong> data must be <em>stable before</em> the clock edge.<br>
+<strong>Hold time (t<sub>h</sub>):</strong> data must be <em>stable after</em> the clock edge.</p>
+<pre><code>Setup check (max-delay / slow path):
+  T_clk  >=  t_cq + t_comb(max) + t_su + t_skew
+        → fix by slowing clock, shortening logic, pipelining
+
+Hold check (min-delay / fast path):  INDEPENDENT of clock period
+  t_cq + t_comb(min)  >=  t_h + t_skew
+        → fix by adding delay/buffers; cannot fix by changing freq</code></pre>
+</div>
+<div class="callout">
+<span class="lbl">Probe-then-push</span>
+<strong>"Why can't you fix a hold violation by slowing the clock?"</strong> → Because hold is a same-edge race between launch and capture flops; the clock period never enters the inequality. You fix hold by <em>adding</em> delay to the data path (or fixing skew), not by changing frequency. Setup is the one that scales with the clock period.
+</div>
+
+<h3>4.3 Clock skew & jitter</h3>
+<ul>
+<li><strong>Skew</strong> = spatial difference in clock arrival between flops (static). Helpful skew can aid setup but hurts hold.</li>
+<li><strong>Jitter</strong> = temporal cycle-to-cycle variation of the clock edge (PLL noise). Eats into the timing budget.</li>
+<li><strong>Clock tree synthesis (CTS)</strong> balances skew. A <strong>balanced clock tree</strong> distributes the clock with minimal skew.</li>
+</ul>
+
+<h3>4.4 FSM — Mealy vs Moore</h3>
+<table>
+<tr><th></th><th>Moore</th><th>Mealy</th></tr>
+<tr><td>Output depends on</td><td>State only</td><td>State + current input</td></tr>
+<tr><td>Timing</td><td>Glitch-free, registered outputs</td><td>Fewer states, but output can glitch with input</td></tr>
+<tr><td>Latency</td><td>One cycle later</td><td>Same cycle (faster react)</td></tr>
+</table>
+<p><strong>State encoding:</strong> binary (fewest FFs), one-hot (fastest decode, easy debug, common in FPGAs), gray (one bit changes — relevant to CDC). Always know how you'd <strong>reset to a known state</strong> and handle illegal states (default → safe state).</p>
+
+<h3>4.5 Pipelining (switch datapaths are deep pipelines)</h3>
+<p>Break a long combinational path with registers → higher clock, higher throughput, at the cost of latency and area. <strong>Throughput</strong> = one result/clock once full; <strong>latency</strong> = depth × cycle. A packet-processing pipeline (parse → lookup → modify → queue) is exactly this.</p>
+</section>
+
+<!-- ============ 5 METASTABILITY ============ -->
+<section id="metastability">
+<h2>5 · Metastability — the bridge to CDC</h2>
+<div class="card">
+<p><strong>What it is:</strong> if a flip-flop's data changes within its setup/hold window, its output can hang at an <strong>intermediate / indeterminate voltage</strong> (neither solid 0 nor 1) for an unbounded time before resolving randomly to 0 or 1.</p>
+<p><strong>When it happens:</strong> whenever you sample an asynchronous signal (a signal from a different/unrelated clock) with your clock — you <em>cannot</em> guarantee setup/hold. This is unavoidable at a clock-domain crossing.</p>
+</div>
+<ul>
+<li>You can never make metastability <em>impossible</em> — only make the probability of <em>unresolved</em> metastability negligibly small (improve MTBF, §7).</li>
+<li>The danger isn't metastability itself — it's <strong>different downstream gates sampling the half-resolved value differently</strong> (one sees 1, one sees 0) → inconsistent state.</li>
+<li>Resolution time constant τ depends on the flop's gain-bandwidth; giving the signal <strong>more time</strong> (extra sync flops) lets it resolve.</li>
+</ul>
+<div class="callout warn">
+<span class="lbl">This is the EE gap that twice closed Intel loops</span>
+Be able to <em>draw</em> it: a flop, data toggling near the edge, output drawn hovering at mid-rail then snapping. Then explain "I give it a second flop a full cycle later to resolve." That visual + the MTBF formula is what separates "I've heard of it" from "I understand it."
+</div>
+</section>
+
+<!-- ============ 6 CDC BASICS ============ -->
+<section id="cdc-basics">
+<h2>6 · CDC fundamentals</h2>
+<p>A <strong>clock domain crossing</strong> is any signal generated in one clock domain and sampled in another. On a switch ASIC there are <em>many</em>: per-lane SerDes recovered clocks, MAC clock, packet-processing core clock, memory clocks, management/CPU bus clock (e.g. AXI/APB), JTAG/test clock.</p>
+
+<h3>6.1 Why CDC is hard</h3>
+<ul>
+<li>No fixed phase relationship → setup/hold cannot be guaranteed → metastability risk on every crossing.</li>
+<li>Static timing analysis (STA) can't meaningfully time an async path — CDC must be handled <em>structurally</em> (synchronizers) and verified with <strong>CDC tools</strong> (e.g. Spyglass-CDC, Questa-CDC) + functional sims with metastability injection.</li>
+</ul>
+
+<h3>6.2 The three crossing types</h3>
+<table>
+<tr><th>Crossing</th><th>Correct technique</th></tr>
+<tr><td><strong>Single-bit level/control</strong></td><td>2-FF (or 3-FF) synchronizer</td></tr>
+<tr><td><strong>Single-bit pulse</strong> (fast→slow)</td><td>Toggle/handshake (pulse can be missed otherwise)</td></tr>
+<tr><td><strong>Multi-bit bus / data</strong></td><td>Async FIFO (gray-coded pointers) OR handshake (req/ack + hold data stable) OR MUX-recirculation with a synchronized enable</td></tr>
+</table>
+<div class="callout bad">
+<span class="lbl">Cardinal rule</span>
+<strong>Never run a multi-bit bus through parallel 2-FF synchronizers.</strong> Each bit resolves independently → you can latch a value that never existed on the bus (<em>data incoherency</em>). Multi-bit must cross as a unit: FIFO, handshake, or gray code.
+</div>
+</section>
+
+<!-- ============ 7 SYNCHRONIZERS ============ -->
+<section id="synchronizers">
+<h2>7 · Synchronizers & MTBF</h2>
+
+<h3>7.1 The 2-flop synchronizer</h3>
+<pre><code>// Single-bit level crossing into clk_dst domain
+always @(posedge clk_dst or negedge rst_n)
+  if (!rst_n) {sync2, sync1} &lt;= 2'b0;
+  else        {sync2, sync1} &lt;= {sync1, async_in};
+// sync2 is the safe, synchronized signal</code></pre>
+<p>FF1 may go metastable; it's given (almost) a full destination clock cycle to resolve before FF2 samples it. FF2's output is treated as clean. Use a <strong>3rd flop</strong> when the destination clock is very fast / reliability target is high.</p>
+
+<h3>7.2 MTBF — quantify it (this is the EE-depth move)</h3>
+<pre><code>           e^(t_r / τ)
+MTBF  =  ───────────────────
+          f_clk · f_data · T_w
+
+t_r  = resolution time available (≈ one dst clock period minus setup)
+τ    = flop resolution time constant (technology/library param)
+T_w  = metastability "window" width
+f_clk  = sampling clock frequency
+f_data = rate of async transitions</code></pre>
+<ul>
+<li>MTBF grows <strong>exponentially</strong> with available resolution time <code>t_r</code> → that's exactly why adding a flop (more t<sub>r</sub>) helps so dramatically.</li>
+<li>Faster clocks / faster data → <em>lower</em> MTBF (worse) → may need 3 flops.</li>
+</ul>
+<div class="callout good">
+<span class="lbl">60-sec spoken answer (rehearse)</span>
+"A 2-FF synchronizer lets the first flop's metastable output resolve over almost a full destination cycle before the second flop samples it. The probability it's still unresolved drops exponentially with the resolution time available, captured by the MTBF formula — so for high-frequency or high-reliability crossings I'd add a third flop. It only works for a single bit; multi-bit buses need a FIFO or handshake so bits stay coherent."
+</div>
+
+<h3>7.3 Pulse synchronizer (fast → slow domain)</h3>
+<p>A 1-cycle pulse in a fast domain may be <em>missed</em> by a slow sampling clock. Solution: convert the pulse to a <strong>toggle</strong> (flip a level on each pulse), synchronize the level with 2 flops, then edge-detect (<code>XOR</code> of last two synced values) in the destination to regenerate the pulse.</p>
+</section>
+
+<!-- ============ 8 ASYNC FIFO ============ -->
+<section id="asyncfifo">
+<h2>8 · Async FIFO + gray code (multi-bit data crossing)</h2>
+<p>The standard way to move a <strong>data stream</strong> across two clocks. A dual-port RAM with a write side in clk_w and a read side in clk_r; full/empty derived by comparing pointers <em>across</em> domains.</p>
+
+<h3>8.1 Why gray-code the pointers</h3>
+<ul>
+<li>The write pointer must be read in the read domain (for empty), and vice-versa (for full) → the pointer itself is a multi-bit CDC.</li>
+<li><strong>Gray code changes only one bit per increment.</strong> So even if the synchronizer samples mid-transition, the worst case is the old value or the new value — never a wildly wrong intermediate. Binary pointers could glitch by many counts.</li>
+<li>Cross each gray pointer with a 2-FF synchronizer, then compare.</li>
+</ul>
+
+<h3>8.2 Full / empty generation</h3>
+<table>
+<tr><th>Flag</th><th>Computed in</th><th>Condition</th></tr>
+<tr><td><strong>Empty</strong></td><td>Read domain</td><td>synced write-ptr == read-ptr</td></tr>
+<tr><td><strong>Full</strong></td><td>Write domain</td><td>synced read-ptr == write-ptr with MSBs inverted (wrapped one lap)</td></tr>
+</table>
+<div class="callout">
+<span class="lbl">Why the extra MSB trick</span>
+The FIFO pointer is <code>log2(depth)+1</code> bits: the extra top bit distinguishes "full" from "empty" when read==write addresses. Empty = pointers fully equal; Full = lower bits equal but the wrap bit differs.
+</div>
+
+<h3>8.3 Binary ↔ Gray conversion (know the one-liners)</h3>
+<pre><code>gray   = bin ^ (bin >> 1);          // binary → gray
+
+// gray → binary (XOR-prefix)
+bin = gray;
+for (i = 1; i < N; i++) bin ^= (gray >> i);</code></pre>
+</section>
+
+<!-- ============ 9 CDC BUGS ============ -->
+<section id="cdc-bugs">
+<h2>9 · CDC bug classes (verification target)</h2>
+<p>As a <em>pre-si validation</em> engineer, you're hunting these. Be able to name them, explain the mechanism, and say how you'd catch each.</p>
+<table>
+<tr><th>Bug class</th><th>Mechanism</th><th>How you catch it pre-si</th></tr>
+<tr><td><strong>Missing synchronizer</strong></td><td>Async signal sampled directly → metastability propagates</td><td>CDC structural tool (Spyglass) flags unsynchronized crossings</td></tr>
+<tr><td><strong>Data incoherency</strong></td><td>Multi-bit bus through parallel 2-FFs → bits resolve in different cycles</td><td>CDC tool + metastability-injection sim shows mismatched bits</td></tr>
+<tr><td><strong>Reconvergence</strong></td><td>One source synchronized via two paths that recombine → relative timing skews logic</td><td>CDC reconvergence check; gray-encode or single-path the crossing</td></tr>
+<tr><td><strong>Lost / dropped pulse</strong></td><td>Fast-domain pulse narrower than slow clock period</td><td>Toggle/handshake synchronizer; assertion that every req gets an ack</td></tr>
+<tr><td><strong>Glitch on crossing</strong></td><td>Combinational logic before the synchronizer → glitch gets latched</td><td>Register before crossing; CDC tool flags combinational logic on crossing</td></tr>
+<tr><td><strong>Data-hold / fast-changing source</strong></td><td>Source changes again before handshake completes → stale/torn data</td><td>Stability assertion: data must hold until ack returns</td></tr>
+</table>
+<div class="callout">
+<span class="lbl">Verification methods (say these)</span>
+<strong>(1) Structural CDC analysis</strong> (lint-style, RTL, no sim) → finds unsynchronized/unsafe crossings. <strong>(2) Metastability injection</strong> in simulation → randomly delays/inverts synchronizer first-stage output to model real metastable resolution, then checks downstream correctness. <strong>(3) SVA assertions</strong> on handshakes/stability. <strong>(4) Formal</strong> for handshake protocol correctness.
+</div>
+</section>
+
+<!-- ============ 10 RESET ============ -->
+<section id="reset">
+<h2>10 · Reset architecture & RDC</h2>
+<h3>10.1 Async vs sync reset</h3>
+<table>
+<tr><th></th><th>Async reset</th><th>Sync reset</th></tr>
+<tr><td>Assert</td><td>Immediate, no clock needed</td><td>On clock edge only</td></tr>
+<tr><td>Risk</td><td><strong>Reset removal</strong> near clock edge → metastability</td><td>Needs running clock; widens data path logic</td></tr>
+</table>
+<p><strong>Best practice — "asynchronous assert, synchronous de-assert"</strong> via a <strong>reset synchronizer</strong>: assert immediately, but release the reset synchronized to the clock so all flops leave reset on the same edge (no metastability on reset <em>recovery</em>).</p>
+
+<h3>10.2 RDC — Reset Domain Crossing</h3>
+<p>The reset analogue of CDC: a flop in one reset domain drives a flop in a <em>different</em> reset domain. If the source resets while the destination doesn't (or vice-versa), the destination can capture a metastable/garbage value. Modern switch SoCs with many independent power/reset domains <strong>must</strong> RDC-verify, not just CDC-verify.</p>
+</section>
+
+<!-- ============ 11 ETHERNET ============ -->
+<section id="ethernet">
+<h2>11 · Ethernet fundamentals</h2>
+<p>The switch ASIC's whole job is to move <strong>Ethernet frames</strong>. You don't need to be a protocol engineer, but you must be able to place the switch in the networking stack and describe what each layer does to a packet. This is the vocabulary that makes your validation answers sound credible.</p>
+
+<h3>11.1 The layered stack — where a switch lives</h3>
+<table>
+<tr><th>OSI</th><th>TCP/IP</th><th>Unit</th><th>Address</th><th>Switch ASIC block</th></tr>
+<tr><td>7 App</td><td rowspan="3">Application</td><td>Data</td><td>—</td><td>—</td></tr>
+<tr><td>6 Presentation</td><td>Data</td><td>—</td><td>—</td></tr>
+<tr><td>5 Session</td><td>Data</td><td>—</td><td>—</td></tr>
+<tr><td>4 Transport</td><td>Transport</td><td><strong>Segment</strong></td><td>Port (TCP/UDP)</td><td>(L4 ACL / hashing only)</td></tr>
+<tr><td>3 Network</td><td>Internet</td><td><strong>Packet</strong></td><td>IP address</td><td><strong>L3 router</strong> — LPM/TCAM lookup, TTL decrement</td></tr>
+<tr><td>2 Data Link</td><td rowspan="2">Link</td><td><strong>Frame</strong></td><td>MAC address</td><td><strong>L2 switch core</strong> — MAC table, VLAN, MAC/parser</td></tr>
+<tr><td>1 Physical</td><td><strong>Bits / symbols</strong></td><td>—</td><td><strong>PHY + SerDes</strong> — lanes, encoding, CDR</td></tr>
+</table>
+<div class="callout">
+<span class="lbl">The one-liner that places the chip</span>
+"A classic switch is an <strong>L2 device</strong> — it forwards Ethernet frames by destination MAC. A modern datacenter switch (Tomahawk/Trident) is <strong>L2+L3</strong>: it also routes IP packets, does VLANs, ACLs, ECMP, and QoS. Physically it's a pile of <strong>SerDes lanes → PHY → MAC → packet pipeline → buffers/scheduler → back out</strong>."
+</div>
+
+<h3>11.2 The Ethernet frame — know every field</h3>
+<pre><code>┌──────────┬─────┬──────────┬──────────┬───────┬───────────┬──────────┬─────┐
+│ Preamble │ SFD │ Dst MAC  │ Src MAC  │ Type/ │  Payload  │   FCS    │ IFG │
+│  7 B     │ 1 B │   6 B    │   6 B    │ Len 2 │ 46–1500 B │  4 B CRC │12 B │
+└──────────┴─────┴──────────┴──────────┴───────┴───────────┴──────────┴─────┘
+        (+ optional 802.1Q VLAN tag, 4 B, after Src MAC)</code></pre>
+<ul>
+<li><strong>Preamble + SFD (Start Frame Delimiter):</strong> <code>1010…</code> clock-sync pattern; SFD <code>10101011</code> marks the byte boundary where the frame proper begins.</li>
+<li><strong>Destination MAC (6 B):</strong> who the frame is for. First bit = unicast(0)/multicast(1); broadcast = all-ones <code>FF:FF:FF:FF:FF:FF</code>. <strong>This is the L2 lookup key.</strong></li>
+<li><strong>Source MAC (6 B):</strong> who sent it — the switch <em>learns</em> (src MAC → ingress port) to build its MAC table.</li>
+<li><strong>802.1Q VLAN tag (optional 4 B):</strong> TPID <code>0x8100</code> + VLAN ID (12 bits) + priority (3 bits, PCP for QoS). Lets one wire carry many isolated L2 domains.</li>
+<li><strong>EtherType / Length:</strong> ≥0x0600 = type (e.g. <code>0x0800</code> IPv4, <code>0x86DD</code> IPv6, <code>0x0806</code> ARP); else it's a length.</li>
+<li><strong>Payload (46–1500 B):</strong> the upper-layer packet; padded to 46 B minimum. Jumbo frames push to ~9000 B.</li>
+<li><strong>FCS (4 B CRC-32):</strong> integrity check over the whole frame; bad FCS → drop + error counter (a key validation check).</li>
+<li><strong>IFG (Inter-Frame Gap, 12 B):</strong> mandatory idle between frames so receivers can re-sync.</li>
+</ul>
+<div class="callout">
+<span class="lbl">Why min frame = 64 B (collision-era fact still asked)</span>
+On legacy half-duplex CSMA/CD, a sender had to still be transmitting when the farthest collision could come back — the slot time. 64 B is the minimum that guarantees collision detection across the max cable length. Modern full-duplex switched links have no collisions, but the 64 B minimum survives for compatibility (hence the 46 B payload floor).
+</div>
+
+<h3>11.3 PHY / MAC / SerDes — the physical chain</h3>
+<table>
+<tr><th>Block</th><th>Job</th><th>Clock-domain relevance</th></tr>
+<tr><td><strong>SerDes</strong></td><td>Serialize parallel data to a high-speed lane; deserialize on RX. <strong>CDR</strong> recovers the clock from the data (no separate clock wire).</td><td>Each lane's recovered clock is its <em>own</em> domain → CDC into the MAC.</td></tr>
+<tr><td><strong>PHY (PCS+PMA)</strong></td><td>Encoding (64b/66b, PAM4 + FEC at high rates), block sync, lane alignment/deskew, scrambling.</td><td>PCS runs on a core clock; PMA on the SerDes clock → CDC inside the PHY.</td></tr>
+<tr><td><strong>MAC</strong></td><td>Frame delineation, preamble/SFD handling, FCS check/gen, IFG enforcement, pause/PFC flow control, stats.</td><td>MAC clock vs packet-pipeline clock → another CDC.</td></tr>
+</table>
+<p><strong>MII family (the MAC↔PHY interface):</strong> MII → GMII (1 G) → XGMII (10 G) → XLGMII/CGMII (40/100 G). At high speed the actual interface is internal (the PHY is on-die). Naming pattern worth recognizing, not memorizing.</p>
+
+<h3>11.4 Speeds & encoding (recognize, don't cram)</h3>
+<table>
+<tr><th>Rate</th><th>Typical encoding</th><th>Notes</th></tr>
+<tr><td>1 GbE</td><td>8b/10b</td><td>GMII</td></tr>
+<tr><td>10 GbE</td><td>64b/66b</td><td>low overhead vs 8b/10b's 25%</td></tr>
+<tr><td>25/50 GbE</td><td>64b/66b (+RS-FEC)</td><td>per-lane building block</td></tr>
+<tr><td>100 GbE</td><td>4×25 G NRZ or 2×50 G PAM4 + FEC</td><td>multi-lane striping</td></tr>
+<tr><td>400/800 GbE</td><td>PAM4 + RS-FEC, 8 lanes</td><td>Tomahawk-class radix</td></tr>
+</table>
+<div class="callout">
+<span class="lbl">Why FEC appears at high rate (ties to PAM4)</span>
+PAM4 packs 2 bits/symbol (4 voltage levels) to double rate at the same baud, but the eye is 1/3 the height → far higher bit-error rate. <strong>Forward Error Correction (Reed-Solomon)</strong> corrects errors in-line so the link is usable without constant retransmits. Same reasoning as PCIe Gen6.
+</div>
+
+<h3>11.5 Flow control & congestion (switch-specific, likely probed)</h3>
+<ul>
+<li><strong>802.3x PAUSE:</strong> link-level "stop sending" frame — crude, pauses everything.</li>
+<li><strong>802.1Qbb PFC (Priority Flow Control):</strong> per-priority pause — lets you make one traffic class lossless (used for RDMA/RoCE) without stalling others.</li>
+<li><strong>ECN (Explicit Congestion Notification):</strong> mark, don't drop — the switch sets a bit so endpoints slow down before buffers overflow.</li>
+<li><strong>Head-of-line blocking / buffer sharing:</strong> why switches use VOQs (virtual output queues) and shared-buffer MMUs — a validation coverage axis.</li>
+</ul>
+</section>
+
+<!-- ============ 12 DATAFLOW ============ -->
+<section id="dataflow">
+<h2>12 · Switch data-flow path (ingress → egress)</h2>
+<p>This is the <strong>full-flow narrative</strong> — be able to trace one frame end-to-end and name what can go wrong at each hop (the validator's lens). Narrate it as an <em>actor trace</em>, not a list.</p>
+
+<pre><code>WIRE IN
+  │  differential signal on a lane
+  ▼
+[SerDes RX]  CDR locks to data, recovers clock, deserializes
+  │  ── CDC: recovered-lane-clk → PHY core clk ──
+  ▼
+[PHY / PCS]  block sync (64b/66b), descramble, FEC decode/correct,
+  │          lane deskew + reorder (multi-lane), align
+  ▼
+[MAC RX]   detect preamble/SFD, strip, check FCS (drop if bad),
+  │         enforce IFG, gather stats
+  │  ── CDC: MAC clk → pipeline clk (async FIFO) ──
+  ▼
+[PARSER]   walk headers: Eth → VLAN → IP → L4; extract keys
+  │         (Dst MAC, VLAN, Dst IP, 5-tuple)
+  ▼
+[INGRESS PIPELINE]
+  │  • L2 lookup: Dst MAC + VLAN → exact-match hash table → egress port(s)
+  │  • L3 lookup: Dst IP → LPM in TCAM → next-hop, decrement TTL, rewrite MACs
+  │  • ACL: 5-tuple → TCAM → permit/deny/redirect/meter
+  │  • assign Traffic Class / queue, metering, learn Src MAC
+  ▼
+[MMU / PACKET BUFFER]  store payload in shared buffer; enqueue a
+  │   descriptor into the destination port's queue (VOQ);
+  │   admission control / WRED / ECN marking on congestion
+  ▼
+[SCHEDULER]  pick next packet per port by QoS (strict prio / DWRR),
+  │   honor PFC pause per priority
+  ▼
+[EGRESS PIPELINE]  egress ACL, header edit (VLAN push/pop, MAC rewrite,
+  │   TTL), final rewrites
+  │  ── CDC: pipeline clk → egress MAC clk ──
+  ▼
+[MAC TX]   add preamble/SFD, recompute FCS, enforce IFG
+  │  ── CDC: MAC clk → SerDes lane clk ──
+  ▼
+[PHY / PCS]  scramble, FEC encode, 64b/66b, stripe across lanes
+  ▼
+[SerDes TX]  serialize, drive differential lane
+  │
+  ▼  WIRE OUT</code></pre>
+
+<h3>12.1 The crossings hidden in that path (the CDC map)</h3>
+<p>Every <code>── CDC ──</code> above is a validation target. A frame crosses <strong>4+ clock domains</strong> one way: lane → PHY → MAC → pipeline, then back out. Multi-bit data crossings use <strong>async FIFOs</strong> (§8); control/status (link-up, pause, credit) use <strong>2-FF synchronizers</strong> (§7). This is exactly why Broadcom asked for CDC depth — the datapath <em>is</em> a chain of clock-domain crossings.</p>
+
+<h3>12.2 Where it breaks — full-flow failure map</h3>
+<table>
+<tr><th>Hop</th><th>Failure</th><th>How you catch it pre-si</th></tr>
+<tr><td>SerDes/CDR</td><td>No lock → no link; lane errors</td><td>LTSSM-equivalent link-state CSR; bit-error injection in sim</td></tr>
+<tr><td>PHY align/FEC</td><td>Lane deskew wrong → reordered/garbled blocks</td><td>FEC counters; directed multi-lane skew tests</td></tr>
+<tr><td>MAC↔pipeline FIFO</td><td>Overflow at line-rate / underflow → dropped or torn frames</td><td>Line-rate + min-frame stress; FIFO full/empty assertions; <strong>CDC metastability injection</strong></td></tr>
+<tr><td>Parser</td><td>Malformed/jumbo/VLAN-stacked header mis-parsed</td><td>Negative tests: bad EtherType, double VLAN, runt/oversize</td></tr>
+<tr><td>Lookup (hash/TCAM)</td><td>Hash collision, table-full, wrong LPM match</td><td>Table-fill + collision tests; golden-model scoreboard</td></tr>
+<tr><td>MMU/buffer</td><td>Buffer exhaustion, leak, wrong drop, descriptor corruption</td><td>All-ports congestion; buffer-accounting checkers</td></tr>
+<tr><td>Scheduler</td><td>QoS starvation, PFC deadlock</td><td>Mixed-priority traffic; PFC pause-storm tests</td></tr>
+<tr><td>Egress edit</td><td>Wrong VLAN/MAC/TTL rewrite, bad FCS regen</td><td>Header-edit coverage; FCS recompute check</td></tr>
+</table>
+<div class="callout good">
+<span class="lbl">The answer that lands</span>
+"A frame enters as a differential signal, the SerDes recovers the clock and deserializes, the PHY does FEC and lane-align, the MAC checks FCS and crosses into the packet pipeline through an async FIFO. The parser pulls the MAC/VLAN/IP keys, the pipeline does the L2/L3/ACL lookups and picks an egress queue, the MMU buffers it and the scheduler drains it by QoS, then it's edited, FCS-regenerated, and driven back out. As a validator I care most about the <strong>clock-domain crossings</strong> between those blocks and the <strong>boundary conditions</strong> — line-rate, min/max frame, table-full, congestion — because that's where the bugs hide."
+</div>
+</section>
+
+<!-- ============ 13 SWITCH ============ -->
+<section id="switch">
+<h2>13 · Switch silicon & pre-si validation</h2>
+
+<h3>13.1 Mental model of an Ethernet switch ASIC</h3>
+<pre><code>          ┌──────── SerDes lanes (recovered clk/lane) ────────┐
+Ingress → │ PHY → MAC → Parser → Lookup (L2/L3, TCAM) →        │
+          │ Packet Buffer / MMU → Queues/Scheduler → Egress    │ → SerDes
+          └────────────────────────────────────────────────────┘
+   Control: embedded CPU + mgmt bus (AXI/APB), tables, counters, PM
+   MANY clock domains: per-lane SerDes, MAC, core pipeline, mem, mgmt</code></pre>
+<ul>
+<li><strong>SerDes:</strong> serialize/deserialize high-speed lanes; clock-data recovery → each lane is its own clock domain → CDC into the MAC. Equalization (CTLE/DFE) for SI.</li>
+<li><strong>MAC/PHY:</strong> framing, CRC, MII-family interfaces.</li>
+<li><strong>Packet pipeline:</strong> parse headers → table lookups (exact-match hash + TCAM for LPM/ACL) → edit/rewrite → forward.</li>
+<li><strong>MMU / buffers / scheduler:</strong> shared packet memory, queueing, QoS, congestion (PFC/ECN).</li>
+</ul>
+
+<h3>13.2 Reusable pre-si test-plan scaffold</h3>
+<p>(Same scaffold that landed at Cerebras &amp; Amazon — generalize it for a switch block.)</p>
+<ol>
+<li><strong>Spec → features</strong> — enumerate what the block must do.</li>
+<li><strong>Modes / configs</strong> — speeds, widths, enable/disable, table sizes.</li>
+<li><strong>Stimulus + checks</strong> — directed + constrained-random packets; scoreboards.</li>
+<li><strong>Coverage axes</strong> — functional coverage, code coverage, packet types, CDC crossings exercised.</li>
+<li><strong>Negative / error injection</strong> — bad CRC, malformed headers, FIFO overflow/underflow, back-pressure.</li>
+<li><strong>Corner cases</strong> — line-rate, min/max packet size, all-ports congestion, clock-ratio extremes.</li>
+<li><strong>CDC / reset</strong> — metastability injection, reset-in-the-middle-of-traffic.</li>
+<li><strong>Pre-si vs post-si split</strong> — what sim/emulation covers vs what waits for silicon.</li>
+</ol>
+
+<h3>13.3 Pre-si environment vocabulary</h3>
+<ul>
+<li><strong>Simulation</strong> (VCS/Questa/Xcelium) + <strong>UVM</strong> testbench (driver/monitor/scoreboard/sequencer) — know the shape even if SV/UVM isn't your daily track.</li>
+<li><strong>Emulation</strong> (Zebu — <em>my actual Intel experience</em>) / Palladium for full-chip, real-traffic speed.</li>
+<li><strong>Formal</strong> for control/CDC/protocol properties.</li>
+<li><strong>Assertions (SVA)</strong>, functional coverage, regressions.</li>
+</ul>
+<div class="callout good">
+<span class="lbl">Position honestly</span>
+"My pre-si depth is on the <strong>C/bare-metal + emulation</strong> side (Zebu transactors, PM/CDC-adjacent handshakes), not SV/UVM authoring. I read testbench structure and own block-level validation, debug, and bug-to-root-cause." — owns the gap without overclaiming.
+</div>
+</section>
+
+<!-- ============ 14 INTEL BRIDGE ============ -->
+<section id="intel-bridge">
+<h2>14 · Intel pre-silicon work — framed for CDC/RTL</h2>
+<div class="card">
+<p><strong>The arc:</strong> Intel Bangalore (Jul 2021–Jun 2024), pre-silicon validation on <strong>Zebu FPGA emulation</strong>: C-state entry/exit flows, ADR flows, P-channel handshakes, PCIe Gen6 transactor work (C++/Perspec on Zebu/Simics), 15+ cross-IP bugs (clock gating, reset sequencing, PM handshakes) in bare-metal C, ~25% reduction in post-silicon escapes.</p>
+</div>
+
+<h3>14.1 Why this maps cleanly to switch pre-si + CDC</h3>
+<ul>
+<li><strong>P-channel / PM handshakes</strong> = request/acknowledge protocols across power & clock domains → this <em>is</em> handshake-style CDC. Frame it that way.</li>
+<li><strong>Clock-gating bugs</strong> = clock-domain enable/qualification issues → CDC-adjacent.</li>
+<li><strong>Reset-sequencing bugs</strong> = reset domain crossing (RDC) territory — exactly §10.</li>
+<li><strong>Cross-IP bugs</strong> = signals crossing block boundaries with independent clocks/resets.</li>
+<li><strong>Emulation depth</strong> = directly relevant to switch full-chip pre-si.</li>
+</ul>
+
+<h3>14.2 Bug story — STAR, &lt;90 sec, CDC-framed</h3>
+<div class="answer-line"><strong>Symptom:</strong> A PM handshake between two IPs intermittently hung on Zebu — entry to a low-power state would occasionally never complete.</div>
+<div class="answer-line"><strong>Hypothesis:</strong> A control/ack crossing two clock/power domains was dropping or mis-sampling near a domain transition.</div>
+<div class="answer-line"><strong>How I narrowed it:</strong> Reproduced on emulation, added trace on the request/ack pair, correlated the hang to a specific reset/clock-gating sequence at the domain boundary.</div>
+<div class="answer-line"><strong>Root cause:</strong> Ordering/handshake-stability issue at the crossing — request changing relative to the destination domain's qualification.</div>
+<div class="answer-line"><strong>Fix + lesson:</strong> Tightened the handshake/sequence; result fed ~25% fewer post-si escapes. Lesson: domain-crossing control needs stability + ordering guarantees, not just functional correctness.</div>
+
+<div class="callout warn">
+<span class="lbl">CV honesty guardrails (from AGENTS.md)</span>
+Intel = <strong>pre-silicon on Zebu emulation</strong>. Do <em>not</em> claim real DVFS voltage transitions, ASPM L1.2, or actual power measurement (no voltage rails/PHY on Zebu). L&T = post-si NVMe board bring-up (that's the HW/lab story). Microsoft = post-si AI-accelerator validation.
+</div>
+</section>
+
+<!-- ============ 15 PCIe ============ -->
+<section id="pcie">
+<h2>15 · PCIe understanding (core — ties to my Intel work)</h2>
+<div class="card">
+<p><strong>Why this is "core" for me:</strong> my Intel pre-si work included <strong>PCIe Gen6 transactor</strong> development (C++/Perspec on Zebu/Simics) plus the PM-handshake flows around the link. So PCIe is my strongest protocol story — know the layered model, link bring-up (LTSSM), enumeration/config, interrupts (MSI/MSI-X), and the power states cold, and frame the transactor work honestly (pre-si emulation, not real-PHY electricals).</p>
+</div>
+
+<h3>15.1 The layered model (know what each layer owns)</h3>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ Software / Config space  (BARs, capabilities, enumeration)│
+├─────────────────────────────────────────────────────────┤
+│ Transaction Layer (TLP) │ MRd/MWr/CplD, posted vs non-    │
+│                         │ posted, TC→VC, flow-control     │
+│                         │ credits, ordering rules         │
+├─────────────────────────────────────────────────────────┤
+│ Data Link Layer (DLLP)  │ ACK/NAK, retry buffer, LCRC,    │
+│                         │ sequence numbers, credit updates│
+├─────────────────────────────────────────────────────────┤
+│ Physical Layer          │ LTSSM, 8b/10b(≤Gen2)/128b130b,  │
+│                         │ SerDes lanes, equalization, FEC │
+│                         │ (Gen6 PAM4 + FLIT mode)         │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<ul>
+<li><strong>Transaction layer:</strong> packetizes reads/writes into TLPs. <em>Posted</em> (MWr — no completion) vs <em>non-posted</em> (MRd — expects CplD). Ordering rules + credit-based flow control live here.</li>
+<li><strong>Data-link layer:</strong> reliable delivery — every TLP gets a sequence number + LCRC; receiver ACKs/NAKs; a <strong>retry (replay) buffer</strong> re-sends on NAK or timeout.</li>
+<li><strong>Physical layer:</strong> the SerDes + the <strong>LTSSM</strong> link state machine; encoding (8b/10b→128b/130b→FLIT at Gen6), lane equalization. This is the part that's literally a CDC source — same SerDes story as a switch.</li>
+</ul>
+
+<h3>15.2 LTSSM — link training state machine (the bring-up answer)</h3>
+<pre><code>Detect → Polling → Configuration → L0 (active)
+                                     │
+              ┌──────────────────────┼─────────────────┐
+           Recovery               L0s / L1            L1.x / L2
+        (re-EQ, re-sync)      (low-power active)   (deeper sleep)</code></pre>
+<table>
+<tr><th>State</th><th>What happens</th></tr>
+<tr><td><strong>Detect</strong></td><td>Receiver-detection: is there a link partner on the lanes?</td></tr>
+<tr><td><strong>Polling</strong></td><td>Exchange TS1/TS2 ordered sets; bit-lock, symbol-lock, polarity.</td></tr>
+<tr><td><strong>Configuration</strong></td><td>Link/lane numbering, width negotiation, lane reversal/deskew.</td></tr>
+<tr><td><strong>L0</strong></td><td>Normal operation — TLPs flow.</td></tr>
+<tr><td><strong>Recovery</strong></td><td>Re-train / re-equalize after errors or speed change; re-enter L0.</td></tr>
+<tr><td><strong>L0s / L1 / L2</strong></td><td>Link power states (see 15.5).</td></tr>
+</table>
+<p><span class="pill">my anchor</span> "On Zebu I drove a Gen6 transactor through this LTSSM in emulation and validated the PM handshakes around L-state entry/exit — I know the state flow and the failure modes (training never reaches L0, drops to Recovery, width/speed mis-negotiation), framed as pre-si emulation not real-PHY electricals."</p>
+
+<h3>15.3 Enumeration &amp; config space (how the system finds a device)</h3>
+<ol>
+<li><strong>Topology is a tree:</strong> Root Complex → (Switches: up/down ports) → Endpoints. Each link is point-to-point.</li>
+<li><strong>Config space</strong>: each function has 4 KB (PCIe extended); first 256 B is PCI-compatible. Header has Vendor/Device ID, <strong>BARs</strong>, capability pointers.</li>
+<li><strong>Enumeration (BIOS/OS):</strong> depth-first walk of buses; read Vendor ID at each (Bus,Dev,Fn) — <code>0xFFFF</code> = no device. Assign bus numbers across bridges.</li>
+<li><strong>BAR sizing:</strong> write all-1s to a BAR, read back to learn the size/alignment, then assign a non-overlapping address window. Program MMIO/IO space.</li>
+<li><strong>Capabilities:</strong> walk the capability linked list — MSI/MSI-X, PCIe cap (link/slot), Power Management, AER, etc.</li>
+</ol>
+
+<h3>15.4 Interrupts — MSI / MSI-X (why no INTx on modern parts)</h3>
+<ul>
+<li><strong>MSI/MSI-X = a memory write</strong> to a special address with a data payload; it travels as a posted TLP in-band — no dedicated interrupt pin, no sideband.</li>
+<li><strong>MSI-X</strong> scales to many vectors (a table in device memory), each with its own address/data → per-queue interrupts (exactly what NICs/switches and NVMe use).</li>
+<li><strong>Validation angle:</strong> interrupt fires once per event, vector maps to the right handler, masking/pending bits behave, and ordering — the interrupt's posted write must not pass the data it signals (producer/consumer ordering).</li>
+</ul>
+
+<h3>15.5 Link power states &amp; the ordering rules (high-value detail)</h3>
+<table>
+<tr><th>State</th><th>Meaning</th></tr>
+<tr><td><strong>L0</strong></td><td>Fully active.</td></tr>
+<tr><td><strong>L0s</strong></td><td>Low-exit-latency idle on one direction; fast wake.</td></tr>
+<tr><td><strong>L1</strong></td><td>Deeper; link powered but quiescent. <strong>ASPM L1</strong> negotiates it; <strong>L1.1/L1.2</strong> add substates (CLKREQ-based) for more savings. <em>(My Zebu work touched the entry/exit handshake; I do NOT claim real L1.2 electricals.)</em></td></tr>
+<tr><td><strong>L2/L3</strong></td><td>Aux-powered / off — device essentially asleep; wake via WAKE#/PME.</td></tr>
+</table>
+<div class="callout">
+<span class="lbl">TLP ordering — the one rule to remember</span>
+<strong>Posted writes (MWr) push non-posted reads</strong> — a read completion can't arrive before a previously-issued write to the same path takes effect. This producer/consumer ordering is why a device writes data <em>then</em> writes the "done" flag/MSI, and the system sees the data first. Most data-corruption-under-stress bugs trace to an ordering or flow-control-credit violation here.
+</div>
+
+<h3>15.6 Where PCIe meets the switch role</h3>
+<ul>
+<li><strong>Same SerDes/CDC physics</strong> as the Ethernet pipeline — recovered clock per lane, elastic buffers, equalization, FEC at high gen → I already reason about this in §8/§12.</li>
+<li><strong>The control/management plane</strong> of a switch ASIC is often reached over PCIe (host configures tables/counters) — config space + BAR + MSI knowledge applies directly.</li>
+<li><strong>Reliable-delivery + retry-buffer</strong> thinking maps onto FIFO/backpressure verification (§13).</li>
+</ul>
+</section>
+
+<!-- ============ 16 CODING ============ -->
+<section id="coding">
+<h2>16 · Coding practice</h2>
+<div class="callout bad">
+<span class="lbl">Before you write a single line — say this</span>
+"The cases I'll handle are: <strong>empty input, single element, boundary/wrap, and overflow/width</strong>. My loop terminates when ___." <em>(This pre-amble is the exact gap Cerebras &amp; Amazon flagged — make it a reflex.)</em>
+</div>
+
+<h3>Tier A — bit-ops & hardware-adjacent C (most likely)</h3>
+
+<details>
+<summary>Q1 · Count set bits / check power of two</summary>
+<p class="q">Count 1-bits, and test if a number is a power of two.</p>
+<pre><code>int popcount(uint32_t x){
+    int c = 0;
+    while (x) { x &= (x - 1); c++; }   // clears lowest set bit each pass
+    return c;
+}
+int is_pow2(uint32_t x){
+    return x && !(x & (x - 1));        // exactly one set bit, x != 0
+}</code></pre>
+<p><span class="pill">edge cases</span> x==0 → popcount 0, is_pow2 false. Mention <code>__builtin_popcount</code> exists.</p>
+</details>
+
+<details>
+<summary>Q2 · Reverse the bits of a 32-bit word</summary>
+<pre><code>uint32_t revbits(uint32_t x){
+    uint32_t r = 0;
+    for (int i = 0; i < 32; i++){
+        r = (r << 1) | (x & 1);
+        x >>= 1;
+    }
+    return r;
+}</code></pre>
+<p><span class="pill">why hardware cares</span> endianness / bus-bit-ordering between blocks.</p>
+</details>
+
+<details>
+<summary>Q3 · Combine two 32-bit register reads into a 64-bit value (Qualcomm asked this)</summary>
+<pre><code>uint64_t make64(uint32_t hi, uint32_t lo){
+    return ((uint64_t)hi << 32) | (uint64_t)lo;
+}
+// TRAP: (hi << 32) on a 32-bit type is undefined — widen BEFORE shifting.</code></pre>
+<p><span class="pill">narrate</span> "Because the registers are 32-bit, I cast to 64-bit <em>before</em> the shift, and preserve hi/lo ordering."</p>
+</details>
+
+<details>
+<summary>Q4 · MMIO register read-modify-write with volatile</summary>
+<pre><code>#define REG(addr) (*(volatile uint32_t *)(addr))
+
+void set_field(uintptr_t addr, uint32_t mask, uint32_t val){
+    uint32_t r = REG(addr);          // read
+    r &= ~mask;                       // clear field
+    r |= (val & mask);                // set field
+    REG(addr) = r;                    // write back
+}</code></pre>
+<p><span class="pill">why volatile</span> stops the compiler caching/reordering the MMIO access. Mention memory barriers for ordering across devices.</p>
+</details>
+
+<details>
+<summary>Q5 · Generate cache-line-boundary-crossing write addresses (Qualcomm cacheline probe)</summary>
+<pre><code>// 64B lines; issue 16B writes that straddle the next line boundary
+void gen_overlap(uintptr_t base, uintptr_t end, int line, int wr){
+    for (uintptr_t a = base; a < end; a += line){
+        uintptr_t off = a + (line - wr/2);  // start near end of line
+        // write of size `wr` at `off` spills into next line
+        do_write(off, wr);
+    }
+}</code></pre>
+<p><span class="pill">intent</span> "I target boundary conditions, not random in-line writes."</p>
+</details>
+
+<h3>Tier B — digital-design-flavored</h3>
+
+<details>
+<summary>Q6 · Binary ↔ Gray code (CDC pointer core skill)</summary>
+<pre><code>uint32_t bin2gray(uint32_t b){ return b ^ (b >> 1); }
+
+uint32_t gray2bin(uint32_t g){
+    uint32_t b = g;
+    while (g >>= 1) b ^= g;   // XOR-prefix
+    return b;
+}</code></pre>
+<p><span class="pill">tie-in</span> "Gray code crosses clock domains safely because only one bit changes per step."</p>
+</details>
+
+<details>
+<summary>Q7 · Circular (ring) FIFO — full/empty, the async-FIFO logic in C</summary>
+<pre><code>typedef struct {
+    uint32_t buf[SIZE];     // SIZE a power of two
+    uint32_t wr, rd;        // free-running, use extra MSB for full/empty
+} fifo_t;
+
+int is_empty(fifo_t *f){ return f->wr == f->rd; }
+int is_full (fifo_t *f){ return (f->wr ^ f->rd) == SIZE; } // MSB differs, low bits equal
+
+int push(fifo_t *f, uint32_t v){
+    if (is_full(f)) return -1;
+    f->buf[f->wr & (SIZE-1)] = v;
+    f->wr++;
+    return 0;
+}
+int pop(fifo_t *f, uint32_t *v){
+    if (is_empty(f)) return -1;
+    *v = f->buf[f->rd & (SIZE-1)];
+    f->rd++;
+    return 0;
+}</code></pre>
+<p><span class="pill">edge cases</span> wrap-around, full vs empty disambiguation via the extra pointer bit. This <em>is</em> the async-FIFO concept (§8).</p>
+</details>
+
+<details>
+<summary>Q8 · Moving average via circular buffer (Cerebras — watch the wrap)</summary>
+<pre><code>typedef struct { int buf[N]; int idx, cnt; long sum; } mavg_t;
+
+double update(mavg_t *m, int x){
+    m->sum -= m->buf[m->idx];      // subtract oldest
+    m->buf[m->idx] = x;            // overwrite
+    m->sum += x;                   // add newest
+    m->idx = (m->idx + 1) % N;     // wrap
+    if (m->cnt < N) m->cnt++;
+    return (double)m->sum / m->cnt; // divide by count, not N, while filling
+}</code></pre>
+<p><span class="pill">bug I made</span> dividing by N before the window fills. Handle the fill phase.</p>
+</details>
+
+<details>
+<summary>Q9 · Digital root (Amazon — the loop-terminate bug)</summary>
+<pre><code>int digital_root(long n){
+    while (n >= 10){          // CORRECT — not (n % 10)!
+        long s = 0;
+        while (n){ s += n % 10; n /= 10; }
+        n = s;
+    }
+    return (int)n;
+}
+// 9875 -> 29 -> 11 -> 2.  while(n%10) wrongly exits on 20, 30, ...</code></pre>
+<p><span class="pill">lesson</span> verbalize the loop invariant: "continue while the number still has &gt;1 digit."</p>
+</details>
+
+<details>
+<summary>Q10 · FSM in C — simple sequence/edge detector</summary>
+<pre><code>// Detect a rising edge on a sampled async input after 2-FF sync
+typedef enum { LOW, HIGH } st_t;
+int rising_edge(st_t *s, int sync_in){
+    int edge = (*s == LOW && sync_in == 1);
+    *s = sync_in ? HIGH : LOW;
+    return edge;     // 1 exactly on the 0->1 transition
+}</code></pre>
+<p><span class="pill">tie-in</span> this is the edge-detect after a pulse synchronizer (§7.3): <code>edge = prev_low & now_high</code>.</p>
+</details>
+
+<h3>Tier C — scripting (keep both reflexes warm)</h3>
+<details>
+<summary>Q11 · Parse a log / grep-clone (Cerebras asked grep in Python)</summary>
+<pre><code>import re, sys
+def grep(pattern, path, ignore_case=False):
+    flags = re.IGNORECASE if ignore_case else 0
+    rx = re.compile(pattern, flags)
+    with open(path) as f:
+        for n, line in enumerate(f, 1):
+            if rx.search(line):
+                print(f"{n}: {line.rstrip()}")</code></pre>
+<p><span class="pill">edge cases</span> empty file, no match, invalid regex (wrap in try), large file → stream line-by-line (already do).</p>
+</details>
+
+<details>
+<summary>Q12 · Count CDC crossings from an RTL netlist-ish report (domain reasoning)</summary>
+<pre><code># Given lines "signal,src_clk,dst_clk", count unsafe crossings (src != dst)
+from collections import Counter
+def count_crossings(path):
+    c = Counter()
+    with open(path) as f:
+        for line in f:
+            sig, src, dst = line.strip().split(',')
+            if src != dst:
+                c[(src, dst)] += 1
+    return c</code></pre>
+<p><span class="pill">talking point</span> "A real CDC tool also checks each crossing has a synchronizer and flags multi-bit ones."</p>
+</details>
+
+<h3>Tier D — C array problems (moderate)</h3>
+<div class="callout bad">
+<span class="lbl">Reflex before coding</span>
+State edge cases (empty, single, all-same, negatives), the loop invariant, and the termination condition <em>out loud first</em> — the exact gap Cerebras &amp; Amazon flagged.
+</div>
+
+<details>
+<summary>Q13 · Reverse an array in place (two pointers)</summary>
+<pre><code>void reverse(int *a, int n){
+    int i = 0, j = n - 1;
+    while (i &lt; j) { int t = a[i]; a[i] = a[j]; a[j] = t; i++; j--; }
+}</code></pre>
+<p><span class="pill">edge</span> n==0/1 → loop body never runs (correct). Terminates when <code>i &gt;= j</code>.</p>
+</details>
+
+<details>
+<summary>Q14 · Find the missing number in 0..n (XOR trick)</summary>
+<pre><code>int missing(int *a, int n){      // a has n items from 0..n, one missing
+    int x = n;                    // start with the top value
+    for (int i = 0; i &lt; n; i++) x ^= i ^ a[i];
+    return x;                     // pairs cancel, missing survives
+}</code></pre>
+<p><span class="pill">why XOR</span> a^a=0, so every present value cancels its index; O(n) time, O(1) space, no overflow risk vs the sum method.</p>
+</details>
+
+<details>
+<summary>Q15 · Move all zeros to the end, keep order (in place)</summary>
+<pre><code>void move_zeros(int *a, int n){
+    int w = 0;                        // write index for non-zeros
+    for (int r = 0; r &lt; n; r++)
+        if (a[r] != 0) a[w++] = a[r];
+    while (w &lt; n) a[w++] = 0;          // fill the rest with zeros
+}</code></pre>
+<p><span class="pill">edge</span> all zeros / no zeros both fall out correctly. Stable partition pattern.</p>
+</details>
+
+<details>
+<summary>Q16 · Two-sum on a sorted array (two pointers, O(n))</summary>
+<pre><code>int two_sum_sorted(int *a, int n, int target, int *i_out, int *j_out){
+    int i = 0, j = n - 1;
+    while (i &lt; j) {
+        int s = a[i] + a[j];
+        if (s == target) { *i_out = i; *j_out = j; return 1; }
+        if (s &lt; target) i++; else j--;
+    }
+    return 0;                          // no pair
+}</code></pre>
+<p><span class="pill">narrate</span> "Sorted lets me converge from both ends; if unsorted I'd use a hash set in one pass." Watch overflow → widen if values large.</p>
+</details>
+
+<details>
+<summary>Q17 · Max subarray sum (Kadane) — classic moderate</summary>
+<pre><code>long max_subarray(int *a, int n){
+    long best = a[0], cur = a[0];      // assumes n &gt;= 1
+    for (int i = 1; i &lt; n; i++){
+        cur = (a[i] &gt; cur + a[i]) ? a[i] : cur + a[i];
+        if (cur &gt; best) best = cur;
+    }
+    return best;
+}</code></pre>
+<p><span class="pill">edge</span> all negatives → returns the largest (least-negative) element, not 0. State that assumption.</p>
+</details>
+
+<details>
+<summary>Q18 · In-place dedup of a sorted array</summary>
+<pre><code>int dedup_sorted(int *a, int n){
+    if (n == 0) return 0;
+    int w = 1;
+    for (int r = 1; r &lt; n; r++)
+        if (a[r] != a[w-1]) a[w++] = a[r];
+    return w;                          // new length
+}</code></pre>
+<p><span class="pill">edge</span> empty handled first; single element returns 1. Returns the logical length, array tail is stale (state that).</p>
+</details>
+
+<details>
+<summary>Q19 · Rotate an array left by k (reversal trick, O(1) space)</summary>
+<pre><code>// reverse[0,k), reverse[k,n), reverse whole → rotated left by k
+void rev(int*a,int i,int j){ while(i&lt;j){int t=a[i];a[i]=a[j];a[j]=t;i++;j--;} }
+void rotate_left(int *a, int n, int k){
+    if (n == 0) return;
+    k %= n;                            // guard k &gt; n  (the easy bug)
+    rev(a, 0, k-1); rev(a, k, n-1); rev(a, 0, n-1);
+}</code></pre>
+<p><span class="pill">bug to avoid</span> forgetting <code>k %= n</code> → out-of-bounds when k≥n. Mention it before coding.</p>
+</details>
+</section>
+
+<!-- ============ DEEP DIVES (full-flow) ============ -->
+<section id="deep-cdc">
+<h2>D1 · CDC — the full decision flow (not a short description)</h2>
+<p>The gap with high-level notes is they tell you <em>what</em> a synchronizer is but not <em>how an engineer decides which one to use and how a tool proves it</em>. Here is the complete flow, the way you'd reason on the job.</p>
+
+<h3>D1.1 Decision tree — "I have a signal crossing a clock boundary"</h3>
+<pre><code>START: signal X generated in clk_A, sampled in clk_B
+  │
+  ├─ Is X a single bit?
+  │     ├─ YES → Is it a level (stays set) or a pulse (1 cycle)?
+  │     │         ├─ LEVEL  → 2-FF synchronizer (3-FF if clk_B very fast)
+  │     │         └─ PULSE  → fast→slow? toggle-synchronizer + edge-detect
+  │     │                     slow→fast? 2-FF may be ok if pulse ≥ 1 dst cycle
+  │     └─ NO (multi-bit) ↓
+  │
+  ├─ Is X a data BUS that changes every cycle (a stream)?
+  │     └─ YES → ASYNC FIFO (gray-coded pointers)  [§8]
+  │
+  ├─ Is X a multi-bit value that changes occasionally (config/status)?
+  │     ├─ Can the source hold it stable until ack? → REQ/ACK HANDSHAKE
+  │     │     (sync the req with 2-FF, hold data stable, sync ack back)
+  │     └─ Is it a counter/pointer only? → GRAY-CODE it, then 2-FF
+  │
+  └─ Are there MULTIPLE related signals that must stay aligned?
+        └─ YES → cross them as ONE unit (FIFO/handshake), never independently
+                 (independent crossing = RECONVERGENCE bug)</code></pre>
+
+<h3>D1.2 The handshake crossing in full (the one people hand-wave)</h3>
+<pre><code>Source domain (clk_A)            Destination domain (clk_B)
+─────────────────────            ──────────────────────────
+1. drive DATA bus (stable)
+2. assert REQ           ───2FF──► 3. REQ_sync seen
+                                  4. capture DATA (now stable, safe)
+                                  5. assert ACK
+6. ACK_sync seen   ◄───2FF─────
+7. deassert REQ, may change DATA
+                                  8. deassert ACK
+</code></pre>
+<ul>
+<li><strong>Why DATA is safe without synchronizing each bit:</strong> it is held stable by the source until ACK returns, so when the destination captures it (step 4) it is not mid-transition. Only the 1-bit REQ/ACK need synchronizers.</li>
+<li><strong>Cost:</strong> a full round-trip of synchronizer latency per transfer → low throughput. That's why streams use FIFOs instead.</li>
+<li><strong>The bug if you skip "hold stable":</strong> source changes DATA before ACK → destination latches torn/partial data. This is the <em>data-hold</em> CDC bug.</li>
+</ul>
+
+<h3>D1.3 How a CDC tool actually proves it (so you can speak to verification)</h3>
+<ol>
+<li><strong>Structural pass (no simulation):</strong> the tool builds the clock-domain graph from the RTL + a <em>clock constraint file</em>, finds every signal where launch-clock ≠ capture-clock, and checks each has a recognized synchronizer structure. Output: list of <em>unsynchronized</em> or <em>unsafe</em> crossings. This is the first thing run on new RTL.</li>
+<li><strong>Protocol/structural checks:</strong> multi-bit bus through parallel FFs → flagged as data-incoherency risk; combinational logic before a synchronizer → glitch risk; two synced copies of one source recombining → reconvergence.</li>
+<li><strong>Metastability injection (simulation):</strong> the tool/model randomly delays or inverts the first synchronizer flop's output by a cycle to <em>emulate</em> real metastable resolution, then runs functional tests. If downstream logic mis-behaves, the crossing isn't robust to metastability even though it "passed structurally."</li>
+<li><strong>Assertions:</strong> SVA properties — "REQ must remain high until ACK," "DATA stable while REQ asserted," "every req eventually gets an ack" — catch protocol violations dynamically.</li>
+<li><strong>Formal:</strong> proves the handshake FSM can't deadlock for <em>any</em> clock ratio.</li>
+</ol>
+<div class="callout good">
+<span class="lbl">Full-flow answer (90 sec)</span>
+"When I hit a crossing I first ask: one bit or many? A single level bit gets a 2-FF synchronizer; a pulse gets a toggle-and-edge-detect so it isn't missed. A continuous data bus crosses through an async FIFO with gray-coded pointers, because gray code guarantees only one pointer bit changes per step. An occasional multi-bit value crosses with a req/ack handshake where the source holds the data stable until the ack returns, so only the 1-bit req and ack need synchronizing. On the verification side, a structural CDC tool finds every crossing and checks it has a synchronizer, metastability injection in simulation models the real half-resolved value to prove downstream logic is robust, and SVA plus formal prove the handshake can't deadlock or tear data. The cardinal rule is multi-bit signals cross as a unit — never through independent synchronizers — or you get data incoherency."
+</div>
+</section>
+
+<section id="deep-timing">
+<h2>D2 · Timing closure — the full flow behind setup/hold</h2>
+<p>High-level notes give you the two inequalities. Here's the <em>full chain</em> from a path to a fix, so a follow-up "and then what?" doesn't run out of road.</p>
+
+<h3>D2.1 The complete path budget</h3>
+<pre><code>     launch FF                combinational logic              capture FF
+ clk→[FF]──Q──►[ logic: gates + wires, delay t_comb ]──►D──[FF]
+        │                                                      │
+   clk arrives                                            clk arrives
+   at T=0+t_skew_launch                                   at T=Tclk+t_skew_capture
+
+SETUP (can the data arrive in time for the NEXT edge?):
+   t_cq + t_comb(max) + t_setup  ≤  T_clk + (t_skew_capture − t_skew_launch) − t_jitter
+   slack_setup = RHS − LHS    (must be ≥ 0)
+
+HOLD (does new data NOT corrupt the SAME edge's capture?):
+   t_cq + t_comb(min)  ≥  t_hold + (t_skew_capture − t_skew_launch)
+   slack_hold = LHS − RHS     (must be ≥ 0)</code></pre>
+
+<h3>D2.2 Why each term is there (the part that gets probed)</h3>
+<ul>
+<li><strong>t_cq (clock-to-Q):</strong> launch flop's own delay to put data on Q after its edge.</li>
+<li><strong>t_comb:</strong> the logic between flops. <em>Max</em> path drives setup; <em>min</em> (shortest) path drives hold. A single register pair has both a worst and best case path.</li>
+<li><strong>t_setup / t_hold:</strong> the capture flop's requirement window.</li>
+<li><strong>skew (capture − launch):</strong> if the capture clock arrives <em>later</em> (positive skew), it <em>helps</em> setup (more time) but <em>hurts</em> hold (the new data races in while the old edge is still effectively "open"). This is why fixing skew to help setup can <em>create</em> hold violations.</li>
+<li><strong>jitter:</strong> cycle-to-cycle clock edge uncertainty (PLL noise); eats setup margin, modeled as a guard band.</li>
+</ul>
+
+<h3>D2.3 The fix ladder (what you do when slack is negative)</h3>
+<table>
+<tr><th>Violation</th><th>Fix, in order tried</th></tr>
+<tr><td><strong>Setup (negative)</strong></td><td>1) shorten logic / restructure 2) <strong>pipeline</strong> (add a register stage) 3) upsize/buffer slow gates 4) better placement (shorter wires) 5) useful-skew (delay capture clock) 6) last resort: lower frequency</td></tr>
+<tr><td><strong>Hold (negative)</strong></td><td>1) add delay buffers on the short data path 2) fix clock skew/balance the tree 3) downsize over-fast gates. <strong>Never</strong> change frequency — period isn't in the hold equation.</td></tr>
+</table>
+
+<h3>D2.4 Why this matters for a switch ASIC validator</h3>
+<p>You won't close timing (that's PD/STA), but you must <strong>recognize timing-rooted symptoms</strong>: a block that works in slow simulation but fails at-speed on emulation/silicon, intermittent data corruption that tracks temperature/voltage (PVT corner), or a CDC path that "passes" structurally but tears data under metastability. Being able to say "that smells like a hold/skew issue at the domain boundary, let's check the synchronizer and the constraint" is the credible-validator move.</p>
+</section>
+
+</main>
+</div>
+
+<footer>
+Broadcom Switch Pre-Si Validation prep · generated 18 Jun 2026 · screening 22 Jun 2026 ·
+companion to <a href="INTERVIEW_LOG.md">INTERVIEW_LOG.md</a> and <a href="CAREER_DECISION_MATRIX.md">CAREER_DECISION_MATRIX.md</a>.
+Self-contained — no external assets.
+</footer>
+
+</body>
+</html>
