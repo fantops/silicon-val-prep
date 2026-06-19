@@ -14,8 +14,8 @@
 | MSFT (current) | Baseline | Retention pitch rejected 22 May (no TC/team/scope change) |
 | Qualcomm CPU Post-Silicon | Active evaluation | 2 rounds done 2 Jun 2026; results pending |
 | AMD CPU Post-Silicon / Core PnP | Active evaluation | R2 done 5 Jun 2026; role clarified as fixed-frequency CPU core performance + expanding power scope |
-| Nvidia · role TBD | Future warm contact | Ranjith contact retained; not a current-cycle decision input because loop timing is unlikely before Intel join |
-| Broadcom · Switch Pre-Si Validation | Referral in — prep stage | Friend referral 18 Jun; applied 1 role, referred for switch pre-si val. No round yet. Prep ask: electronics + digital design + CDC + Intel work. Not a July decision input unless loop opens fast with strong written scope |
+| Nvidia · Verification Engineer | Rejected this cycle · future warm contact | Screening 11 Jun (“not ready yet”) = ❌ reject for this cycle's Verification Engineer seat; Ranjith contact retained, door open to reconnect next cycle. Not a current-cycle decision input |
+| Broadcom · Switch Pre-Si Validation | Referral in — first round scheduled | Friend referral 18 Jun; **first screening round scheduled 22 Jun 2026**. Prep ask: electronics + digital design + CDC + Intel work. Not a July decision input unless loop opens fast with strong written scope |
 
 ### 1A. June 2026 compensation signal
 
@@ -26,7 +26,7 @@
 | **MSFT stock rebound** | Stock recovery can improve RSU value | Helps net worth, but it does not fix low role satisfaction, scope, or annual cash growth |
 | **Intel assumptions** | 12% hikes + 20% G8 promo are upside assumptions | Keep ₹413 L as upside case; use a lower planning band for decision sanity |
 
-> Closed / stalled loops (Amazon · Qualcomm CPU Core Pre-Si · Qualcomm PnP/Thermal · Intel Ireland NPU · Renesas · Cerebras · Arm · Intel P&P Apr) tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). Qualcomm CPU Post-Silicon and AMD CPU Post-Silicon are the only live offer-evaluation gates; Nvidia is kept as a future warm contact, not as current leverage.
+> Closed / stalled loops (Amazon · Qualcomm CPU Core Pre-Si · Qualcomm PnP/Thermal · Intel Ireland NPU · Renesas · Cerebras · Arm · Intel P&P Apr) tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). Qualcomm CPU Post-Silicon and AMD CPU Post-Silicon are the only live offer-evaluation gates; Nvidia was rejected this cycle (Verification Engineer screening, 11 Jun) but the warm contact is kept for a future cycle, not as current leverage.
 
 ---
 
@@ -120,9 +120,9 @@ This ranking is **not** based on interview excitement. It is based on written ce
 
 **AMD CPU post-silicon / core performance active gate:** R2 completed on **5 Jun 2026**. Treat as the highest-upside external gate, but do not emotionally price it in until written scope confirms CPU core performance ownership, not just broad validation execution.
 
-**Nvidia future contact:** Ranjith contact retained after 11 Jun screening. Keep the PythonSV / HW-debug prep gap in the study backlog, but exclude Nvidia from July 2026 decision modeling.
+**Nvidia future contact:** Verification Engineer screening on 11 Jun came back as ❌ **not ready / rejected for this cycle**; Ranjith contact retained for a future re-approach. Keep the PythonSV / HW-debug prep gap in the study backlog, but exclude Nvidia from July 2026 decision modeling.
 
-**Broadcom referral (prep stage):** Friend referral on 18 Jun for **switch pre-silicon validation**; separately applied to one Broadcom role. No round scheduled yet. Prep ask = electronics fundamentals + digital design + CDC + Intel pre-si work (study notes in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html)). Exclude from July 2026 modeling unless the loop opens quickly and produces written scope + TC that clears the displacement bar; otherwise treat as next-cycle optionality with a referral advantage.
+**Broadcom referral (first round scheduled):** Friend referral on 18 Jun for **switch pre-silicon validation**; **first screening round scheduled 22 Jun 2026** (separately applied Broadcom role was rejected). Prep ask = electronics fundamentals + digital design + CDC + Intel pre-si work (study notes in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html)). Exclude from July 2026 modeling unless the loop produces written scope + TC that clears the displacement bar; otherwise treat as next-cycle optionality with a referral advantage.
 
 **Intel remains the default anchor.** Amazon closed 28 May (R1 HW-depth gap confirmed). All other current-cycle loops are stalled / closed / future-only. **Intel join proceeds 27 Jul 2026 unless Qualcomm or AMD produces a clearly superior written offer with stronger scope.**
 

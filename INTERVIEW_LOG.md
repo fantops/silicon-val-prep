@@ -25,7 +25,7 @@ Round-by-round breakdown:
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer accepted 21 May · joining 27 Jul** |
 | Cerebras | 1 | R1 — ❌ not fit for role (closed 18 May) |
 | AMD · Core PnP Post-Si | 2 | R1 (14 May) + R2 (5 Jun) — 🟡 active/recent |
-| **Nvidia · role TBD** | 1 | 🔵 Technical screening done 11 Jun — future warm contact via Ranjith; not a current-cycle gate |
+| **Nvidia · Verification Engineer** | 1 | ❌ rejected this cycle (screening 11 Jun — not ready) · 🔵 warm contact via Ranjith retained, can reconnect next cycle |
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
 | **Broadcom · Switch Pre-Si Validation** | 0 | 🟢 **2 roles: direct app ❌ rejected · referral 🟢 screening scheduled 22 Jun** — applied 1 role directly (rejected), friend referred for a separate switch pre-si val role; prep ask = electronics + digital design + CDC + Intel work |
 | **Total** | **20 completed** | |
@@ -36,7 +36,7 @@ Loop status:
 |---|---|---|
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
 | 🟡 Active gate | **2** | Qualcomm CPU Post-Silicon — 2 rounds done 2 Jun, results pending · AMD Core PnP Post-Si — R2 done 5 Jun |
-| 🔵 Future warm contact / next-cycle option | **1** | Nvidia — Ranjith contact retained; revisit after boot-flow + PCIe-emulation gap closes, not for July decision |
+| 🔵 Future warm contact / next-cycle option | **1** | Nvidia (Verification Engineer) — ❌ rejected this cycle; Ranjith contact retained, reconnect next cycle after boot-flow + PCIe-emulation gap closes |
 | 🟢 Referral in — prep stage (no round yet) | **1** | Broadcom Switch Pre-Si Validation — friend referral 18 Jun; prep on electronics + digital design + CDC + Intel work before loop opens |
 | 🔴 Stalled — no reply (treat as closed) | **2** | QC CPU Core Pre-Si (16+ d) · QC PnP/Thermal (30+ d) |
 | ❌ Rejected / closed | **5** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
@@ -59,7 +59,7 @@ Loop status:
 | Qualcomm | 21 | 4 | 19% | 1 active (CPU Post-Silicon) + 2 stalled (CPU Core Pre-Si, PnP/Thermal) + 1 mismatch (Pre-Si Verification) |
 | AMD | 14 | 1 | 7% | 1 active/recent (Core PnP Post-Si R2 done 5 Jun) |
 | Arm | 10 | 1 | 10% | 1 mismatch (Verification) |
-| Nvidia | 7 | 1 | 14% | 1 technical screen; future warm contact / next-cycle option |
+| Nvidia | 7 | 1 | 14% | 1 technical screen (Verification Engineer) — ❌ rejected this cycle; warm contact retained for next cycle |
 | Amazon | 2 | 1 | 50% | 1 reject (Lab126 Echo full-Si) |
 | Broadcom | 2 | 0 | — | 1 reject (direct-applied role, pre-interview) + 🟢 1 referral loop opening (switch pre-si val, screening 22 Jun — not yet a completed loop) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
@@ -171,9 +171,9 @@ Loop status:
 - **Gap:** Benchmark/tooling vocabulary is soft: Geekbench / perfbench style workloads, fixed-frequency normalization, IPC / CPI / stall breakdown, perf counters, TDP vs sustained power, and how to separate core pipeline bottleneck from memory/interconnect/firmware effects.
 - **Suggestion:** Add a focused CPU post-silicon perf drill: fixed frequency setup → benchmark run → counter collection → IPC/CPI/stall analysis → compare against golden → isolate core pipeline vs memory/uncore/multi-IP. Tie this into [Day 15 power/perf counters](prep_plan/day15_thermal_power_perf_counters.md) and [Day 09 pipeline microarchitecture](prep_plan/day09_pipeline_microarch.md).
 
-### 11 Jun — Nvidia · screening / readiness discussion — 🔵 future warm contact / next-cycle option
+### 11 Jun — Nvidia · Verification Engineer · screening / readiness discussion — ❌ Rejected this cycle · 🔵 warm contact retained
 - **What happened:** Screening became a technical readiness probe. Main topics: **boot flow**, especially *who triggers startup code* after reset; **how a PCIe write actually happens** from software/store → MMIO/BAR → TLP → endpoint; whether prep covers **LTSSM**; and **what is not covered in emulation for PCIe**. I forgot / did not land the PCIe-emulation limitations clearly.
-- **Interviewer signal:** He said I am **not ready for the interview yet**. He asked me to let him know once ready and said we can have the **same discussion again**. This is not a hard reject, but for the current July decision timeline it should be treated as **future-cycle only**.
+- **Interviewer signal:** He said I am **not ready for the interview yet** — a **rejection for this cycle's Verification Engineer seat**. He asked me to let him know once ready and said we can have the **same discussion again**. So the door is open: treat as **future-cycle only** via the retained warm contact, not a hard permanent reject.
 - **Role/team signal:** They are building a team equivalent to **PythonSV**: heavy hardware debug, boot-flow knowledge, PCIe/system bring-up, and similar SoC-validation tooling/debug work. The role likely values hands-on debug fluency more than generic architecture recall.
 - **Learning:** The gap is not "do I know PCIe exists" — it is **system debug narration**: reset actor → ROM/firmware actor → host/RC actor → config/MMIO actor → LTSSM/tooling visibility → emulation-vs-silicon boundary. Need answer as an execution trace, not a definition.
 - **Suggestion:** Keep Ranjith as a warm future contact. Do **not** plan current-cycle decisions around Nvidia. For a later re-approach, drill four answer chains until 60-90 sec each: (1) who starts startup code after reset, (2) PCIe posted memory write / doorbell path, (3) LTSSM bring-up ladder + stuck-state debug, (4) what emulation covers vs cannot cover for PCIe. Map to [Day 11 CPU bring-up](prep_plan/day11_cpu_bringup_functional_val.md), [Day 18 PCIe LTSSM](prep_plan/day18_pcie_fundamentals_ltssm.md), [Day 21 PCIe bring-up](prep_plan/day21_pcie_bringup_functional_val.md), and [Day 24 final mock](prep_plan/day24_final_mock.md).
