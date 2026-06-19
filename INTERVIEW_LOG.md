@@ -1,6 +1,8 @@
 # Interview Log — Apr 2026 Cycle
 
 > One row per round. Keep it light: what happened, what I learned, status, next action. Detailed prep frameworks live in the [25-day plan](prep_plan/) (Day 24 = final mock loop / flashcard sweep).
+>
+> **Why this log exists:** so the *next* job search is referral-first and targeted — not the desperate apply-to-everything spray this cycle became while trying to leave Microsoft. Keep every loop, outcome, and role-shape here as reference for what to repeat and what to skip.
 
 **Intel BLR joining date:** **27 July 2026** (confirmed). **Cycle reopened 1 Jun 2026** for separate Qualcomm CPU post-silicon and AMD CPU post-silicon follow-up loops; evaluate only after written offer / level / scope are clear.
 
@@ -8,7 +10,7 @@
 
 ## 📈 Cycle scoreboard (as of 11 Jun 2026)
 
-**Total rounds: 20 completed** across **10 companies** / **15 distinct role-loops**.
+**Total rounds: 20 completed** across **10 companies** / **16 distinct role-loops**.
 
 Round-by-round breakdown:
 
@@ -29,7 +31,7 @@ Round-by-round breakdown:
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
 | **Broadcom · Switch Pre-Si Validation** | 0 | 🟢 **2 roles: direct app ❌ rejected · referral 🟢 screening scheduled 22 Jun** — applied 1 role directly (rejected), friend referred for a separate switch pre-si val role; prep ask = electronics + digital design + CDC + Intel work |
 | **Qualcomm · System Performance** | 0 | 🔵 **R1 + R2 scheduled 20 Jun** — new QC role; update with topics / coding / outcome after |
-| **Micron · HBM Customer Memory Validation** | 0 | ⬜ **2 roles; 1 interview scheduled — declined by me** (role off-track: HBM customer memory val, not target arc) |
+| **Micron · HBM Customer Systems Validation** | 0 | ⬜ **2 roles; interview scheduled 20 May — declined by me, not attended** (loop opened; role off-track: HBM customer memory val) |
 | **Total** | **20 completed** | |
 
 Loop status:
@@ -39,15 +41,14 @@ Loop status:
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
 | 🟡 Active gate | **2** | Qualcomm CPU Post-Silicon — 2 rounds done 2 Jun, results pending · AMD Core PnP Post-Si — R2 done 5 Jun |
 | 🔵 Future warm contact / next-cycle option | **1** | Nvidia (Verification Engineer) — ❌ rejected this cycle; Ranjith contact retained, reconnect next cycle after boot-flow + PCIe-emulation gap closes |
-| 🟢 Referral in — prep stage (no round yet) | **1** | Broadcom Switch Pre-Si Validation — friend referral 18 Jun; prep on electronics + digital design + CDC + Intel work before loop opens |
-| � Scheduled — upcoming round | **1** | Qualcomm System Performance — R1 + R2 on 20 Jun |
-| ⬜ Declined by me (role fit) | **1** | Micron HBM Customer Memory Validation — interview scheduled, opted out (off-track) |
+| 🔵 Scheduled — upcoming round | **2** | Qualcomm System Performance — R1 + R2 on 20 Jun · Broadcom Switch Pre-Si Validation — first round 22 Jun (referral 18 Jun) |
+| ⬜ Declined by me (role fit) | **1** | Micron HBM Customer Memory Validation — interview scheduled 20 May, opted out (off-track); counts as loop opened, not attended |
 | 🔴 Stalled — no reply (treat as closed) | **2** | QC CPU Core Pre-Si (16+ d) · QC PnP/Thermal (30+ d) |
 | ❌ Rejected / closed | **5** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
-| **Total loops** | **15** | |
+| **Total loops** | **16** | |
 
-**Conversion (loops, not rounds):** 1 / 13 decided loops landed = **7.7%** (Intel Bangalore, accepted). Two new loops added 18–19 Jun are not yet decided and excluded from the denominator: Qualcomm System Performance (R1+R2 scheduled 20 Jun) and Micron HBM Customer Memory Validation (declined by me pre-interview). **Current-cycle evaluation is only confirmed Intel plus open Qualcomm CPU Post-Silicon and AMD CPU post-silicon follow-up**; Nvidia is parked for a future cycle via warm contact.
+**Conversion (loops, not rounds):** 1 / 14 decided loops landed = **7.1%** (Intel Bangalore, accepted). Two loops are still pending and excluded from the denominator: Qualcomm System Performance (R1+R2 scheduled 20 Jun) and Broadcom Switch Pre-Si Validation (first round 22 Jun). **Current-cycle evaluation is only confirmed Intel plus open Qualcomm CPU Post-Silicon and AMD CPU post-silicon follow-up**;
 
 **Velocity:** 20 completed rounds over ~60 days (13 Apr → 11 Jun). Intel join proceeds 27 Jul unless Qualcomm or AMD produces a clearly superior written offer. Nvidia should not be treated as current-cycle leverage: even if re-requested after ~2 weeks, the interview loop is unlikely to complete in time for the July decision.
 
@@ -66,7 +67,7 @@ Loop status:
 | Nvidia | 7 | 1 | 14% | 1 technical screen (Verification Engineer) — ❌ rejected this cycle; warm contact retained for next cycle |
 | Amazon | 2 | 1 | 50% | 1 reject (Lab126 Echo full-Si) |
 | Broadcom | 2 | 0 | — | 1 reject (direct-applied role, pre-interview) + 🟢 1 referral loop opening (switch pre-si val, screening 22 Jun — not yet a completed loop) |
-| Micron | 2 | 0 | — | 2 roles; 1 interview scheduled — **declined by me** (HBM customer memory validation, off-track) |
+| Micron | 2 | 1 | 50% | 2 roles; interview scheduled 20 May — **declined by me, not attended** (HBM customer system validation, off-track) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
 | Apple | 4 | 0 | 0% | no response |
@@ -77,10 +78,10 @@ Loop status:
 | Graphcore | 1 | 0 | 0% | no response |
 | NXP | 1 | 0 | 0% | no response |
 | Marvell | 1 | 0 | 0% | no response |
-| **Total** | **91** | **13** | **14.3%** | **1 offer = 1.10% app→offer, 7.7% loop→offer** |
+| **Total** | **91** | **14** | **15.4%** | **1 offer = 1.10% app→offer, 7.1% loop→offer** |
 
 **Funnel signal:**
-- **8 of 16 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / 23% of total effort wasted on cold-apply portals where the no-referral conversion rate is ~0%.
+- **8 of 18 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / 23% of total effort wasted on cold-apply portals where the no-referral conversion rate is ~0%.
 - **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 9 loops — spray-and-pray with low per-app yield.
 - **Highest hit-rate shops** were the smaller/warm ones (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — the loops that opened easiest were where the app was targeted, not bulk.
 
@@ -153,6 +154,11 @@ Loop status:
 - **Status:** Advanced to R2 on 5 Jun — see 5 Jun entry.
 - **Suggestion:** Add **multi-SoC PnP design scaffold** to [Day 15](prep_plan/day15_thermal_power_perf_counters.md) (thermal envelope sharing) and [Day 12](prep_plan/day12_dvfs_pstates_pvt.md) (DVFS coordination across SoCs / shared vs independent rails). Add a one-liner answer to [Day 24 final mock](prep_plan/day24_final_mock.md) Sec 5 on "design an NPU+CPU+multi-SoC PnP tradeoff" so it's a reflex.
 
+### 20 May — Micron · HBM Customer Memory Validation (2 roles) — ⬜ Declined by me (role fit)
+- **What happened:** Two Micron roles in play; one reached **interview scheduled (20 May)**. I **chose not to attend** because the role was **HBM customer memory validation** — off my target track (CPU/SoC power-perf + pre-Si/post-Si system validation). Loop counts as opened (interview was granted) but I did not attend.
+- **Learning:** Filter HBM / memory-customer-validation shapes upstream — not aligned with the silicon system-val / PnP arc. Declining preserved prep bandwidth for the Qualcomm / AMD / Broadcom gates.
+- **Status:** ⬜ **Declined — loop opened, not attended.**
+
 ### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — ❌ Rejected 28 May (HW-depth gap)
 - **What happened:** Echo full silicon validation role. HW-bug-heavy — deep follow-ups on prior bug stories. Design probe 1: **"design a core C-state for a PC from scratch"** — entry/exit, residency, break-even, wake sources, demotion *why* (false-wake penalty, break-even violation) + *how* (governor weighting, HW-side promotion-block, LTR / peripheral blocker interaction). Design probe 2: **"create a test plan for an IP"** — walked the spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si scaffold (same shape that landed at Cerebras). Coding: **digital root** (`9875 → 29 → 11 → 2`).
 - **Coding bug:** outer loop was `while (sum % 10)` — wrong (exits on any multiple of 10, e.g. `20 → 2` exits early). Correct: `while (sum >= 10)`. Termination-condition slip, same edge-case-preamble gap Cerebras flagged.
@@ -183,23 +189,18 @@ Loop status:
 - **Learning:** The gap is not "do I know PCIe exists" — it is **system debug narration**: reset actor → ROM/firmware actor → host/RC actor → config/MMIO actor → LTSSM/tooling visibility → emulation-vs-silicon boundary. Need answer as an execution trace, not a definition.
 - **Suggestion:** Keep Ranjith as a warm future contact. Do **not** plan current-cycle decisions around Nvidia. For a later re-approach, drill four answer chains until 60-90 sec each: (1) who starts startup code after reset, (2) PCIe posted memory write / doorbell path, (3) LTSSM bring-up ladder + stuck-state debug, (4) what emulation covers vs cannot cover for PCIe. Map to [Day 11 CPU bring-up](prep_plan/day11_cpu_bringup_functional_val.md), [Day 18 PCIe LTSSM](prep_plan/day18_pcie_fundamentals_ltssm.md), [Day 21 PCIe bring-up](prep_plan/day21_pcie_bringup_functional_val.md), and [Day 24 final mock](prep_plan/day24_final_mock.md).
 
-### 18 Jun — Broadcom · Switch Pre-Si Validation — 🟢 Referral in, prep stage (no round yet)
+### 20 Jun — Qualcomm · System Performance (2 rounds) — 🔵 Scheduled
+- **What happened:** New Qualcomm role — **System Performance**. Two rounds scheduled for 20 Jun. *(Will update with exact topics / coding / outcome after the rounds.)*
+- **Status:** 🔵 **Upcoming** — R1 + R2 on 20 Jun. Update post-round.
+- **Suggestion:** Lean on PM-flow + perf-counter + system-val framing; keep the same hardware-adjacent C reflexes that came up in QC CPU Post-Si (cache-line boundary stress, register-width / data-bus mismatch, integer promotion). Tie to [Day 15 power/perf counters](prep_plan/day15_thermal_power_perf_counters.md) and [Day 09 pipeline microarch](prep_plan/day09_pipeline_microarch.md). Fill in specifics after the round.
+
+### 22 Jun — Broadcom · Switch Pre-Si Validation — 🔵 First round scheduled (referral)
 - **What happened:** Two separate Broadcom roles. (1) I **applied to one role directly — that one got rejected.** (2) Separately, a **friend referred me for a different role** — a **switch team pre-silicon validation** position. The referral is the live one. He asked me to **prepare on basics of electronics, digital design concepts, CDC (clock domain crossing) and similar concepts**, plus be ready to walk through my **Intel pre-silicon work**.
 - **Role signal:** Switch ASIC pre-si val (networking/Ethernet switch silicon). Expect emphasis on **RTL-adjacent fundamentals** — CMOS/logic basics, sequential design (setup/hold, metastability), **synchronizers + CDC + RDC**, FIFOs across clock domains, FSMs, reset architecture, low-power intent — framed for a **pre-Si verification/validation** seat, not just architecture recall. Intel Zebu pre-Si C-state / PM-handshake / cross-IP bug work is the strongest CV bridge.
 - **Learning:** This is the **EE-fundamentals + digital-design gap** that closed Intel P&P (Apr) and Intel Ireland NPU — now showing up as an *explicit prep ask*. Treat as the trigger to finally lock that gap. The switch-domain twist adds CDC depth (multi-clock SerDes/MAC/PHY + packet pipelines) on top of generic digital design.
 - **Status:** 🟢 Referral in. **First screening round scheduled 22 Jun 2026.** Prep window: 18–22 Jun. Standalone HTML study notes created (see [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html)) covering electronics + digital design + CDC + cross-interview gaps + coding practice.
 - **Referrer intel (Sparsh, 18 Jun) — his own interview shape (high-signal):** CDC in depth · async FIFO in depth · state machines · gate-type digital logic questions · **puzzles** · bit manipulation · **memory-subsystem verification** · **verifying a FIFO** · **DMA controller** · STA focused on **metastability, data incoherency, FIFO-pointer gray-code conversion** · **C array problems (moderate)** · scenario design: **devise a strategy to find a stuck-at fault on a memory-subsystem address line** (his team does heavy memory-subsystem verification) · scenario: **given Ethernet config/features, devise verification strategies** for different queueing methods and **how to verify a FIFO never overflows across all switches**. Process shape: **early rounds = basics, later rounds = your own work**. He worked mostly on **reset, boot, low-power flows** at Intel and got asked on those later — maps directly to my Intel Zebu PM/reset/clock-gating arc.
 - **Suggestion:** Work the dedicated HTML notes (electronics → digital design → CDC → metastability/synchronizers → switch-silicon pre-si val → Intel bridge). Rehearse a 60-90 sec answer for: *two-FF synchronizer + MTBF*, *why async FIFO + gray-code pointers*, *setup/hold + metastability*, *CDC bug classes (data loss, reconvergence, glitch)*, and *map my Intel cross-IP / PM-handshake bug to a CDC/RTL framing*. **Per referrer: add memory-subsystem verification (March/stuck-at, address-line stuck-at strategy), FIFO verification, DMA controller, gate-level logic puzzles, and C array problems; lead my own-work story with reset/boot/low-power flows for later rounds.**
-
-### 19 Jun — Micron · HBM Customer Memory Validation (2 roles) — ⬜ Declined by me (role fit)
-- **What happened:** Two Micron roles in play; one had an interview scheduled. I **chose not to attend** because the role was **HBM customer memory validation** — off my target track (CPU/SoC power-perf + pre-Si/post-Si system validation).
-- **Learning:** Filter HBM / memory-customer-validation shapes upstream — not aligned with the silicon system-val / PnP arc. Declining preserves prep bandwidth for the Qualcomm / AMD / Broadcom gates.
-- **Status:** ⬜ **Declined pre-interview.** No round attended.
-
-### 20 Jun — Qualcomm · System Performance (2 rounds) — 🔵 Scheduled
-- **What happened:** New Qualcomm role — **System Performance**. Two rounds scheduled for 20 Jun. *(Will update with exact topics / coding / outcome after the rounds.)*
-- **Status:** 🔵 **Upcoming** — R1 + R2 on 20 Jun. Update post-round.
-- **Suggestion:** Lean on PM-flow + perf-counter + system-val framing; keep the same hardware-adjacent C reflexes that came up in QC CPU Post-Si (cache-line boundary stress, register-width / data-bus mismatch, integer promotion). Tie to [Day 15 power/perf counters](prep_plan/day15_thermal_power_perf_counters.md) and [Day 09 pipeline microarch](prep_plan/day09_pipeline_microarch.md). Fill in specifics after the round.
 
 ---
 
