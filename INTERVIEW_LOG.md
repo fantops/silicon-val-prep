@@ -50,7 +50,7 @@ Loop status:
 
 **Conversion (loops, not rounds):** 1 / 14 decided loops landed = **7.1%** (Intel Bangalore, accepted). Two loops are still pending and excluded from the denominator: Qualcomm System Performance (R1+R2 scheduled 20 Jun) and Broadcom Switch Pre-Si Validation (first round 22 Jun). **Current-cycle evaluation is only confirmed Intel plus open Qualcomm CPU Post-Silicon and AMD CPU post-silicon follow-up**;
 
-**Velocity:** 20 completed rounds over ~60 days (13 Apr → 11 Jun). Intel join proceeds 27 Jul unless Qualcomm or AMD produces a clearly superior written offer. Nvidia should not be treated as current-cycle leverage: even if re-requested after ~2 weeks, the interview loop is unlikely to complete in time for the July decision.
+**Velocity:** 20 completed rounds over ~60 days (13 Apr → 11 Jun). Intel join proceeds 27 Jul unless Qualcomm or AMD produces a clearly superior written offer.
 
 ---
 
@@ -102,7 +102,7 @@ Loop status:
 - **What happened:** Same shape as Arm; not pursued.
 - **Learning:** Confirmed DV-pre-Si is out of arc.
 
-### 28 Apr — Qualcomm · CPU Core (R1) — 🟢 Cleared → 🔴 loop stalled
+### 28 Apr — Qualcomm · CPU Core (R1) — 🟢 Cleared → Advanced to R2
 - **What happened:** Pipeline stages, `a = b` data movement, MS NPU walkthrough. Coding solid.
 - **Learning:** High-level concept + concrete project narrative lands cleanly.
 - **Status:** Advanced to R2. Loop ultimately stalled after HM (12 May), no reply since.
