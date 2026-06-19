@@ -1,10 +1,34 @@
 # Interview Log — Apr 2026 Cycle
 
-> One row per round. Keep it light: what happened, what I learned, status, next action. Detailed prep frameworks live in the [25-day plan](prep_plan/) (Day 24 = final mock loop / flashcard sweep).
+> One row per round: what happened, what I learned, status, next action. Detailed prep frameworks live in the [25-day plan](prep_plan/) (Day 24 = final mock / flashcard sweep).
 >
-> **Why this log exists:** so the *next* job search is referral-first and targeted — not the desperate apply-to-everything spray this cycle became while trying to leave Microsoft. Keep every loop, outcome, and role-shape here as reference for what to repeat and what to skip.
+> **Why this log exists:** so the *next* search is referral-first and targeted — not the apply-to-everything spray this cycle became while leaving Microsoft. Keep every loop, outcome, and role-shape as reference for what to repeat and skip.
 
 **Intel BLR joining date:** **27 July 2026** (confirmed). **Cycle reopened 1 Jun 2026** for separate Qualcomm CPU post-silicon and AMD CPU post-silicon follow-up loops; evaluate only after written offer / level / scope are clear.
+
+---
+
+## 🧭 Current status (19 Jun 2026)
+
+**Search phase closed — this is now a selection phase.** Intel Bangalore IP Functional Validation (joining 27 Jul 2026) is the **accepted default**. No new applications unless a role clearly beats the displacement criteria.
+
+**Remaining active evaluations:** (1) AMD CPU Post-Silicon (R2 done 5 Jun) · (2) Qualcomm CPU Post-Silicon (2 rounds done 2 Jun) · (3) Broadcom Switch Pre-Si Validation (screening 22 Jun) · (4) Google TPU Silicon Validation (only if recruiter compresses timeline). **All else closed for this cycle, regardless of future recruiter responses.**
+
+### Interview Freeze Policy (effective 19 Jun 2026)
+
+No new interview loops after 22 Jun unless **ALL** hold: role advances the long-term silicon path · comp expected to meaningfully exceed Intel · team scope known before interviewing · timeline can conclude before 18 Jul.
+
+**Auto-decline:** generic perf engineering · customer support · OEM enablement · mobile app/system optimization · HBM customer validation · automotive validation · pure SV/UVM verification.
+
+**Reason:** highest-ROI activity before joining Intel is strengthening silicon fundamentals, not expanding the funnel — avoids the Apr–May pattern (recruiter call → nice title → 3 rounds → role not aligned).
+
+### Company tiering for next cycle
+
+- **Tier A — revisit aggressively:** Intel · Google · AMD · Nvidia · Broadcom (most aligned with silicon trajectory).
+- **Tier B — evaluate selectively:** Qualcomm CPU · Cerebras · Amazon Lab126 (good learning, not clearly superior to Intel).
+- **Tier C — avoid unless exceptional:** Renesas · Arm Verification · Qualcomm Verification · Qualcomm Thermal/PnP · Micron HBM Customer Validation (repeated role-shape mismatch).
+
+**Highest-ROI to 27 Jul:** (1) Broadcom prep · (2) AMD/QC follow-ups · (3) Google recruiter escalation · (4) Intel onboarding prep (PCIe, CXL, emulation, PM flows). No new loops after Broadcom unless recruiter immediately shows comp above Intel, stronger scope, and a decision timeline before 18 Jul.
 
 ---
 
@@ -29,9 +53,9 @@ Round-by-round breakdown:
 | AMD · Core PnP Post-Si | 2 | R1 (14 May) + R2 (5 Jun) — 🟡 active/recent |
 | **Nvidia · Verification Engineer** | 1 | ❌ rejected this cycle (screening 11 Jun — not ready) · 🔵 warm contact via Ranjith retained, can reconnect next cycle |
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
-| **Broadcom · Switch Pre-Si Validation** | 0 | 🟢 **2 roles: direct app ❌ rejected · referral 🟢 screening scheduled 22 Jun** — applied 1 role directly (rejected), friend referred for a separate switch pre-si val role; prep ask = electronics + digital design + CDC + Intel work |
-| **Qualcomm · System Performance** | 0 | 🔵 **R1 + R2 scheduled 20 Jun** — new QC role; update with topics / coding / outcome after |
-| **Micron · HBM Customer Systems Validation** | 0 | ⬜ **2 roles; interview scheduled 20 May — declined by me, not attended** (loop opened; role off-track: HBM customer memory val) |
+| **Broadcom · Switch Pre-Si Validation** | 0 | 🟢 2 roles: direct app ❌ rejected · referral 🟢 screening 22 Jun; prep ask = electronics + digital design + CDC + Intel work |
+| **Qualcomm · System Performance** | 0 | 🔵 R1 + R2 scheduled 20 Jun — new QC role; fill in after |
+| **Micron · HBM Customer Systems Validation** | 0 | ⬜ 2 roles; interview 20 May — declined by me, not attended (off-track: HBM customer memory val) |
 | **Total** | **20 completed** | |
 
 Loop status:
@@ -48,9 +72,9 @@ Loop status:
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **16** | |
 
-**Conversion (loops, not rounds):** 1 / 14 decided loops landed = **7.1%** (Intel Bangalore, accepted). Two loops are still pending and excluded from the denominator: Qualcomm System Performance (R1+R2 scheduled 20 Jun) and Broadcom Switch Pre-Si Validation (first round 22 Jun). **Current-cycle evaluation is only confirmed Intel plus open Qualcomm CPU Post-Silicon and AMD CPU post-silicon follow-up**;
+**Conversion (loops, not rounds):** 1 / 14 decided loops = **7.1%** (Intel Bangalore, accepted). Two loops pending and excluded: QC System Performance (20 Jun), Broadcom Switch Pre-Si (22 Jun).
 
-**Velocity:** 20 completed rounds over ~60 days (13 Apr → 11 Jun). Intel join proceeds 27 Jul unless Qualcomm or AMD produces a clearly superior written offer.
+**Velocity:** 20 rounds over ~60 days (13 Apr → 11 Jun). Intel join proceeds 27 Jul unless a written offer meeting all displacement criteria is received by 18 Jul.
 
 ---
 
@@ -81,9 +105,9 @@ Loop status:
 | **Total** | **91** | **14** | **15.4%** | **1 offer = 1.10% app→offer, 7.1% loop→offer** |
 
 **Funnel signal:**
-- **8 of 18 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / 23% of total effort wasted on cold-apply portals where the no-referral conversion rate is ~0%.
-- **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 9 loops — spray-and-pray with low per-app yield.
-- **Highest hit-rate shops** were the smaller/warm ones (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — the loops that opened easiest were where the app was targeted, not bulk.
+- **8 of 18 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / ~23% of effort wasted on cold-apply portals (~0% no-referral conversion).
+- **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 9 loops — low per-app yield.
+- **Highest hit-rate shops** were smaller/warm (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — loops opened where the app was targeted, not bulk.
 
 ---
 
@@ -201,11 +225,11 @@ Loop status:
 
 **Strong:** bug stories with measurable impact, cross-vendor NPU breadth, **design-from-scratch scaffolds** (test-plan, multi-SoC PnP, C-state), role-fit framing in HM rounds.
 
-**Still soft:** layer-3 depth under probe-then-push, live-C **terminate-condition + edge-case pre-amble** (Cerebras + Amazon both), EE fundamentals, **HW-exposure breadth** for board/lab-fluency roles (Amazon Echo signal), **boot-flow + PCIe execution-trace narration** for Nvidia/PythonSV-shape debug roles, **digital-design + CDC fundamentals** for RTL-adjacent pre-si seats (Broadcom switch ask, 18 Jun).
+**Still soft:** layer-3 depth under probe-then-push · live-C terminate-condition + edge-case pre-amble (Cerebras + Amazon) · EE fundamentals · HW-exposure breadth for board/lab roles (Amazon Echo) · boot-flow + PCIe execution-trace narration (Nvidia/PythonSV) · digital-design + CDC fundamentals for RTL-adjacent pre-si seats (Broadcom switch ask, 18 Jun).
 
 **Meta-skill:** probe-then-push — *what → why → how → connected*. Scaffolds survive the push; flat-fact recall doesn't. Every concept = scaffold to walk, not paragraph to recite.
 
-**Strategic principle:** Intel offer accepted, joining 27 Jul, remains the default anchor. Qualcomm CPU Post-Silicon and AMD CPU post-silicon are the only active written-offer gates. Nvidia is **future warm-contact only**, not a July decision input. Carry-forward gaps for tomorrow/future cycles: (1) design-from-scratch scaffolds (test-plan, multi-SoC PnP, C-state — lock as reflex), (2) C edge-case + loop-invariant pre-amble (Cerebras + Amazon both flagged), (3) HW-fluency framing (L&T board bring-up + Intel post-Si lab) when role reads HW-heavy, (4) EE fundamentals refresh — 2x-closed gap (Intel P&P Apr + Intel Ireland NPU), (5) CPU fixed-frequency perf / benchmark / counter-debug vocabulary for AMD-shape roles, (6) Nvidia/PythonSV-shape boot-flow + PCIe execution traces.
+**Carry-forward gaps:** (1) design-from-scratch scaffolds — lock as reflex · (2) C edge-case + loop-invariant pre-amble (Cerebras + Amazon) · (3) HW-fluency framing (L&T board + Intel post-Si lab) for HW-heavy roles · (4) EE fundamentals — 2x-closed gap (Intel P&P + Ireland NPU) · (5) CPU fixed-frequency perf / benchmark / counter-debug vocab (AMD-shape) · (6) boot-flow + PCIe execution traces (Nvidia/PythonSV).
 
 ---
 
@@ -220,9 +244,9 @@ Loop status:
 
 ## 📝 Retro / carry-forward
 
-- **Top gap closed:** design-from-scratch scaffolds — multi-SoC PnP (AMD) + test-plan-from-spec (Cerebras/Amazon) now landed in [Day 11](prep_plan/day11_cpu_bringup_functional_val.md), [Day 12](prep_plan/day12_dvfs_pstates_pvt.md), [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md), [Day 15](prep_plan/day15_thermal_power_perf_counters.md).
-- **Top gap still open:** EE-fundamentals refresh — 2x-closed (Intel P&P Apr + Intel Ireland NPU). Quick-refresh now consolidated in [Day 24 Sec 5](prep_plan/day24_final_mock.md) but needs live drilling, not just text.
-- **Best-fitting role:** Intel Bangalore IP Functional Validation — spec→vplan→UVM→coverage→CR-triage matches the CV one-for-one; ADR + C-state negative-path probes were directly answerable from prior Intel work.
-- **Companies to re-approach / evaluate:** Qualcomm CPU Post-Silicon is a separate active role with 2 rounds done on 2 Jun; AMD Core PnP / CPU Post-Si revived with R2 on 5 Jun and is worth evaluating carefully against Intel if it advances. Nvidia is a future warm-contact option through Ranjith; keep the relationship, but exclude it from current-cycle offer evaluation.
-- **Companies to deprioritise:** Renesas (automotive shape) · Arm Verification · Qualcomm Pre-Si Verification — known role-shape mismatches. **Cold-apply portals at FAANG (Apple, Meta, Google, Marvell, TI, NXP)** — 0/20 yield; referral-only next time.
-- **One thing I'd do differently:** Front-load the funnel with **referrals**, not portal applications. 20 cold apps at FAANG-tier returned zero loops; even 3-4 warm referrals via LinkedIn would likely have opened 1-2 loops at the same effort. And: filter JD-shape upstream (no automotive, no pure SV-UVM) to stop burning loops on known-mismatch roles — cost 3 of 13 loops this cycle.
+- **Top gap closed:** design-from-scratch scaffolds — multi-SoC PnP (AMD) + test-plan-from-spec (Cerebras/Amazon), landed in [Day 11](prep_plan/day11_cpu_bringup_functional_val.md), [Day 12](prep_plan/day12_dvfs_pstates_pvt.md), [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md), [Day 15](prep_plan/day15_thermal_power_perf_counters.md).
+- **Top gap open:** EE-fundamentals refresh — 2x-closed (Intel P&P Apr + Intel Ireland NPU); consolidated in [Day 24 Sec 5](prep_plan/day24_final_mock.md) but needs live drilling.
+- **Best-fitting role:** Intel Bangalore IFV — spec→vplan→UVM→coverage→CR-triage matches the CV 1:1; ADR + C-state negative-path probes answerable from prior Intel work.
+- **Re-approach / evaluate:** QC CPU Post-Si (2 rounds 2 Jun) + AMD Core PnP / CPU Post-Si (R2 5 Jun) — evaluate vs Intel if they advance. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
+- **Deprioritise:** Renesas (automotive) · Arm Verification · QC Pre-Si Verification (role-shape mismatch). Cold-apply FAANG portals (Apple, Meta, Google, Marvell, TI, NXP) — 0/20 yield; referral-only next time.
+- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops; 3-4 warm referrals likely open 1-2 at the same effort. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 13 loops this cycle.
