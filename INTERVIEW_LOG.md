@@ -63,12 +63,11 @@ Loop status:
 | Bucket | Count | Loops |
 |---|---|---|
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
-| 🟡 Active gate | **2** | Qualcomm CPU Post-Silicon — 2 rounds done 2 Jun, results pending · AMD Core PnP Post-Si — R2 done 5 Jun |
-| 🔵 Future warm contact / next-cycle option | **1** | Nvidia (Verification Engineer) — ❌ rejected this cycle; Ranjith contact retained, reconnect next cycle after boot-flow + PCIe-emulation gap closes |
-| 🔵 Scheduled — upcoming round | **2** | Qualcomm System Performance — R1 done 20 Jun (🔴 weak, fumbled), R2 pending · Broadcom Switch Pre-Si Validation — first round 22 Jun (referral 18 Jun) |
-| ⬜ Declined by me (role fit) | **1** | Micron HBM Customer Memory Validation — interview scheduled 20 May, opted out (off-track); counts as loop opened, not attended |
+| 🟡 Active gate | **3** | Qualcomm System Performance — R1 done 20 Jun (🔴 weak, fumbled), R2 pending · Qualcomm CPU Post-Silicon — 2 rounds done 2 Jun, results pending · AMD Core PnP Post-Si — R2 done 5 Jun |
+| 🔵 Scheduled — upcoming round | **1** | Broadcom Switch Pre-Si Validation — first round 22 Jun (referral 18 Jun) |
+| ⬜ Declined by me (role fit) | **1** | Micron HBM Customer System Validation — interview scheduled 20 May, opted out (off-track); counts as loop opened, not attended |
 | 🔴 Stalled — no reply (treat as closed) | **2** | QC CPU Core Pre-Si (16+ d) · QC PnP/Thermal (30+ d) |
-| ❌ Rejected / closed | **5** | Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
+| ❌ Rejected / closed | **6** | Nvidia (Verification Engineer) · Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **16** | |
 
@@ -199,12 +198,6 @@ Loop status:
 - **Learning:** Qualcomm is probing PM-flow ownership plus hardware-adjacent C reflexes: cache-line boundary stress, register-width/data-bus mismatch, and correct integer promotion. Need to narrate the intent of the test, not only write code.
 - **Suggestion:** Add cache-line-overlap write generator and 32-bit-register-to-64-bit-tick routine to [Day 00 C basics](prep_plan/day00_c_basics.md) / [Day 03 bits + MMIO](prep_plan/day03_bits_mmio_volatile_polling.md). Practice saying: *"because the bus/registers are 32-bit, I widen before shifting and preserve low/high ordering."*
 
-### 20 Jun — Qualcomm · System Performance (R1) — 🔴 Weak round, fumbled across the board
-- **What happened:** Largely an experience-walkthrough round where the interviewer tried to understand *what I actually did and how*, with depth probes on each: (1) **how we find perf regressions at Microsoft** (NPU), (2) **what we did for the PCIe transactor at Intel and how I debugged it**, (3) **what I did at L&T and how I used JTAG**, (4) **the different power states — P0, P1, P2**, and (5) a **"draw the architecture diagram for a CPU"** whiteboard ask.
-- **Self-assessment:** All of it went badly — could not answer confidently, fumbled a lot, gave shallow / disorganised answers on areas that are literally my own résumé (MS perf flow, Intel PCIe transactor, L&T JTAG). The CPU-architecture draw and the P-state ladder (P0/P1/P2) also came out muddled.
-- **Learning:** The failure mode here is **not depth — it's owned-narrative fluency**. These were all *my* projects, and I still couldn't trace them cleanly. This is the same probe-then-push gap (QC CPU Core R2) re-appearing on familiar ground: I know the facts but can't walk the chain on demand. Two résumé-anchor stories (MS perf regression, Intel PCIe transactor) and one HW-exposure story (L&T JTAG) must become reflex *traces*, not recalled definitions. P-states (P0 = max V/f, descending) must be separable from C-states / PCIe L-states cold. A CPU block diagram must be drawable from muscle memory.
-- **Suggestion:** Rebuilt all five answers cleanly in the Broadcom notes — see new **§0c "QC 20 Jun fumble — answers rebuilt"** in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html): (1) MS perf-regression detection flow, (2) Intel PCIe-transactor what/why + STAR debug story, (3) L&T JTAG what/how, (4) P0/P1/P2 P-state ladder vs C/L/D states, (5) CPU architecture block diagram drawn from scratch. Rehearse each out loud as a *trace*, not a fact, before the 22 Jun Broadcom screen and the QC R2.
-
 ### 05 Jun — AMD · CPU Post-Silicon / Core Power & Performance (R2) — 🟡 active/recent
 - **What happened:** Discussion stayed close to normal work and role fit. Main technical area was **PM flows, power, and performance**, with questions around whether I know benchmark/perf tooling such as Geekbench / perfbench, TDP framing, and related performance characterization. I said I did not know those tools deeply.
 - **Role clarification from interviewer:** This team is currently doing **CPU core post-silicon on fixed-frequency performance**. They are expanding the team to add power on top of that. When issues appear, debug can go down to **core pipeline-level identification** and can require **multi-IP debug** to understand why performance or power behavior fails.
@@ -218,6 +211,12 @@ Loop status:
 - **Role/team signal:** They are building a team equivalent to **PythonSV**: heavy hardware debug, boot-flow knowledge, PCIe/system bring-up, and similar SoC-validation tooling/debug work. The role likely values hands-on debug fluency more than generic architecture recall.
 - **Learning:** The gap is not "do I know PCIe exists" — it is **system debug narration**: reset actor → ROM/firmware actor → host/RC actor → config/MMIO actor → LTSSM/tooling visibility → emulation-vs-silicon boundary. Need answer as an execution trace, not a definition.
 - **Suggestion:** Keep Ranjith as a warm future contact. Do **not** plan current-cycle decisions around Nvidia. For a later re-approach, drill four answer chains until 60-90 sec each: (1) who starts startup code after reset, (2) PCIe posted memory write / doorbell path, (3) LTSSM bring-up ladder + stuck-state debug, (4) what emulation covers vs cannot cover for PCIe. Map to [Day 11 CPU bring-up](prep_plan/day11_cpu_bringup_functional_val.md), [Day 18 PCIe LTSSM](prep_plan/day18_pcie_fundamentals_ltssm.md), [Day 21 PCIe bring-up](prep_plan/day21_pcie_bringup_functional_val.md), and [Day 24 final mock](prep_plan/day24_final_mock.md).
+
+### 20 Jun — Qualcomm · System Performance (R1) — 🔴 Weak round, fumbled across the board
+- **What happened:** Largely an experience-walkthrough round where the interviewer tried to understand *what I actually did and how*, with depth probes on each: (1) **how we find perf regressions at Microsoft** (NPU), (2) **what we did for the PCIe transactor at Intel and how I debugged it**, (3) **what I did at L&T and how I used JTAG**, (4) **the different power states — P0, P1, P2**, and (5) a **"draw the architecture diagram for a CPU"** whiteboard ask.
+- **Self-assessment:** All of it went badly — could not answer confidently, fumbled a lot, gave shallow / disorganised answers on areas that are literally my own résumé (MS perf flow, Intel PCIe transactor, L&T JTAG). The CPU-architecture draw and the P-state ladder (P0/P1/P2) also came out muddled.
+- **Learning:** The failure mode here is **not depth — it's owned-narrative fluency**. These were all *my* projects, and I still couldn't trace them cleanly. This is the same probe-then-push gap (QC CPU Core R2) re-appearing on familiar ground: I know the facts but can't walk the chain on demand. Two résumé-anchor stories (MS perf regression, Intel PCIe transactor) and one HW-exposure story (L&T JTAG) must become reflex *traces*, not recalled definitions. P-states (P0 = max V/f, descending) must be separable from C-states / PCIe L-states cold. A CPU block diagram must be drawable from muscle memory.
+- **Suggestion:** Rebuilt all five answers cleanly in the Broadcom notes — see new **§0c "QC 20 Jun fumble — answers rebuilt"** in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html): (1) MS perf-regression detection flow, (2) Intel PCIe-transactor what/why + STAR debug story, (3) L&T JTAG what/how, (4) P0/P1/P2 P-state ladder vs C/L/D states, (5) CPU architecture block diagram drawn from scratch. Rehearse each out loud as a *trace*, not a fact, before the 22 Jun Broadcom screen and the QC R2.
 
 ### 22 Jun — Broadcom · Switch Pre-Si Validation — 🔵 First round scheduled (referral)
 - *(To be filled in once done — first round 22 Jun.)*
