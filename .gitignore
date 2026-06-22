@@ -6,4 +6,4 @@ prep_plan/day00/bin/
 _archive/
 
 # Local-only prep notes (keep out of the repo)
-broadcom_switch_presi_notes.html
+*.html
