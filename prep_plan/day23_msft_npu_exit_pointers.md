@@ -1,8 +1,8 @@
-# Day 23 — Microsoft NPU Exit Pointers + Retained QNN Bug Story
+# Day 23 — Microsoft AI-Model KPI Validation: Exit Pointers + Retained Cross-IHV Bug Story
 
 ## Concept
 
-You're leaving the Microsoft Surface NPU/ORT EP role for a silicon-validation role. **One day is enough** — extract the highest-signal pointers from the current work so you can answer "tell me about your last role" credibly without making it the centre of the interview narrative. Two things to walk away with: **(a) a probe-list of things to learn before you leave** (vendor escalation contacts, internal docs, version assumptions) and **(b) one retained bug story** (the QNN page-fault) that you can re-use as a "tell me about a hard bug" anchor whenever the interview drifts to general debug skill.
+You're leaving the Microsoft **system-level AI-model validation** role for an **SoC / silicon-validation** role. **One day is enough** — extract the highest-signal pointers from the current work so you can answer "tell me about your last role" credibly without making it the centre of the interview narrative. Frame the current role the way the CV does: **validating AI models across IHV silicon (Intel, AMD, Qualcomm), capturing KPIs for performance, accuracy, and memory** (EdgeOptimizer), and **agentic-AI-assisted trace triage**. Two things to walk away with: **(a) a probe-list of things to learn before you leave** (vendor escalation contacts, internal docs, version assumptions) and **(b) one retained cross-IHV bug story** that you can re-use as a "tell me about a hard bug" anchor whenever the interview drifts to general debug skill.
 
 ## Why this day in the flow
 
@@ -12,7 +12,20 @@ In the Layer map this is one of two **wrap days** before the final mock (D24). S
 
 ---
 
-## Probe-Before-Leaving Checklist
+## Current-Role Framing (matches CV)
+
+State the Microsoft role exactly as the CV does — system-level, KPI-driven, vendor-agnostic:
+
+- **What:** validate AI models / workloads across **IHV silicon (Intel, AMD, Qualcomm)** on Copilot+ PCs; verify correctness across hardware vendors.
+- **KPIs captured:** **performance** (latency/throughput), **accuracy** (output correctness vs golden), **memory** (footprint/peak). These are the three numbers EdgeOptimizer reports.
+- **EdgeOptimizer:** a KPI-capture tool — runs a model on real silicon, records per-workload perf/accuracy/memory, enables **cross-IHV comparison and regression tracking**. Frame it as instrumentation/measurement, *not* as a perf-optimization or architecture tool — don't oversell.
+- **Concurrency under load:** validated **multi-model concurrency with semaphore-based execution control** — debugged scheduling and resource-contention so KPI capture stays deterministic under load. (This is the classic producer/consumer + shared-resource arbitration pattern from D08/D10 — same muscle as cross-IP contention in silicon val.)
+- **Agentic AI:** GitHub Copilot CLI parses WPR/WPA + ETL traces, correlates events, flags anomalies → turns multi-hour manual triage into a short automated pass.
+- **Transferable to SoC val:** cross-IHV (multi-vendor silicon) debug == cross-IP debug; KPI capture + regression tracking == coverage + sign-off metrics; trace-driven RCA == post-Si bring-up debug.
+
+Keep this to ~30 sec spoken. The headline is the **next** role (SoC/storage validation), not the AI-model work.
+
+---
 
 Things to learn *now* while you still have access:
 
@@ -92,12 +105,12 @@ This is the bug you'll re-use as "tell me about a hard bug you debugged."
 
 | Asked | Response strategy |
 |---|---|
-| "Tell me about a hard bug" | Use this story. End on the cross-IP coverage gap → tie to the IP val role. |
-| "Tell me about your current role" | One-sentence summary (NPU + ORT EP val for Surface), then immediately pivot: "the most transferable skill I've built is cross-vendor cross-IP debug, which is why I want IP Functional Val." |
-| "Why are you leaving?" | "I want to validate at the IP boundary itself, not at the SW-on-top-of-IP boundary. The bug above taught me where the highest-leverage gap lives, and that's at the IP val team." |
-| "What did you learn that you'll bring to the new role?" | (1) Multi-version regression triage. (2) Telemetry-driven bug attribution. (3) Cross-team escalation. (4) The discipline of writing a coverage row from a field bug. |
+| "Tell me about a hard bug" | Use this story. End on the cross-IP coverage gap → tie to the SoC/IP val role. |
+| "Tell me about your current role" | One sentence: *validate AI models across Intel/AMD/Qualcomm silicon, capturing perf/accuracy/memory KPIs via EdgeOptimizer*, then immediately pivot: "the most transferable skill is cross-vendor cross-IP debug, which is why I want SoC validation." |
+| "Why are you leaving?" | "I want to validate at the silicon/IP boundary itself, not at the SW-on-top-of-IP boundary. The bug above taught me where the highest-leverage gap lives, and that's at the SoC/IP val team." |
+| "What did you learn that you'll bring to the new role?" | (1) Multi-version regression triage. (2) Telemetry/KPI-driven bug attribution. (3) Cross-team / cross-IHV escalation. (4) The discipline of writing a coverage row from a field bug. |
 
-**Do not let NPU/QNN take more than 90 sec of any answer.** The role is IP Functional Val. NPU is the past chapter, not the headline.
+**Do not let the AI-model / KPI work take more than 90 sec of any answer.** The target role is SoC / silicon validation. The Microsoft work is the past chapter, not the headline.
 
 ---
 

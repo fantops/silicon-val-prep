@@ -83,6 +83,8 @@ The core IP and its memory subsystem — the substrate every other layer depends
 
 The full active + idle power chapter, ending with **two dedicated days** for pre-Si vs post-Si PM validation — the exact split a CPU IP Functional Val team operates across.
 
+> **CV note:** "CPUSS" / CPU-subsystem in the CV summary maps to **this phase** (CPU power management + the CPU-arch substrate in Phase 1) — it is the Intel pre-Si C-state/ADR work, not a separate track.
+
 | Day | Topic |
 |---|---|
 | [Day 12 — DVFS, P-states, PVT](day12_dvfs_pstates_pvt.md) | $P=CV^2F$, V-first/F-first, Turbo, FF/SS corners |
@@ -92,9 +94,9 @@ The full active + idle power chapter, ending with **two dedicated days** for pre
 | [Day 16 — Pre-Si PM validation](day16_pre_si_pm_validation.md) | coverage axes (state × transition × residency), UPF assertions, low-power sims, Perspec, PCU opcode tracing |
 | [Day 17 — Post-Si PM validation + ADR/C6 bug stories](day17_post_si_pm_validation.md) | PM bring-up (PMIC/PCU/FW), governors, residency, MSR sweeps, lab tools, ADR opcode-ordering + Core C6 wake-loss |
 
-### Phase 3 — PCIe (Days 18-22)
+### Phase 3 — PCIe (Days 18-22b)
 
-The PCIe layer, taken seriously: stack + enumeration + PM + bring-up + the **PCIe × PM intersection** that dominates real platform debug.
+The PCIe layer, taken seriously: stack + enumeration + PM + bring-up + the **PCIe × PM intersection** that dominates real platform debug — then **NVMe storage-controller datapath** layered on top (the storage-controller-role variant).
 
 | Day | Topic |
 |---|---|
@@ -103,12 +105,13 @@ The PCIe layer, taken seriously: stack + enumeration + PM + bring-up + the **PCI
 | [Day 20 — PCIe power management](day20_pcie_power_management.md) | ASPM L0s/L1/L1.1/L1.2, D0-D3hot/D3cold, CLKREQ#, PME, LTR |
 | [Day 21 — PCIe bring-up + functional val](day21_pcie_bringup_functional_val.md) | link train debug, LTSSM stuck-state ladder, compliance, AER, eye/SI, analyser usage |
 | [Day 22 — PCIe × PM intersection](day22_pcie_pm_intersection.md) | L1.2 ↔ PkgC dependency, root-complex PM, ADR's PCIe quiesce, cross-IP negotiation |
+| [Day 22b — NVMe storage-controller SoC val](day22b_nvme_storage_controller_val.md) | queues/doorbells/CQ phase, PRP/SGL, APST × L1.2, SDExpress bring-up *(storage-role)* |
 
 ### Phase 4 — Wrap (Days 23-24)
 
 | Day | Topic |
 |---|---|
-| [Day 23 — MSFT/NPU exit pointers + retained QNN story](day23_msft_npu_exit_pointers.md) | 1-day distillation: what to probe at MSFT before leaving + one anchor bug story (QNN page-fault) for "tell me about a hard bug" |
+| [Day 23 — MSFT AI-model KPI validation: exit pointers + retained cross-IHV bug story](day23_msft_npu_exit_pointers.md) | 1-day distillation: frame current role as AI-model validation across IHV silicon (perf/accuracy/memory KPIs, EdgeOptimizer, agentic AI) + one anchor cross-IHV bug story for "tell me about a hard bug" |
 | [Day 24 — Final mock interview day](day24_final_mock.md) | timed 90-min mock loop, revision sweep, bug-story rehearsal, flashcards, pre-call checklist |
 
 ---
