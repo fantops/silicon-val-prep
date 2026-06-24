@@ -8,11 +8,11 @@
 
 ---
 
-## 🧭 Current status (19 Jun 2026)
+## 🧭 Current status (24 Jun 2026)
 
 **Search phase closed — this is now a selection phase.** Intel Bangalore IP Functional Validation (joining 27 Jul 2026) is the **accepted default**. No new applications unless a role clearly beats the displacement criteria.
 
-**Remaining active evaluations:** (1) AMD CPU Post-Silicon (R2 done 5 Jun) · (2) Qualcomm CPU Post-Silicon (2 rounds done 2 Jun) · (3) Qualcomm System Performance (R1 done 20 Jun — weak; R2 pending) · (4) Broadcom Switch Pre-Si Validation (screening 22 Jun) · (5) Google TPU Silicon Validation (only if recruiter compresses timeline). **All else closed for this cycle, regardless of future recruiter responses.**
+**Remaining active evaluations:** (1) Broadcom Switch Pre-Si Validation (**R1 cleared 22 Jun → R2 upcoming**) · (2) Google TPU Silicon Validation (only if recruiter compresses timeline). All else closed for this cycle, regardless of future recruiter responses.
 
 ### Interview Freeze Policy (effective 19 Jun 2026)
 
@@ -32,9 +32,9 @@ No new interview loops after 22 Jun unless **ALL** hold: role advances the long-
 
 ---
 
-## 📈 Cycle scoreboard (as of 20 Jun 2026)
+## 📈 Cycle scoreboard (as of 22 Jun 2026)
 
-**Total rounds: 21 completed** across **10 companies** / **16 distinct role-loops**.
+**Total rounds: 22 completed** across **10 companies** / **16 distinct role-loops**.
 
 Round-by-round breakdown:
 
@@ -44,36 +44,36 @@ Round-by-round breakdown:
 | Arm · Verification | 1 | 🟡 mismatch (filtered) |
 | Qualcomm · Pre-Si Verification | 1 | 🟡 mismatch (filtered) |
 | Qualcomm · CPU Core (Pre-Si) | 3 | R1 + R2 + HM — 🔴 stalled 16+ d |
-| Qualcomm · CPU Post-Silicon | 2 | R1 + R2 on 2 Jun (planned 3, actually 2) — 🟡 results pending |
+| Qualcomm · CPU Post-Silicon | 2 | R1 + R2 on 2 Jun (planned 3, actually 2) — � stalled, no reply since (22+ days) |
 | Qualcomm · PnP / Thermal (Hyderabad) | 2 | both rounds 28 Apr — 🔴 stalled, no reply since (30+ days) |
 | Intel Ireland · NPU | 1 | rapid-fire 2 interviewers — ❌ rejected 21 May |
 | Renesas | 1 | R1 — ❌ role-fit miss |
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer accepted 21 May · joining 27 Jul** |
 | Cerebras | 1 | R1 — ❌ not fit for role (closed 18 May) |
-| AMD · Core PnP Post-Si | 2 | R1 (14 May) + R2 (5 Jun) — 🟡 active/recent |
+| AMD · Core PnP Post-Si | 2 | R1 (14 May) + R2 (5 Jun) — � stalled, no reply since (19+ days) |
 | **Nvidia · Verification Engineer** | 1 | ❌ rejected this cycle (screening 11 Jun — not ready) · 🔵 warm contact via Ranjith retained, can reconnect next cycle |
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
-| **Broadcom · Switch Pre-Si Validation** | 0 | 🟢 2 roles: direct app ❌ rejected · referral 🟢 screening 22 Jun; prep ask = electronics + digital design + CDC + Intel work |
-| **Qualcomm · System Performance** | 1 | R1 done 20 Jun — 🔴 weak/fumbled (MS perf-regr, Intel PCIe transactor, L&T JTAG, P0/P1/P2, draw-a-CPU); R2 pending |
+| **Broadcom · Switch Pre-Si Validation** | 1 | R1 done 22 Jun — 🟢 **cleared → advanced to R2**; R1 = intro, Intel work, FIFO-depth problem (ans 32), CDC bug story, draw 101-detector bubble diagram, puzzle, Verdi/Verilog, test plan. R2 ask = CV depth + digital logic + verification (functional/error tests) + CDC + aptitude + metastability avoidance |
+| **Qualcomm · System Performance** | 1 | R1 done 20 Jun — ❌ **rejected** (R1 weak/fumbled)|
 | **Micron · HBM Customer Systems Validation** | 0 | ⬜ 2 roles; interview 20 May — declined by me, not attended (off-track: HBM customer memory val) |
-| **Total** | **21 completed** | |
+| **Total** | **22 completed** | |
 
 Loop status:
 
 | Bucket | Count | Loops |
 |---|---|---|
 | ✅ Selected (final offer) | **1** | Intel Bangalore (joining 27 Jul) |
-| 🟡 Active gate | **3** | Qualcomm System Performance — R1 done 20 Jun (🔴 weak, fumbled), R2 pending · Qualcomm CPU Post-Silicon — 2 rounds done 2 Jun, results pending · AMD Core PnP Post-Si — R2 done 5 Jun |
-| 🔵 Scheduled — upcoming round | **1** | Broadcom Switch Pre-Si Validation — first round 22 Jun (referral 18 Jun) |
+| 🟡 Active gate | **0** | — (none open) |
+| 🔵 Scheduled — upcoming round | **1** | Broadcom Switch Pre-Si Validation — R1 cleared 22 Jun, R2 upcoming (digital logic · verification functional/error tests · CDC · aptitude · metastability avoidance) |
 | ⬜ Declined by me (role fit) | **1** | Micron HBM Customer System Validation — interview scheduled 20 May, opted out (off-track); counts as loop opened, not attended |
-| 🔴 Stalled — no reply (treat as closed) | **2** | QC CPU Core Pre-Si (16+ d) · QC PnP/Thermal (30+ d) |
-| ❌ Rejected / closed | **6** | Nvidia (Verification Engineer) · Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
+| 🔴 Stalled — no reply (treat as closed) | **4** | AMD Core PnP Post-Si (R2 5 Jun, 19+ d) · QC CPU Post-Silicon (2 Jun, 22+ d) · QC CPU Core Pre-Si (16+ d) · QC PnP/Thermal (30+ d) |
+| ❌ Rejected / closed | **7** | QC System Performance (R1 20 Jun — low regret, role not of interest) · Nvidia (Verification Engineer) · Intel Power & Perf (Apr) · Renesas · Cerebras · Intel Ireland NPU · Amazon Lab126 |
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **16** | |
 
-**Conversion (loops, not rounds):** 1 / 14 decided loops = **7.1%** (Intel Bangalore, accepted). Two loops pending and excluded: QC System Performance (20 Jun), Broadcom Switch Pre-Si (22 Jun).
+**Conversion (loops, not rounds):** 1 / 15 decided loops = **6.7%** (Intel Bangalore, accepted). One loop pending and excluded: Broadcom Switch Pre-Si (R1 cleared 22 Jun → R2 upcoming).
 
-**Velocity:** 21 rounds over ~68 days (13 Apr → 20 Jun). Intel join proceeds 27 Jul unless a written offer meeting all displacement criteria is received by 18 Jul.
+**Velocity:** 22 rounds over ~70 days (13 Apr → 22 Jun). Intel join proceeds 27 Jul unless a written offer meeting all displacement criteria is received by 18 Jul.
 
 ---
 
@@ -84,12 +84,12 @@ Loop status:
 | Company | Apps | Loops opened | App→Loop % | Outcome |
 |---|---:|---:|---:|---|
 | Intel | 10 | 3 | 30% | 1 offer (BLR IFV) + 2 rejects (P&P, Ireland NPU) |
-| Qualcomm | 21 | 5 | 24% | 1 active (CPU Post-Silicon) + 1 active (System Performance — R1 done 20 Jun, 🔴 weak; R2 pending) + 2 stalled (CPU Core Pre-Si, PnP/Thermal) + 1 mismatch (Pre-Si Verification) |
-| AMD | 14 | 1 | 7% | 1 active/recent (Core PnP Post-Si R2 done 5 Jun) |
+| Qualcomm | 21 | 5 | 24% | 3 stalled (CPU Post-Silicon 22+ d, CPU Core Pre-Si, PnP/Thermal) + 2 rejected/closed (System Performance R1 20 Jun, Pre-Si Verification mismatch) |
+| AMD | 14 | 1 | 7% | 1 stalled (Core PnP Post-Si R2 done 5 Jun, 19+ d no reply) |
 | Arm | 10 | 1 | 10% | 1 mismatch (Verification) |
 | Nvidia | 7 | 1 | 14% | 1 technical screen (Verification Engineer) — ❌ rejected this cycle; warm contact retained for next cycle |
 | Amazon | 2 | 1 | 50% | 1 reject (Lab126 Echo full-Si) |
-| Broadcom | 2 | 0 | — | 1 reject (direct-applied role, pre-interview) + 🟢 1 referral loop opening (switch pre-si val, screening 22 Jun — not yet a completed loop) |
+| Broadcom | 2 | 1 | 50% | 1 reject (direct-applied role, pre-interview) + 🟢 1 referral loop (switch pre-si val) — R1 cleared 22 Jun, R2 upcoming |
 | Micron | 2 | 1 | 50% | 2 roles; interview scheduled 20 May — **declined by me, not attended** (HBM customer system validation, off-track) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
@@ -101,7 +101,7 @@ Loop status:
 | Graphcore | 1 | 0 | 0% | no response |
 | NXP | 1 | 0 | 0% | no response |
 | Marvell | 1 | 0 | 0% | no response |
-| **Total** | **91** | **15** | **16.5%** | **1 offer = 1.10% app→offer, 7.1% loop→offer (1/14 decided)** |
+| **Total** | **91** | **16** | **17.6%** | **1 offer = 1.10% app→offer, 7.1% loop→offer (1/14 decided)** |
 
 **Funnel signal:**
 - **8 of 18 companies returned zero** (Apple, Meta, Google, Qualinx, TI, Graphcore, NXP, Marvell) = 20 apps / ~23% of effort wasted on cold-apply portals (~0% no-referral conversion).
@@ -189,7 +189,7 @@ Loop status:
 - **Status:** ❌ **Rejected 28 May.** Soft-negative signal from R1 confirmed — mismatch was structural (CV reads architecture + system-val, role wanted board / lab / HW-fluency for Echo full-Si). No further rounds.
 - **Suggestion:** Add C-state design-from-scratch scaffold to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md). Add digital-root + verbalise-loop-invariant to [Day 00](prep_plan/day00_c_basics.md). For any follow-up: lean into L&T board bring-up + Intel post-Si lab debug to close HW-exposure perception.
 
-### 02 Jun — Qualcomm · CPU Post-Silicon — 2 rounds done (planned 3) — 🟡 results pending
+### 02 Jun — Qualcomm · CPU Post-Silicon — 2 rounds done (planned 3) — 🔴 Stalled (22+ days, no reply — treat as closed)
 - **Correction:** Loop completed as **2 rounds**, not 3. Both rounds happened on 2 Jun.
 - **R1 — what happened:** Discussion on PM flows, especially what I did at Intel, with probes on **why** and **how** behind the flows. Coding/design probe around **64B cache lines**, 16B writes, and generating write addresses that overlap cache-line boundaries / stress write overlap behavior.
 - **R1 coding shape:** Given base/end address range and cache-line size, compute number of cache lines, iterate line-by-line, choose an offset near the end of each 64B line, and issue a 16B write so it overlaps into the next line. Key intent: target boundary conditions, not just random writes inside a line.
@@ -198,7 +198,7 @@ Loop status:
 - **Learning:** Qualcomm is probing PM-flow ownership plus hardware-adjacent C reflexes: cache-line boundary stress, register-width/data-bus mismatch, and correct integer promotion. Need to narrate the intent of the test, not only write code.
 - **Suggestion:** Add cache-line-overlap write generator and 32-bit-register-to-64-bit-tick routine to [Day 00 C basics](prep_plan/day00_c_basics.md) / [Day 03 bits + MMIO](prep_plan/day03_bits_mmio_volatile_polling.md). Practice saying: *"because the bus/registers are 32-bit, I widen before shifting and preserve low/high ordering."*
 
-### 05 Jun — AMD · CPU Post-Silicon / Core Power & Performance (R2) — 🟡 active/recent
+### 05 Jun — AMD · CPU Post-Silicon / Core Power & Performance (R2) — 🔴 Stalled (19+ days, no reply — treat as closed)
 - **What happened:** Discussion stayed close to normal work and role fit. Main technical area was **PM flows, power, and performance**, with questions around whether I know benchmark/perf tooling such as Geekbench / perfbench, TDP framing, and related performance characterization. I said I did not know those tools deeply.
 - **Role clarification from interviewer:** This team is currently doing **CPU core post-silicon on fixed-frequency performance**. They are expanding the team to add power on top of that. When issues appear, debug can go down to **core pipeline-level identification** and can require **multi-IP debug** to understand why performance or power behavior fails.
 - **Learning:** AMD shape is more CPU-core-performance/debug-heavy than broad PnP alone. They value fixed-frequency perf characterization, benchmark literacy, TDP/power framing, and the ability to debug from system symptom → core/pipeline/IP interaction.
@@ -212,14 +212,19 @@ Loop status:
 - **Learning:** The gap is not "do I know PCIe exists" — it is **system debug narration**: reset actor → ROM/firmware actor → host/RC actor → config/MMIO actor → LTSSM/tooling visibility → emulation-vs-silicon boundary. Need answer as an execution trace, not a definition.
 - **Suggestion:** Keep Ranjith as a warm future contact. Do **not** plan current-cycle decisions around Nvidia. For a later re-approach, drill four answer chains until 60-90 sec each: (1) who starts startup code after reset, (2) PCIe posted memory write / doorbell path, (3) LTSSM bring-up ladder + stuck-state debug, (4) what emulation covers vs cannot cover for PCIe. Map to [Day 11 CPU bring-up](prep_plan/day11_cpu_bringup_functional_val.md), [Day 18 PCIe LTSSM](prep_plan/day18_pcie_fundamentals_ltssm.md), [Day 21 PCIe bring-up](prep_plan/day21_pcie_bringup_functional_val.md), and [Day 24 final mock](prep_plan/day24_final_mock.md).
 
-### 20 Jun — Qualcomm · System Performance (R1) — 🔴 Weak round, fumbled across the board
+### 20 Jun — Qualcomm · System Performance (R1) — ❌ Rejected (R1 weak; low regret — role not of interest)
 - **What happened:** Largely an experience-walkthrough round where the interviewer tried to understand *what I actually did and how*, with depth probes on each: (1) **how we find perf regressions at Microsoft** (NPU), (2) **what we did for the PCIe transactor at Intel and how I debugged it**, (3) **what I did at L&T and how I used JTAG**, (4) **the different power states — P0, P1, P2**, and (5) a **"draw the architecture diagram for a CPU"** whiteboard ask.
 - **Self-assessment:** All of it went badly — could not answer confidently, fumbled a lot, gave shallow / disorganised answers on areas that are literally my own résumé (MS perf flow, Intel PCIe transactor, L&T JTAG). The CPU-architecture draw and the P-state ladder (P0/P1/P2) also came out muddled.
 - **Learning:** The failure mode here is **not depth — it's owned-narrative fluency**. These were all *my* projects, and I still couldn't trace them cleanly. This is the same probe-then-push gap (QC CPU Core R2) re-appearing on familiar ground: I know the facts but can't walk the chain on demand. Two résumé-anchor stories (MS perf regression, Intel PCIe transactor) and one HW-exposure story (L&T JTAG) must become reflex *traces*, not recalled definitions. P-states (P0 = max V/f, descending) must be separable from C-states / PCIe L-states cold. A CPU block diagram must be drawable from muscle memory.
-- **Suggestion:** Rebuilt all five answers cleanly in the Broadcom notes — see new **§0c "QC 20 Jun fumble — answers rebuilt"** in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html): (1) MS perf-regression detection flow, (2) Intel PCIe-transactor what/why + STAR debug story, (3) L&T JTAG what/how, (4) P0/P1/P2 P-state ladder vs C/L/D states, (5) CPU architecture block diagram drawn from scratch. Rehearse each out loud as a *trace*, not a fact, before the 22 Jun Broadcom screen and the QC R2.
+- **Suggestion:** Rebuilt all five answers cleanly in the Broadcom notes — see new **§0c "QC 20 Jun fumble — answers rebuilt"** in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html): (1) MS perf-regression detection flow, (2) Intel PCIe-transactor what/why + STAR debug story, (3) L&T JTAG what/how, (4) P0/P1/P2 P-state ladder vs C/L/D states, (5) CPU architecture block diagram drawn from scratch. The owned-narrative-fluency drill still carries forward (it's the cross-loop gap), but rehearse it for Broadcom and the next cycle, not for a QC R2.
+- **Status:** ❌ **Rejected (R1, 20 Jun) — low regret.** Role was generic system-performance engineering, an auto-decline under the freeze policy; not aligned with the silicon system-val / pre-Si arc. No loss to the trajectory; the value was the answer-fluency lesson, now captured.
 
-### 22 Jun — Broadcom · Switch Pre-Si Validation — 🔵 First round scheduled (referral)
-- *(To be filled in once done — first round 22 Jun.)*
+### 22 Jun — Broadcom · Switch Pre-Si Validation (R1) — 🟢 Cleared → advanced to R2
+- **What happened (8 questions):** (1) Intro. (2) Work at Intel. (3) **Problem-solving / FIFO depth** — writes at 80 data per 100 clocks, reads at 8 data per 10 clocks, all random; find min queue depth for no data loss → guided to **32**. (4) Intel bug story (CDC back-to-back-wake). (5) **Draw a bubble diagram** to detect `101` in the last 4 bits and give the output (sequence-detector FSM). (6) A **puzzle**. (7) **How much Verdi usage / how I read Verilog**. (8) **Test plan for an enhancement**.
+- **FIFO-depth insight:** write avg = 80/100 = 0.8 word/clk, read avg = 8/10 = 0.8 word/clk → **equal average rates**, so it is *not* a rate-mismatch sizing problem. Depth is set by worst-case **burst backlog** (writes bunching while reads are in their slow phase); hints converged on **32**. The trap is saying "rates match → no/shallow FIFO."
+- **R2 guidance from the SAME interviewer:** be **thorough with everything on the CV** (deep layered follow-ups on every line); expect **digital-logic problems** (FSMs, combinational/sequential); **verification questions** — write **functional tests AND error/negative tests** for given scenarios; **clock-domain-crossing** questions; **aptitude/puzzle** questions; and **design methods employed to avoid metastability**.
+- **Learning:** This panel weights RTL-adjacent fundamentals (FSM/bubble diagrams, FIFO/CDC math, metastability fixes) plus verification test-design and CV-narrative depth — the digital-design + CDC ask flagged at referral (18 Jun) was accurate. The §1.4 CDC bug story is the bridge: it's the *why-it-matters*; metastability methods are the *catalogue of fixes*.
+- **Suggestion:** Built a full R2 prep block in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html) — **§4** digital logic (101 detector bubble diagram + Moore/Mealy + window version), **§5** FIFO depth (80/100 vs 8/10 + general depth formula), **§6** metastability & CDC design methods (MTBF, synchronizer types, Gray code, async FIFO, do/don't rules), **§7** verification (functional vs error tests, FIFO worked example, reading Verilog/Verdi, enhancement test plan with regression), **§8** aptitude pack. Rehearse: FIFO "average-equal ⇒ size for burst" one-liner, the 101 bubble diagram from muscle memory, and the metastability-methods table out loud. Also do a CV-line drill: every bullet must survive 3+ "why/how/what-if" follow-ups.
 
 ---
 
@@ -227,7 +232,7 @@ Loop status:
 
 **Strong:** bug stories with measurable impact, cross-vendor NPU breadth, **design-from-scratch scaffolds** (test-plan, multi-SoC PnP, C-state), role-fit framing in HM rounds.
 
-**Still soft:** layer-3 depth under probe-then-push · live-C terminate-condition + edge-case pre-amble (Cerebras + Amazon) · EE fundamentals · HW-exposure breadth for board/lab roles (Amazon Echo) · boot-flow + PCIe execution-trace narration (Nvidia/PythonSV) · digital-design + CDC fundamentals for RTL-adjacent pre-si seats (Broadcom switch ask, 18 Jun).
+**Still soft:** layer-3 depth under probe-then-push · live-C terminate-condition + edge-case pre-amble (Cerebras + Amazon) · EE fundamentals · HW-exposure breadth for board/lab roles (Amazon Echo) · boot-flow + PCIe execution-trace narration (Nvidia/PythonSV) · digital-design + CDC fundamentals for RTL-adjacent pre-si seats (Broadcom switch ask, 18 Jun; R1 22 Jun confirmed FSM/FIFO/CDC/metastability focus).
 
 **Meta-skill:** probe-then-push — *what → why → how → connected*. Scaffolds survive the push; flat-fact recall doesn't. Every concept = scaffold to walk, not paragraph to recite.
 
@@ -249,6 +254,6 @@ Loop status:
 - **Top gap closed:** design-from-scratch scaffolds — multi-SoC PnP (AMD) + test-plan-from-spec (Cerebras/Amazon), landed in [Day 11](prep_plan/day11_cpu_bringup_functional_val.md), [Day 12](prep_plan/day12_dvfs_pstates_pvt.md), [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md), [Day 15](prep_plan/day15_thermal_power_perf_counters.md).
 - **Top gap open:** EE-fundamentals refresh — 2x-closed (Intel P&P Apr + Intel Ireland NPU); consolidated in [Day 24 Sec 5](prep_plan/day24_final_mock.md) but needs live drilling.
 - **Best-fitting role:** Intel Bangalore IFV — spec→vplan→UVM→coverage→CR-triage matches the CV 1:1; ADR + C-state negative-path probes answerable from prior Intel work.
-- **Re-approach / evaluate:** QC CPU Post-Si (2 rounds 2 Jun) + AMD Core PnP / CPU Post-Si (R2 5 Jun) — evaluate vs Intel if they advance. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
+- **Re-approach / evaluate:** Both 🔴 stalled as of 24 Jun — QC CPU Post-Si (2 rounds 2 Jun, 22+ d no reply) + AMD Core PnP / CPU Post-Si (R2 5 Jun, 19+ d no reply); treat as closed, re-engage only if recruiter revives with offer/level/scope. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
 - **Deprioritise:** Renesas (automotive) · Arm Verification · QC Pre-Si Verification (role-shape mismatch). Cold-apply FAANG portals (Apple, Meta, Google, Marvell, TI, NXP) — 0/20 yield; referral-only next time.
 - **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops; 3-4 warm referrals likely open 1-2 at the same effort. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 13 loops this cycle.
