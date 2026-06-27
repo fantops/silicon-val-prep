@@ -51,11 +51,11 @@ Round-by-round breakdown:
 | Intel Bangalore · IP Functional Validation | 2 | F2F R1 + R2 — ✅ **Selected, offer accepted 21 May · joining 27 Jul** |
 | Cerebras | 1 | R1 — ❌ not fit for role (closed 18 May) |
 | AMD · Core PnP Post-Si | 2 | R1 (14 May) + R2 (5 Jun) — � stalled, no reply since (19+ days) |
+| **Micron · HBM Customer Systems Validation** | 0 | ⬜ 2 roles; interview 20 May — declined by me, not attended (off-track: HBM customer memory val) |
 | **Nvidia · Verification Engineer** | 1 | ❌ rejected this cycle (screening 11 Jun — not ready) · 🔵 warm contact via Ranjith retained, can reconnect next cycle |
 | **Amazon Lab126 · AZ1 ML SoC (Echo full-Si val)** | 1 | R1 done 26 May — ❌ **Rejected 28 May** (HW-depth gap confirmed) |
 | **Broadcom · Switch Pre-Si Validation** | 1 | R1 done 22 Jun — 🟢 **cleared → advanced to R2**; R1 = intro, Intel work, FIFO-depth problem (ans 32), CDC bug story, draw 101-detector bubble diagram, puzzle, Verdi/Verilog, test plan. R2 ask = CV depth + digital logic + verification (functional/error tests) + CDC + aptitude + metastability avoidance |
 | **Qualcomm · System Performance** | 1 | R1 done 20 Jun — ❌ **rejected** (R1 weak/fumbled)|
-| **Micron · HBM Customer Systems Validation** | 0 | ⬜ 2 roles; interview 20 May — declined by me, not attended (off-track: HBM customer memory val) |
 | **Total** | **22 completed** | |
 
 Loop status:
