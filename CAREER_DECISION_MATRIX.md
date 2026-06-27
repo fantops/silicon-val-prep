@@ -10,7 +10,7 @@
 
 | Role | Status | Note |
 |---|---|---|
-| **Intel BLR · G7 IP Functional Val** | ✅ **Final offer accepted (21 May) · joining 27 Jul 2026** | TC ~₹413 L over 5 yrs (upside case) |
+| **Intel BLR · G7 IP Functional Val** | ✅ **Final offer accepted (21 May) · joining 27 Jul 2026** | 5-yr TC ₹381-393 L (conservative — plan on this) · ₹413 L upside |
 
 > Only the finalised Intel offer is tracked here. All other loops are **not finalised** (rejected / stalled / in progress) and are excluded from this matrix — see [INTERVIEW_LOG.md](INTERVIEW_LOG.md).
 
