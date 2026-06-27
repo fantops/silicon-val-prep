@@ -93,7 +93,7 @@ Loop status:
 | Micron | 2 | 1 | 50% | 2 roles; interview scheduled 20 May — **declined by me, not attended** (HBM customer system validation, off-track) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
-| Sandisk | 2 | 0 | 0% | no response (2 roles applied; 1 recent app still pending) |
+| Sandisk | 3 | 0 | 0% | no response (3 roles applied; latest app just submitted, pending) |
 | Apple | 4 | 0 | 0% | no response |
 | Meta | 5 | 0 | 0% | no response |
 | Google | 4 | 0 | 0% | no response |
@@ -102,10 +102,11 @@ Loop status:
 | Graphcore | 1 | 0 | 0% | online assessment (HackerRank coding test ~Apr) → ❌ rejected 25 Jun (direct mail, ~2 mo later) |
 | NXP | 1 | 0 | 0% | no response |
 | Marvell | 1 | 0 | 0% | no response |
-| **Total** | **93** | **16** | **17.2%** | **1 offer = 1.08% app→offer, 7.1% loop→offer (1/14 decided)** |
+| Microsoft | 2 | 0 | 0% | 2 SoC roles applied — possible reject (roles US-only; geo mismatch vs BLR base) |
+| **Total** | **96** | **16** | **16.7%** | **1 offer = 1.04% app→offer, 7.1% loop→offer (1/14 decided)** |
 
 **Funnel signal:**
-- **7 of 19 companies returned zero** (Sandisk, Apple, Meta, Google, TI, NXP, Marvell) = 19 apps / ~20% of effort wasted on cold-apply portals (~0% no-referral conversion). One Sandisk app is recent and still pending. Graphcore (HackerRank OA → direct reject ~2 mo later) and Qualinx (application reject mail) did respond but with no live loop.
+- **7 of 20 companies returned zero** (Sandisk, Apple, Meta, Google, TI, NXP, Marvell) = 20 apps / ~21% of effort wasted on cold-apply portals (~0% no-referral conversion). One Sandisk app is recent and still pending. Microsoft (2 SoC roles) is a likely geo-reject — roles are US-only vs BLR base. Graphcore (HackerRank OA → direct reject ~2 mo later) and Qualinx (application reject mail) did respond but with no live loop.
 - **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 10 loops — low per-app yield.
 - **Highest hit-rate shops** were smaller/warm (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — loops opened where the app was targeted, not bulk.
 
