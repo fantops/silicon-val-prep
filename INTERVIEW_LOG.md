@@ -71,7 +71,7 @@ Loop status:
 | 🟡 Mismatch — filtered upstream | **2** | Arm Verification · QC Pre-Si Verification |
 | **Total loops** | **16** | |
 
-**Conversion (loops, not rounds):** 1 / 15 decided loops = **6.7%** (Intel Bangalore, accepted). One loop pending and excluded: Broadcom Switch Pre-Si (R1 cleared 22 Jun → R2 upcoming).
+**Conversion (loops, not rounds):** 1 / 16 loops = **6.25%** (Intel Bangalore, accepted; Broadcom Switch Pre-Si still pending R2, R1 cleared 22 Jun).
 
 **Velocity:** 22 rounds over ~70 days (13 Apr → 22 Jun). Intel join proceeds 27 Jul unless a written offer meeting all displacement criteria is received by 18 Jul.
 
@@ -103,10 +103,10 @@ Loop status:
 | NXP | 1 | 0 | 0% | no response |
 | Marvell | 1 | 0 | 0% | no response |
 | Microsoft | 2 | 0 | 0% | 2 SoC roles applied — possible reject (roles US-only; geo mismatch vs BLR base) |
-| **Total** | **96** | **16** | **16.7%** | **1 offer = 1.04% app→offer, 7.1% loop→offer (1/14 decided)** |
+| **Total** | **96** | **16** | **16.7%** | **1 offer = 1.04% app→offer, 6.25% loop→offer (1/16)** |
 
 **Funnel signal:**
-- **6 of 20 companies returned zero** (Sandisk, Apple, Meta, TI, NXP, Marvell) = 16 apps / ~17% of effort wasted on cold-apply portals (~0% no-referral conversion). One Sandisk app is recent and still pending. Microsoft (2 SoC roles) is a likely geo-reject — roles are US-only vs BLR base. Google (recruiter replying over email but not moving forward), Graphcore (HackerRank OA → direct reject ~2 mo later) and Qualinx (application reject mail) did respond but with no live loop.
+- **6 of 20 companies returned zero** (Sandisk, Apple, Meta, TI, NXP, Marvell) = 16 apps / ~17% of effort wasted on cold-apply portals (~0% no-referral conversion).
 - **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 10 loops — low per-app yield.
 - **Highest hit-rate shops** were smaller/warm (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — loops opened where the app was targeted, not bulk.
 
