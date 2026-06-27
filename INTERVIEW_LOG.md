@@ -4,7 +4,7 @@
 >
 > **Why this log exists:** so the *next* search is referral-first and targeted — not the apply-to-everything spray this cycle became while leaving Microsoft. Keep every loop, outcome, and role-shape as reference for what to repeat and skip.
 
-**Intel BLR joining date:** **27 July 2026** (confirmed). **Cycle reopened 1 Jun 2026** for separate Qualcomm CPU post-silicon and AMD CPU post-silicon follow-up loops; evaluate only after written offer / level / scope are clear.
+**Intel BLR joining date:** **27 July 2026** (confirmed).
 
 ---
 
@@ -12,7 +12,7 @@
 
 **Search phase closed — this is now a selection phase.** Intel Bangalore IP Functional Validation (joining 27 Jul 2026) is the **accepted default**. No new applications unless a role clearly beats the displacement criteria.
 
-**Remaining active evaluations:** (1) Broadcom Switch Pre-Si Validation (**R1 cleared 22 Jun → R2 upcoming**) · (2) Google TPU Silicon Validation (only if recruiter compresses timeline). All else closed for this cycle, regardless of future recruiter responses.
+**Remaining active evaluations:** (1) Broadcom Switch Pre-Si Validation (**R1 cleared 22 Jun → R2 upcoming**).
 
 ### Interview Freeze Policy (effective 19 Jun 2026)
 
@@ -28,7 +28,7 @@ No new interview loops after 22 Jun unless **ALL** hold: role advances the long-
 - **Tier B — evaluate selectively:** Qualcomm CPU · Cerebras · Amazon Lab126 (good learning, not clearly superior to Intel).
 - **Tier C — avoid unless exceptional:** Renesas · Arm Verification · Qualcomm Verification · Qualcomm Thermal/PnP · Micron HBM Customer Validation (repeated role-shape mismatch).
 
-**Highest-ROI to 27 Jul:** (1) Broadcom prep · (2) AMD/QC follow-ups · (3) Google recruiter escalation · (4) Intel onboarding prep (PCIe, CXL, emulation, PM flows). No new loops after Broadcom unless recruiter immediately shows comp above Intel, stronger scope, and a decision timeline before 18 Jul.
+**Highest-ROI to 27 Jul:** (1) Broadcom prep · (2) Intel onboarding prep (PCIe, CXL, emulation, PM flows). No new loops after Broadcom unless recruiter immediately shows comp above Intel, stronger scope, and a decision timeline before 18 Jul.
 
 ---
 
@@ -96,7 +96,7 @@ Loop status:
 | Sandisk | 3 | 0 | 0% | no response (3 roles applied; latest app just submitted, pending) |
 | Apple | 4 | 0 | 0% | no response |
 | Meta | 5 | 0 | 0% | no response |
-| Google | 4 | 0 | 0% | no response |
+| Google | 4 | 0 | 0% | recruiter replying over email, but not moving forward (no loop) |
 | Qualinx Netherlands | 2 | 0 | 0% | ❌ rejected 25 Jun (application rejection mail, no loop) |
 | Texas Instruments | 2 | 0 | 0% | no response |
 | Graphcore | 1 | 0 | 0% | online assessment (HackerRank coding test ~Apr) → ❌ rejected 25 Jun (direct mail, ~2 mo later) |
@@ -106,7 +106,7 @@ Loop status:
 | **Total** | **96** | **16** | **16.7%** | **1 offer = 1.04% app→offer, 7.1% loop→offer (1/14 decided)** |
 
 **Funnel signal:**
-- **7 of 20 companies returned zero** (Sandisk, Apple, Meta, Google, TI, NXP, Marvell) = 20 apps / ~21% of effort wasted on cold-apply portals (~0% no-referral conversion). One Sandisk app is recent and still pending. Microsoft (2 SoC roles) is a likely geo-reject — roles are US-only vs BLR base. Graphcore (HackerRank OA → direct reject ~2 mo later) and Qualinx (application reject mail) did respond but with no live loop.
+- **6 of 20 companies returned zero** (Sandisk, Apple, Meta, TI, NXP, Marvell) = 16 apps / ~17% of effort wasted on cold-apply portals (~0% no-referral conversion). One Sandisk app is recent and still pending. Microsoft (2 SoC roles) is a likely geo-reject — roles are US-only vs BLR base. Google (recruiter replying over email but not moving forward), Graphcore (HackerRank OA → direct reject ~2 mo later) and Qualinx (application reject mail) did respond but with no live loop.
 - **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 10 loops — low per-app yield.
 - **Highest hit-rate shops** were smaller/warm (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — loops opened where the app was targeted, not bulk.
 
