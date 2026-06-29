@@ -30,7 +30,7 @@ No new interview loops after 22 Jun unless **ALL** hold: role advances the long-
 
 ---
 
-## 📈 Cycle scoreboard (as of 22 Jun 2026)
+## 📈 Cycle scoreboard (as of 29 Jun 2026)
 
 **Total rounds: 22 completed** across **10 companies** / **16 distinct role-loops**.
 
@@ -91,7 +91,7 @@ Round-by-round (rounds + outcome), grouped by status:
 | **Total** | **97** | **16** | **16.5%** | **1 offer = 1.03% app→offer, 6.25% loop→offer (1/16)** |
 
 **Funnel signal:**
-- **6 of 20 companies returned zero loops** (Sandisk, Apple, Meta, TI, NXP, Marvell) = 17 apps. Apple/Meta/TI/NXP/Marvell (13 apps) were cold portal applies; **SanDisk (4) was a referral and still got zero response** — referral was necessary, not sufficient, this cycle.
+- **10 of 20 companies opened zero loops** — of those, **6 got zero response at all** (Sandisk, Apple, Meta, TI, NXP, Marvell) = 17 apps (the other 4 — Google, Qualinx, Graphcore, Microsoft — at least replied or sent a reject). Apple/Meta/TI/NXP/Marvell (13 apps) were cold portal applies; **SanDisk (4) was a referral and still got zero response** — referral was necessary, not sufficient.
 - **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 10 loops — low per-app yield.
 - **Highest hit-rate shops** were smaller/warm (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — loops opened where the app was targeted, not bulk.
 
@@ -102,7 +102,6 @@ Round-by-round (rounds + outcome), grouped by status:
 ### 13 Apr — Intel · Power & Performance — ❌ Rejected
 - **What happened:** R1 ok. R2 — couldn't write a struct-based C program under pressure; missed the *why* behind PkgC entry/exit (break-even, residency, wake cost).
 - **Learning:** Knew *what*, missed *why*. Live-C must be reflex.
-- **Suggestion:** Daily Day 0 C drill; rehearse C-state ladder as break-even residency.
 
 ### 15 Apr — Arm · Verification — ❌ Rejected (DV role-shape mismatch; rejection mail)
 - **What happened:** SV/UVM-heavy DV screen; not my track.
@@ -115,137 +114,107 @@ Round-by-round (rounds + outcome), grouped by status:
 ### 28 Apr — Qualcomm · CPU Core (R1) — 🟢 Cleared → Advanced to R2
 - **What happened:** Pipeline stages, `a = b` data movement, MS NPU walkthrough. Coding solid.
 - **Learning:** High-level concept + concrete project narrative lands cleanly.
-- **Status:** Advanced to R2. Loop ultimately ghosted after HM (12 May), no reply since.
 
-### 28 Apr — Qualcomm · PnP / Thermal (Hyderabad, 2 rounds) — 🔴 Ghosted (no reply)
+### 28 Apr — Qualcomm · PnP / Thermal (Hyderabad, 2 rounds) — 🔴 Ghosted
 - **What happened:** Power/perf, thermal basics, system debug. Domain alignment + cross-vendor NPU breadth landed. Thermal control-loop depth and leadership/ownership framing slightly soft.
 - **Learning:** Frame thermal as a control loop; tighten ownership STAR.
-- **Status:** 🔴 Ghosted — no feedback or next-round signal since 28 Apr. Treat as closed.
-- **Suggestion:** Section 0A behavioural rehearsal; Day 15 control-loop framing.
 
 ### 29 Apr — Intel Ireland · NPU — ❌ Rejected (closed 21 May)
-- **What happened:** Rapid-fire, 2 interviewers. ~70-80% landed. Cross-vendor NPU + EdgeOptimizer story strong. EE fundamentals weak; bug story tangled under pace.
-- **Learning:** Slow ~10%; STAR-strict bug stories; refresh EE basics. Confirmed: EE-fundamentals weakness + tangled bug-story-under-pace is the failure mode that closes NPU-heavy loops — same pattern that cost Intel P&P Apr R2.
-- **Status:** ❌ **Rejected 21 May.** No further rounds.
-- **Suggestion:** 90-sec timer on Bug 2 / Bug 3; quick CMOS / setup-hold / CDC / SI refresh (Section 8). Keep EE basics in rotation — this is now a 2x-closed gap.
+- **Asked:** Rapid-fire, 2 interviewers. NPU + EdgeOptimizer story strong; EE fundamentals weak; bug story tangled under pace.
+- **Learning:** EE-fundamentals weak + tangled bug-story-under-pace = the failure mode that closes NPU loops (also cost Intel P&P). Slow ~10%; STAR-strict bug stories.
 
 ### 30 Apr — Qualcomm · CPU Core (R2) — 🟢 Advanced despite weak fundamentals
-- **What happened:** "Probe-then-push" style — drilled C-state *why-a-ladder*, clock gating *how*, leakage as separate mechanism, cache hierarchy *why multi-level*, generic boot flow. CFC FIFO / Core C6 wake-loss bug story landed cleanly; textbook depth ran out at layer 2-3.
-- **Learning:** Failure mode is shallow ownership, not pressure handling. Need to rehearse the *what → why → how → connected-concept* chain out loud, not just read it. Bug-story ownership + system breadth carried the round even when textbook depth ran out — signal that owned narrative compensates for layer-3 gaps.
-- **Status:** Advanced to Hiring Manager (12 May). Loop ultimately ghosted post-HM — see 12 May entry.
-- **Suggestion:** Daily what/why/how/bug-hook chain on one concept, no notes.
+- **Asked:** Probe-then-push: C-state why-ladder, clock-gating how, leakage, cache-hierarchy why, boot flow. CFC FIFO / Core C6 wake-loss bug story landed; textbook depth ran out at layer 2-3.
+- **Learning:** Failure = shallow ownership, not pressure. Rehearse *what → why → how → connected* out loud; owned bug-story compensates for layer-3 gaps.
 
 ### 07 May — Renesas · R1 — ❌ Rejected (role-fit miss)
 - **What happened:** L&T PCIe/NVMe + MS NPU walkthrough flowed; PCIe/NVMe protocol depth rusty (5-6 yrs since daily use). Bug story itself landed.
 - **Learning:** Role likely wanted automotive protocol fluency (CAN/LIN/FlexRay/AVB/SOME-IP) + live PCIe/NVMe — neither is current stack.
-- **Suggestion:** No automotive track; filter Renesas-shape roles upstream. Keep PCIe/NVMe at bug-story + first-principles depth ([Day 18](prep_plan/day18_pcie_fundamentals_ltssm.md)–[22](prep_plan/day22_pcie_pm_intersection.md)).
 
 ### 12 May — Intel Bangalore · IP Functional Validation (F2F, 2 rounds) — ✅ Selected · offer accepted 21 May · joining 27 Jul 2026
-- **What happened (R1, 2 engineers):** Msft/Intel walkthrough + how I narrow down a model regression. CPU core states — pushed on **negative scenarios** (e.g. requested C3 not achieved, peripheral blocking entry — what can happen, not specific). ISRs. Page table / page fault / MMU. C storage classes + usage. Program memory layout. C coding: **reverse a string using pointers, no extra variable**.
-- **What happened (R2):** Explain **ADR flow** — how to decide *which data* needs to be copied (answered: maintain a table of regions / persistent-state descriptors). ISRs — *when* served, *where* the data is stored, what mechanism is used (context save / stack / vector table). Behavioural: why left Intel, why switching again; interviewer framed *"most work everywhere is prep activity, only 5-10% translates to CV"* — testing if I'd flinch. Each topic ran long.
-- **Learning:** Negative-scenario framing for C-states (blocker → why entry denied → who owns the veto) is a recurring probe — needs a reflex chain. ADR "what gets copied" needs a crisp answer: persistent-region table + flush list + ordering, not hand-wavy. ISR storage answer needs the **hardware (vector table, stack, banked regs) + software (context frame)** split. Behavioural push on "prep vs CV work" needs an honest, non-defensive answer.
-- **Suggestion:** Add C-state negative-path drill (peripheral veto, broadcast-block, LTR, demotion) to [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md). Tighten ADR "copy table" framing in [Day 17 (post-Si PM val + ADR/C6)](prep_plan/day17_post_si_pm_validation.md). ISR context-save chain into [Day 03](prep_plan/day03_bits_mmio_volatile_polling.md). Reverse-string-in-place into [Day 00](prep_plan/day00_c_basics.md) reflex set. Rehearse "why switching" / "prep-vs-CV" answer in [Day 24 final mock](prep_plan/day24_final_mock.md) Sec 5 behavioural STAR.
+- **Asked (R1):** MS/Intel walkthrough + model-regression debug; CPU C-states **negative scenarios** (C3 denied, peripheral blocks entry); ISRs; page table / fault / MMU; C storage classes; memory layout; **C: reverse a string with pointers, no extra var**.
+- **Asked (R2):** **ADR flow** — which data to copy (→ persistent-region table + flush list + ordering); ISRs (when served / where stored / mechanism — vector table, stack, context frame); behavioural "prep-vs-CV work" probe.
+- **Learning:** C-state negative-path (blocker → why denied → who vetoes), ADR copy-table, and ISR HW+SW split must be reflex chains; keep behavioural answers honest + non-defensive.
 
 ### 12 May — Qualcomm · CPU Core (Hiring Manager) — 🟢 Positive signal → 🔴 loop ghosted
-- **What happened:** Basics on what I did and how, then mostly behavioural. Pushed on *no CPU-core experience — why hire you?* and *what value-add after joining?* (expecting "hard work + dedication" framing). Direct ask: *if switching for money, don't come to QC*. Asked about other offers — said Arm in discussion. *Arm vs QC?* → answered QC for engineering scope. Overall positive; they will combine all interview outputs.
-- **Learning:** HM rounds at QC weight **intent + attitude** over depth — "hard work / dedication / scope" framing lands; money-led framing is an instant red flag. Cross-offer question is a real signal probe — answer with *fit reasoning*, not leverage.
-- **Status:** 🔴 Ghosted — no combined-loop decision; treat as closed.
-- **Suggestion:** Lock in a 30-sec "why QC over Arm / why CPU core despite no prior CPU-core work" answer in [Day 24 final mock](prep_plan/day24_final_mock.md) Sec 5 — value-add = validation rigor + cross-vendor system view + ownership pattern, not domain seniority.
+- **Asked:** Mostly behavioural — "no CPU-core exp, why hire you?", value-add, "don't switch for money", other offers (Arm vs QC → answered scope).
+- **Learning:** QC HM weights intent + attitude over depth; money-led framing = instant red flag; answer cross-offer with fit reasoning, not leverage.
 
 ### 13 May — Cerebras · R1 — ❌ Not fit for role
-- **What happened:** (1) Cerebras-context warmup — what they do (wafer-scale engine, MemoryX/SwarmX). (2) Intel work walk-through — what + how. (3) **Test-plan design from scratch** for a device — took PCIe as the example and walked: spec → features → modes → stimulus + checks → coverage axes → negative + error injection → perf/power → silicon-vs-pre-Si split. (4) Microsoft NPU work walkthrough. (5) **Coding** — implement `grep` in Python (regex + file walk + flags); moving-average in C (circular buffer / running sum). Small issues on edge cases but recovered. (6) Closing chat on team-size expansion + responsibilities scope.
-- **Learning:** Test-plan-from-spec is a recurring opener at AI-accelerator shops — having a reusable scaffold (spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si split) lands cleanly. Two-language coding (scripting + C) is becoming the norm — keep both reflexes warm. Edge-case discipline (empty input, single element, wrap-around in moving-avg, null pattern in grep) is what separated "works" from "clean."
-- **Status:** ❌ **Closed 18 May — not fit for role.** No further rounds.
-- **Suggestion:** Generic test-plan scaffold → [Day 17](prep_plan/day17_post_si_pm_validation.md)/[Day 11](prep_plan/day11_cpu_bringup_functional_val.md); `grep`-clone + moving-average → [Day 00](prep_plan/day00_c_basics.md); edge-case pre-amble (*"cases I'll handle are…"*) → [Day 24](prep_plan/day24_final_mock.md) Sec 5.
+- **Asked:** Cerebras context; Intel walkthrough; **test-plan design from scratch** (PCIe: spec → features → modes → stimulus/checks → coverage → negative → perf/power → pre-Si/post-Si); MS NPU; **coding: `grep` in Python + moving-average in C**.
+- **Learning:** Test-plan-from-spec is a recurring AI-shop opener; two-language coding (script + C) is the norm; edge-case discipline separates "works" from "clean."
 
 ### 14 May — AMD · Core Power & Performance Post-Si (R1) — 🟢 Positive → 🟡 advanced to R2
-- **What happened:** (1) Walk through every prior role with a deep-dive at each — what I did, issues hit, how I unblocked. (2) Open-ended design probe: *how would I design an NPU + CPU + multi-SoC power/perf tradeoff?* — answered with workload-driven budget split, shared rail vs independent rail tradeoff, DVFS coordination across SoCs (single PMIC arbiter vs distributed), thermal-envelope sharing, and the validation-side coverage matrix that falls out. (3) Role framing from interviewer: **core PnP post-Si team — heavy execution + heavy debug after data lands; needs architecture exposure + system understanding.** Direct fit with my Intel PnP + MS NPU arc.
-- **Learning:** Multi-SoC PnP design questions are the new shape at AMD/Cerebras-tier shops — the answer scaffold is **workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix**, in that order. Role pitch ("execution + debug + architecture exposure") is exactly what my CV reads as.
-- **Status:** Advanced to R2 on 5 Jun — see 5 Jun entry.
-- **Suggestion:** Multi-SoC PnP design scaffold (workload→budget→rail→DVFS→thermal→val matrix) → [Day 15](prep_plan/day15_thermal_power_perf_counters.md)/[Day 12](prep_plan/day12_dvfs_pstates_pvt.md); reflex one-liner → [Day 24](prep_plan/day24_final_mock.md) Sec 5.
+- **Asked:** Deep-dive every prior role; **design probe — NPU + CPU multi-SoC power/perf tradeoff** (workload → budget split → rail topology → DVFS coordination → thermal envelope → validation matrix). Role = core PnP post-Si (execution + debug + architecture).
+- **Learning:** Multi-SoC PnP design scaffold = workload → budget → rail → DVFS → thermal → val-matrix; fits the Intel PnP + MS NPU arc.
 
 ### 20 May — Micron · HBM Customer Memory Validation (2 roles) — ⬜ Declined by me (role fit)
-- **What happened:** Two Micron roles in play; one reached **interview scheduled (20 May)**. I **chose not to attend** because the role was **HBM customer memory validation** — off my target track (CPU/SoC power-perf + pre-Si/post-Si system validation). Loop counts as opened (interview was granted) but I did not attend.
-- **Learning:** Filter HBM / memory-customer-validation shapes upstream — not aligned with the silicon system-val / PnP arc. Declining preserved prep bandwidth for the Qualcomm / AMD / Broadcom gates.
-- **Status:** ⬜ **Declined — loop opened, not attended.**
+- **What happened:** Interview scheduled (20 May) but **chose not to attend** — HBM customer memory validation, off-track. Loop counts as opened.
+- **Learning:** Filter HBM / memory-customer-val shapes upstream; declining preserved bandwidth for QC / AMD / Broadcom.
 
 ### 26 May — Amazon Lab126 · AZ1 ML SoC (Echo full-Si val) — R1 — ❌ Rejected 28 May (HW-depth gap)
-- **What happened:** Echo full silicon validation role. HW-bug-heavy — deep follow-ups on prior bug stories. Design probe 1: **"design a core C-state for a PC from scratch"** — entry/exit, residency, break-even, wake sources, demotion *why* (false-wake penalty, break-even violation) + *how* (governor weighting, HW-side promotion-block, LTR / peripheral blocker interaction). Design probe 2: **"create a test plan for an IP"** — walked the spec → features → modes → stimulus/checks → coverage axes → negative → perf/power → pre-Si vs post-Si scaffold (same shape that landed at Cerebras). Coding: **digital root** (`9875 → 29 → 11 → 2`).
-- **Coding bug:** outer loop was `while (sum % 10)` — wrong (exits on any multiple of 10, e.g. `20 → 2` exits early). Correct: `while (sum >= 10)`. Termination-condition slip, same edge-case-preamble gap Cerebras flagged.
-- **Learning:** Echo full-Si is HW-heavier than Intel BLR / AMD shape — they want board / lab / debug-fluency, not just architecture. C-state design-from-scratch is the **2nd design-scaffold probe** (after AMD multi-SoC PnP); scaffold = **entry triggers → eligibility → save/restore → power/clock action → wake sources → exit → demotion + governor feedback → measurement → validation matrix**.
-- **Status:** ❌ **Rejected 28 May.** Soft-negative signal from R1 confirmed — mismatch was structural (CV reads architecture + system-val, role wanted board / lab / HW-fluency for Echo full-Si). No further rounds.
-- **Suggestion:** C-state design-from-scratch scaffold → [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md); digital-root + loop-invariant → [Day 00](prep_plan/day00_c_basics.md); for HW-heavy roles lean on L&T board + Intel post-Si lab.
+- **Asked:** HW-bug-heavy bug-story follow-ups; **design a core C-state from scratch** (entry/exit, residency, break-even, wake, demotion why+how); **test plan for an IP** (same scaffold as Cerebras); **coding: digital root** (`9875 → 29 → 11 → 2`).
+- **Coding bug:** `while (sum % 10)` wrong (exits on `20 → 2` early); correct `while (sum >= 10)` — termination-condition slip.
+- **Learning:** Echo full-Si wants board/lab/debug-fluency, not just architecture. C-state design scaffold = entry → eligibility → save/restore → power/clock → wake → exit → demotion → measurement → val-matrix.
 
-### 02 Jun — Qualcomm · CPU Post-Silicon — 2 rounds done (planned 3) — 🔴 Ghosted (no reply — treat as closed)
-- **Correction:** Loop completed as **2 rounds**, not 3. Both rounds happened on 2 Jun.
-- **R1 — what happened:** Discussion on PM flows, especially what I did at Intel, with probes on **why** and **how** behind the flows. Coding/design probe around **64B cache lines**, 16B writes, and generating write addresses that overlap cache-line boundaries / stress write overlap behavior.
-- **R1 coding shape:** Given base/end address range and cache-line size, compute number of cache lines, iterate line-by-line, choose an offset near the end of each 64B line, and issue a 16B write so it overlaps into the next line. Key intent: target boundary conditions, not just random writes inside a line.
-- **R2 — what happened:** More normal work discussion — what I want to do, prior work shape, and fit. Coding probe: combine two 32-bit register reads from a 32-bit data bus into one 64-bit tick value. Example: low register `0x1111ABC2`, high register `0xABDC1113` → `0xABDC11131111ABC2`.
-- **R2 coding answer:** Read low/high as `uint32_t`, cast each to `uint64_t` before shifting, compute `((uint64_t)high << 32) | low`. The important trap is not shifting a 32-bit value by 32 before widening.
-- **Learning:** Qualcomm is probing PM-flow ownership plus hardware-adjacent C reflexes: cache-line boundary stress, register-width/data-bus mismatch, and correct integer promotion. Need to narrate the intent of the test, not only write code.
-- **Suggestion:** Cache-line-overlap write gen + 32→64-bit tick routine → [Day 00](prep_plan/day00_c_basics.md)/[Day 03](prep_plan/day03_bits_mmio_volatile_polling.md); say *"32-bit bus ⇒ widen before shift, preserve low/high."*
+### 02 Jun — Qualcomm · CPU Post-Silicon — 2 rounds done (planned 3) — 🔴 Ghosted
+- **Asked (R1):** PM flows (why/how); **coding: 64B cache lines, 16B writes overlapping line boundaries** (compute #lines → offset near end of each 64B line → write spans into next line; target boundary conditions, not random in-line writes).
+- **Asked (R2):** Work/fit; **coding: combine two 32-bit reg reads → one 64-bit tick** (`((uint64_t)high << 32) | low`; trap = widen before shifting by 32).
+- **Learning:** QC probes PM-flow ownership + HW-adjacent C reflexes (cache-line stress, register width, integer promotion); narrate test *intent*, not just code.
 
-### 05 Jun — AMD · CPU Post-Silicon / Core Power & Performance (R2) — 🔴 Ghosted (no reply — treat as closed)
-- **What happened:** Discussion stayed close to normal work and role fit. Main technical area was **PM flows, power, and performance**, with questions around whether I know benchmark/perf tooling such as Geekbench / perfbench, TDP framing, and related performance characterization. I said I did not know those tools deeply.
-- **Role clarification from interviewer:** This team is currently doing **CPU core post-silicon on fixed-frequency performance**. They are expanding the team to add power on top of that. When issues appear, debug can go down to **core pipeline-level identification** and can require **multi-IP debug** to understand why performance or power behavior fails.
-- **Learning:** AMD shape is more CPU-core-performance/debug-heavy than broad PnP alone. They value fixed-frequency perf characterization, benchmark literacy, TDP/power framing, and the ability to debug from system symptom → core/pipeline/IP interaction.
-- **Gap:** Benchmark/tooling vocabulary is soft: Geekbench / perfbench style workloads, fixed-frequency normalization, IPC / CPI / stall breakdown, perf counters, TDP vs sustained power, and how to separate core pipeline bottleneck from memory/interconnect/firmware effects.
-- **Suggestion:** CPU post-Si perf drill: fixed-freq → benchmark → counters → IPC/CPI/stall → golden compare → isolate core vs memory/uncore/multi-IP → [Day 15](prep_plan/day15_thermal_power_perf_counters.md)/[Day 09](prep_plan/day09_pipeline_microarch.md).
+### 05 Jun — AMD · CPU Post-Silicon / Core Power & Performance (R2) — 🔴 Ghosted
+- **Asked:** PM flows / power / perf; benchmark/perf tooling (Geekbench / perfbench), TDP framing — said I don't know deeply. Role = CPU-core post-Si fixed-frequency perf (expanding to power); debug down to pipeline / multi-IP.
+- **Learning + gap:** AMD wants fixed-freq perf characterization, benchmark literacy, TDP framing, IPC/CPI/stall breakdown, perf counters, core-vs-memory/uncore isolation — soft vocab to build.
 
 ### 11 Jun — Nvidia · Verification Engineer · screening / readiness discussion — ❌ Rejected this cycle · 🔵 warm contact retained
-- **What happened:** Screening became a technical readiness probe. Main topics: **boot flow**, especially *who triggers startup code* after reset; **how a PCIe write actually happens** from software/store → MMIO/BAR → TLP → endpoint; whether prep covers **LTSSM**; and **what is not covered in emulation for PCIe**. I forgot / did not land the PCIe-emulation limitations clearly.
-- **Interviewer signal:** He said I am **not ready for the interview yet** — a **rejection for this cycle's Verification Engineer seat**. He asked me to let him know once ready and said we can have the **same discussion again**. So the door is open: treat as **future-cycle only** via the retained warm contact, not a hard permanent reject.
-- **Role/team signal:** They are building a team equivalent to **PythonSV**: heavy hardware debug, boot-flow knowledge, PCIe/system bring-up, and similar SoC-validation tooling/debug work. The role likely values hands-on debug fluency more than generic architecture recall.
-- **Learning:** The gap is not "do I know PCIe exists" — it is **system debug narration**: reset actor → ROM/firmware actor → host/RC actor → config/MMIO actor → LTSSM/tooling visibility → emulation-vs-silicon boundary. Need answer as an execution trace, not a definition.
-- **Suggestion:** Future-cycle only (Ranjith warm contact). Drill 4 chains to 60-90 sec: (1) reset→startup-code actor, (2) PCIe posted-write/doorbell path, (3) LTSSM ladder + stuck-state debug, (4) emulation covers-vs-can't for PCIe → [Day 11](prep_plan/day11_cpu_bringup_functional_val.md)/[Day 18](prep_plan/day18_pcie_fundamentals_ltssm.md)/[Day 21](prep_plan/day21_pcie_bringup_functional_val.md)/[Day 24](prep_plan/day24_final_mock.md).
+- **Asked:** boot flow (who triggers startup code after reset); **PCIe write path** (store → MMIO/BAR → TLP → endpoint); LTSSM; **what emulation can't cover for PCIe** (didn't land).
+- **Signal:** "not ready yet" → reject this cycle, door open via Ranjith (future-cycle only). Team = PythonSV-style HW debug / boot-flow / PCIe bring-up.
+- **Learning:** Gap = system-debug **narration as an execution trace** (reset → ROM → RC → MMIO → LTSSM → emulation boundary), not definitions.
 
 ### 20 Jun — Qualcomm · System Performance (R1) — 🔴 Ghosted (R1 weak, assumed reject — but no reply; low regret, role not of interest)
-- **What happened:** Largely an experience-walkthrough round where the interviewer tried to understand *what I actually did and how*, with depth probes on each: (1) **how we find perf regressions at Microsoft** (NPU), (2) **what we did for the PCIe transactor at Intel and how I debugged it**, (3) **what I did at L&T and how I used JTAG**, (4) **the different power states — P0, P1, P2**, and (5) a **"draw the architecture diagram for a CPU"** whiteboard ask.
-- **Self-assessment:** All of it went badly — could not answer confidently, fumbled a lot, gave shallow / disorganised answers on areas that are literally my own résumé (MS perf flow, Intel PCIe transactor, L&T JTAG). The CPU-architecture draw and the P-state ladder (P0/P1/P2) also came out muddled.
-- **Learning:** The failure mode here is **not depth — it's owned-narrative fluency**. These were all *my* projects, and I still couldn't trace them cleanly. This is the same probe-then-push gap (QC CPU Core R2) re-appearing on familiar ground: I know the facts but can't walk the chain on demand. Two résumé-anchor stories (MS perf regression, Intel PCIe transactor) and one HW-exposure story (L&T JTAG) must become reflex *traces*, not recalled definitions. P-states (P0 = max V/f, descending) must be separable from C-states / PCIe L-states cold. A CPU block diagram must be drawable from muscle memory.
-- **Suggestion:** All 5 answers rebuilt in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html) §0c (MS perf-regression flow · Intel PCIe-transactor STAR · L&T JTAG · P0/P1/P2 vs C/L/D states · CPU block diagram). Owned-narrative-fluency drill carries forward — rehearse for Broadcom + next cycle, not a QC R2.
-- **Status:** 🔴 **Ghosted (R1, 20 Jun) — assumed reject (round went badly), but no reply received; low regret.** Role was generic system-performance engineering, an auto-decline under the freeze policy; not aligned with the silicon system-val / pre-Si arc. No loss to the trajectory; the value was the answer-fluency lesson, now captured.
+- **Asked:** Experience walkthrough w/ depth probes: (1) MS perf-regression flow, (2) Intel PCIe transactor + how I debugged it, (3) L&T JTAG, (4) power states P0/P1/P2, (5) **draw a CPU architecture diagram**. Fumbled all five — own résumé, couldn't trace cleanly.
+- **Learning:** Failure = **owned-narrative fluency** (gap #1). The 5 anchors must be reflex traces (now the §9.6 drill); P-states separable from C/L/D; CPU block diagram from memory.
 
 ### 22 Jun — Broadcom · Switch Pre-Si Validation (R1) — 🟢 Cleared → advanced to R2
-- **What happened (8 questions):** (1) Intro. (2) Work at Intel. (3) **Problem-solving / FIFO depth** — writes at 80 data per 100 clocks, reads at 8 data per 10 clocks, all random; find min queue depth for no data loss → guided to **32**. (4) Intel bug story (CDC back-to-back-wake). (5) **Draw a bubble diagram** to detect `101` in the last 4 bits and give the output (sequence-detector FSM). (6) A **puzzle**. (7) **How much Verdi usage / how I read Verilog**. (8) **Test plan for an enhancement**.
-- **FIFO-depth insight:** write avg = 80/100 = 0.8 word/clk, read avg = 8/10 = 0.8 word/clk → **equal average rates**, so it is *not* a rate-mismatch sizing problem. Depth is set by worst-case **burst backlog** (writes bunching while reads are in their slow phase); hints converged on **32**. The trap is saying "rates match → no/shallow FIFO."
-- **R2 guidance from the SAME interviewer:** be **thorough with everything on the CV** (deep layered follow-ups on every line); expect **digital-logic problems** (FSMs, combinational/sequential); **verification questions** — write **functional tests AND error/negative tests** for given scenarios; **clock-domain-crossing** questions; **aptitude/puzzle** questions; and **design methods employed to avoid metastability**.
-- **Learning:** This panel weights RTL-adjacent fundamentals (FSM/bubble diagrams, FIFO/CDC math, metastability fixes) plus verification test-design and CV-narrative depth — the digital-design + CDC ask flagged at referral (18 Jun) was accurate. The §1.4 CDC bug story is the bridge: it's the *why-it-matters*; metastability methods are the *catalogue of fixes*.
-- **Suggestion:** Built a full R2 prep block in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html) — **§4** digital logic (101 detector bubble diagram + Moore/Mealy + window version), **§5** FIFO depth (80/100 vs 8/10 + general depth formula), **§6** metastability & CDC design methods (MTBF, synchronizer types, Gray code, async FIFO, do/don't rules), **§7** verification (functional vs error tests, FIFO worked example, reading Verilog/Verdi, enhancement test plan with regression), **§8** aptitude pack. Rehearse: FIFO "average-equal ⇒ size for burst" one-liner, the 101 bubble diagram from muscle memory, and the metastability-methods table out loud. Also do a CV-line drill: every bullet must survive 3+ "why/how/what-if" follow-ups.
+- **Asked (8 Q):** intro; Intel work; **FIFO depth** (80 wr/100 clk, 8 rd/10 clk → **32**); CDC back-to-back-wake bug; **draw a 101-detector bubble diagram**; a puzzle; Verdi/Verilog reading; **test plan for an enhancement**.
+- **FIFO insight:** equal avg rates (0.8/clk each) → size for **burst backlog = 32**, not rate-mismatch (now §1.4).
+- **R2 ask (same interviewer):** thorough on **every CV line**; **digital-logic** (FSMs, comb/seq); write **functional + error/negative tests**; **CDC**; **aptitude/puzzle**; **metastability-avoidance methods**.
+- **Learning:** Panel weights RTL-adjacent fundamentals + verification test-design + CV depth; full prep in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html) (§1–§9).
 
 ---
 
-##  Patterns
+## Patterns
 
-**Strong:** bug stories with measurable impact · cross-vendor NPU breadth · **design-from-scratch scaffolds** (test-plan, multi-SoC PnP, C-state) · role-fit framing in HM rounds.
+**Strong:** bug stories with measurable impact · cross-vendor NPU breadth · **design-from-scratch scaffolds** (test-plan, multi-SoC PnP, C-state) · role-fit framing in HM rounds · **RTL-adjacent fundamentals under pressure** (Broadcom R1 cleared — FIFO depth, CDC bug, 101-detector, test plan).
 
 **Meta-skill:** probe-then-push — *what → why → how → connected*. Scaffolds survive the push; flat-fact recall doesn't. Every concept = scaffold to walk, not paragraph to recite.
 
-**Soft / carry-forward gaps:**
-1. Layer-3 depth + owned-narrative fluency under probe-then-push (QC CPU Core R2, QC SysPerf — couldn't trace own résumé cleanly).
-2. Live-C terminate-condition + edge-case / loop-invariant pre-amble (Cerebras + Amazon).
-3. EE fundamentals — 2x-closed gap (Intel P&P + Ireland NPU).
-4. HW-fluency framing for board/lab roles — lean on L&T board + Intel post-Si lab (Amazon Echo).
-5. Boot-flow + PCIe execution-trace narration (Nvidia/PythonSV).
-6. Digital-design + CDC fundamentals for RTL-adjacent pre-Si seats — FSM/FIFO/CDC/metastability (Broadcom, R1 22 Jun).
-7. CPU fixed-frequency perf / benchmark / counter-debug vocab (AMD-shape).
+**Company behavior:** **Qualcomm ghosts routinely** — 4 of 5 QC loops ended in silence (no reply), incl. two positive-signal rounds (CPU Core HM, CPU Post-Si). Treat QC post-final-round silence as default-no; don't wait on it.
+
+**The one win, decoded:** the only offer (Intel BLR) had a formula the 14 non-offers lacked — **referral + role-fit 1:1 + probes answerable from prior work**. Replicate that shape, not the application volume.
+
+**Gaps ranked by what they cost (most → least):**
+1. **Role-shape mismatch → 3 rejects** (Arm, QC Pre-Si Verif, Renesas) — a *filtering* miss, not a skill gap; fix by not applying (no automotive, no pure SV/UVM).
+2. **EE fundamentals → 2 rejects** (Intel P&P, Ireland NPU) — CMOS / setup-hold / CDC / SI.
+3. **HW-fluency framing → 1 reject** (Amazon Echo) — board/lab/debug; lean on L&T board + Intel post-Si lab.
+4. **Boot-flow + PCIe execution-trace narration → 1 reject** (Nvidia/PythonSV) — reset→ROM→RC→MMIO→LTSSM→emulation-boundary as a trace.
+5. **Owned-narrative fluency → 2 ghosts (self-assessed)** (QC CPU Core R2, SysPerf) — couldn't trace own résumé on demand; no employer confirmation, so weight accordingly.
+6. **Live-C terminate-condition / edge-case pre-amble** (Cerebras, Amazon coding slips) — contributing, never solely fatal.
+
+**Priority split:**
+- **Now — Broadcom R2 (only live loop):** FSM + **FIFO-depth (§1.4)** · CDC + metastability methods · functional-vs-error tests · aptitude · **owned-narrative / résumé-trace drill (§9.6)** + CV-line defense → [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html).
+- **Next cycle (post-Intel-join, dead loops):** HW-fluency framing · boot-flow/PCIe narration (Nvidia warm) · AMD fixed-freq perf/benchmark vocab.
 
 ---
 
-## 🔁 Flywheel (after every round)
+## � Flywheel (per round, next cycle)
 
-1. **Same day:** add row to timeline above — what happened, learning, status, suggestion.
-2. **Within 24h:** map each "didn't land" to a Day file Architect Drill — add one if missing.
-3. **Within 48h:** ensure the relevant Day file's drills + Exit Check cover the gap.
-4. **Before next interview:** run [Day 24 final mock](prep_plan/day24_final_mock.md) flashcard sweep with the new gap-fill in rotation.
+After each round: same-day timeline row (what · learning · status · suggestion) → map each "didn't land" to a Day-file drill → re-run the [Day 24 mock](prep_plan/day24_final_mock.md) flashcard sweep before the next interview.
 
 ---
 
-## 📝 Retro / carry-forward
+## �📝 Retro / carry-forward
 
-- **Top gap closed:** design-from-scratch scaffolds — multi-SoC PnP (AMD) + test-plan-from-spec (Cerebras/Amazon), landed in [Day 11](prep_plan/day11_cpu_bringup_functional_val.md), [Day 12](prep_plan/day12_dvfs_pstates_pvt.md), [Day 13](prep_plan/day13_cstates_pkgc_s0ix.md), [Day 15](prep_plan/day15_thermal_power_perf_counters.md).
-- **Top gap open:** EE-fundamentals refresh — 2x-closed (Intel P&P Apr + Intel Ireland NPU); consolidated in [Day 24 Sec 5](prep_plan/day24_final_mock.md) but needs live drilling.
-- **Best-fitting role:** Intel Bangalore IFV — spec→vplan→UVM→coverage→CR-triage matches the CV 1:1; ADR + C-state negative-path probes answerable from prior Intel work.
-- **Re-approach / evaluate:** Both 🔴 ghosted — QC CPU Post-Si (2 rounds 2 Jun, no reply) + AMD Core PnP / CPU Post-Si (R2 5 Jun, no reply); treat as closed, re-engage only if recruiter revives with offer/level/scope. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
-- **Deprioritise:** Renesas (automotive) · Arm Verification · QC Pre-Si Verification (role-shape mismatch). Cold-apply FAANG portals (Apple, Meta, Google, Marvell, TI, NXP) — 0/20 yield; referral-only next time.
-- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops; 3-4 warm referrals likely open 1-2 at the same effort. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 16 loops this cycle (Arm, QC Pre-Si Verif, Renesas).
+- **Cycle outcome (16 loops):** 1 offer (Intel BLR ✅ accepted) · 1 pending (Broadcom 🔵 R2) · 1 declined (Micron ⬜) · **5 ghosted** (4 Qualcomm + 1 AMD) · **8 rejected**. App→loop 16/97 = 16.5%; loop→offer 1/16 = 6.25%.
+- **Re-approach / evaluate:** Of the **5 ghosted** loops, only two are worth re-approaching — **QC CPU Post-Si** (2 rounds, 2 Jun) + **AMD Core PnP** (R2, 5 Jun), the most recent + furthest-progressed; re-engage only if a recruiter revives with offer/level/scope. The other three (QC CPU Core HM, QC PnP/Thermal, QC SysPerf) → fully closed. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
+- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops. But **referral ≠ guarantee**: SanDisk's 4 referral apps → 0 loops too (a passive name-drop). The wins (Intel, Broadcom) each had an **engaged referrer + recruiter/HM pull** — next cycle, secure an *active advocate who follows up internally*, not just a referral submission. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 16 loops this cycle (Arm, QC Pre-Si Verif, Renesas).
