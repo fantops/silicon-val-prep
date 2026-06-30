@@ -1,12 +1,12 @@
-# Day 10 — Concurrency Primitives, Lock-free Queues, DSA Drills
+# Day 22 — Concurrency Primitives, Lock-free Queues, DSA Drills
 
 ## Concept
 
-A concurrent primitive offers some combination of three independent guarantees: **atomicity** (no torn read/write), **visibility** (the write becomes observable), **ordering** (relative position vs surrounding ops preserved). `volatile` gives only compiler-side ordering for that variable; **C11 atomics** with explicit memory orders give all three at controllable cost. Pick the **weakest correct** order: relaxed < acquire/release < seq_cst. The canonical lock-free structure is the **SPSC ring** — one writer per pointer + acquire/release, no CAS needed; same shape as NVMe SQ/CQ (Day 11). DSA drills (two-pointer, sliding window, hashmap, stack/queue, BFS/DFS, binary search, bit manipulation, heap) round out a Qualcomm coding round.
+A concurrent primitive offers some combination of three independent guarantees: **atomicity** (no torn read/write), **visibility** (the write becomes observable), **ordering** (relative position vs surrounding ops preserved). `volatile` gives only compiler-side ordering for that variable; **C11 atomics** with explicit memory orders give all three at controllable cost. Pick the **weakest correct** order: relaxed < acquire/release < seq_cst. The canonical lock-free structure is the **SPSC ring** — one writer per pointer + acquire/release, no CAS needed; same shape as NVMe SQ/CQ (Day 23). DSA drills (two-pointer, sliding window, hashmap, stack/queue, BFS/DFS, binary search, bit manipulation, heap) round out a Qualcomm coding round.
 
 ## Why this day in the flow
 
-Days 5 (MESI / false sharing) and 09 (memory model) gave you the *why*; Day 10 gives you the *write it under interview pressure* skill. Coding rounds at Qualcomm/Intel/Microsoft test both systems-C (spinlock, ring, doorbell harness) and classic DSA. Today is the rep day.
+Days 17 (MESI / false sharing) and 09 (memory model) gave you the *why*; Day 22 gives you the *write it under interview pressure* skill. Coding rounds at Qualcomm/Intel/Microsoft test both systems-C (spinlock, ring, doorbell harness) and classic DSA. Today is the rep day.
 
 In the Layer map this is the **coding-readiness layer that sits across Layers 1, 5, and 6**.
 
@@ -59,7 +59,7 @@ static void spin_unlock(spinlock_t *l) {
 - **Acquire on lock** — subsequent loads/stores cannot reorder above.
 - **Release on unlock** — preceding loads/stores cannot reorder below.
 
-**Test-and-test-and-set:** naive CAS in a hot loop hammers the cache line and causes coherence storms (Day 5). Pre-check with a **relaxed load** before CAS to keep the line in Shared state until you really need to acquire:
+**Test-and-test-and-set:** naive CAS in a hot loop hammers the cache line and causes coherence storms (Day 17). Pre-check with a **relaxed load** before CAS to keep the line in Shared state until you really need to acquire:
 
 ```c
 while (atomic_load_explicit(l, memory_order_relaxed) != 0) cpu_relax();
@@ -116,7 +116,7 @@ static bool spsc_pop(spsc_t *r, int *v) {
 }
 ```
 
-Same pattern is used by NVMe SQ/CQ (Day 11) and Linux kfifo. **Always pad `head` and `tail` onto separate cache lines** (`alignas(64)`) — otherwise false sharing kills throughput.
+Same pattern is used by NVMe SQ/CQ (Day 23) and Linux kfifo. **Always pad `head` and `tail` onto separate cache lines** (`alignas(64)`) — otherwise false sharing kills throughput.
 
 ### 6. MPSC / MPMC and ABA
 
@@ -144,7 +144,7 @@ typedef struct {
 |---|---|
 | Two pointers | Reverse linked list, Floyd cycle detect, middle of list |
 | Sliding window | Longest substring no-repeat, max sum window K |
-| Hashmap | Two-sum, group anagrams, LRU cache (Day 4 anchor) |
+| Hashmap | Two-sum, group anagrams, LRU cache (Day 16 anchor) |
 | Stack | Valid parens, next greater element, RPN |
 | Queue / BFS | Shortest path in grid, level-order traversal |
 | Recursion / DFS | Subsets, permutations, word search |
@@ -168,7 +168,7 @@ State **time/space complexity unprompted** for every solution: "O(n log n) avera
 ## Bugs in this Topic
 
 - **Counter incremented from two threads with no atomic:** lost updates; final value < expected. Fix: `_Atomic` + `atomic_fetch_add` (relaxed is fine for a pure counter).
-- **CAS spin without test-first:** cache-line ping-pong (Day 5 false-sharing / coherence storm). Fix: relaxed pre-check before CAS.
+- **CAS spin without test-first:** cache-line ping-pong (Day 17 false-sharing / coherence storm). Fix: relaxed pre-check before CAS.
 - **`head` and `tail` of SPSC ring on same cache line:** false sharing collapses throughput. Fix: `alignas(64)`.
 - **ABA on lock-free pop:** stale CAS succeeds against a recycled pointer. Fix: tagged pointer, hazard pointer, RCU.
 - **`volatile` used as substitute for atomic:** no atomicity, no cross-core visibility guarantee. Fix: `_Atomic` with the right memory order.
@@ -196,16 +196,16 @@ State **time/space complexity unprompted** for every solution: "O(n log n) avera
 **D3. ABA defends against reuse-during-CAS. Reason about why hardware doesn't just provide a wider CAS that bakes in a counter.**
 *Constraints to weigh:* DCAS (double-word CAS) exists on x86 (cmpxchg16b) and ARM (LDXP/STXP), but most lock-free libs avoid it — generation-counter overflow, portability, why hazard pointers / RCU often win. What would a 128-bit native CAS actually unlock that DCAS doesn't?
 
-**D4. Spinlocks are pointless on uniprocessor. Construct — if you can — a UP workload where spinlocks beat mutexes.**
+**D16. Spinlocks are pointless on uniprocessor. Construct — if you can — a UP workload where spinlocks beat mutexes.**
 *Constraints to weigh:* preemption-disabled regions, ISR vs task context, hybrid spin-then-sleep, expected-CS-length distribution. What does Linux actually compile spinlocks to on UP, and why?
 
-**D5. Cache-line padding fixes false sharing but wastes memory. Construct an SPSC ring that is contention-free without padding.**
+**D17. Cache-line padding fixes false sharing but wastes memory. Construct an SPSC ring that is contention-free without padding.**
 *Constraints to weigh:* head and tail on different lines, batch updates, separate "shadow" copies in producer/consumer cores. What does kfifo / DPDK rte_ring actually do, and where does the trick fail?
 
-**D6. `volatile` is not a synchronisation primitive. Reason from first principles about why beginners think it is.**
+**D18. `volatile` is not a synchronisation primitive. Reason from first principles about why beginners think it is.**
 *Constraints to weigh:* compiler-side ordering for that variable vs CPU-side ordering vs cross-core visibility, single-core asymmetry, "it works on x86" trap. What language change would make volatile genuinely sufficient — and why does no language do it?
 
-**D7. Lock-free is not wait-free. Construct a workload where you need wait-free, not just lock-free.**
+**D19. Lock-free is not wait-free. Construct a workload where you need wait-free, not just lock-free.**
 *Constraints to weigh:* hard real-time deadlines, ISR contexts, attacker-resistant data structures, fairness. What does wait-free buy that lock-free can't, and why isn't it the default?
 
 ---
@@ -298,7 +298,7 @@ int main(void) {
 ### Q: Why lock-free? Aren't locks fine if uncontended?
 
 Uncontended locks are cheap (~10 ns). Contended locks are catastrophic:
-- **Cache line bouncing** — the lock word ping-pongs M→I→M between cores (Day 5).
+- **Cache line bouncing** — the lock word ping-pongs M→I→M between cores (Day 17).
 - **Convoy effect** — a context-switched lock holder blocks every waiter.
 - **Priority inversion** — a low-prio holder blocks a high-prio waiter.
 - **Cross-domain impossibility** — you cannot share a mutex with a device. Devices don't run mutex code.
@@ -326,7 +326,7 @@ The value matched, but the *world changed and changed back*. CAS only checks the
 
 ### Q: Why cache-line padding between `head` and `tail` in every ring?
 
-Day 5 false sharing. Producer writes `head` constantly; consumer writes `tail` constantly. If they're on the same cache line, the line bounces between cores on every op — hundreds of cycles per push/pop instead of single cycles. **Pad `head` and `tail` to separate 64-byte cache lines** (`alignas(64)` between them) and throughput jumps 5-10×. *This single change is the difference between a textbook lock-free queue and a production one.*
+Day 17 false sharing. Producer writes `head` constantly; consumer writes `tail` constantly. If they're on the same cache line, the line bounces between cores on every op — hundreds of cycles per push/pop instead of single cycles. **Pad `head` and `tail` to separate 64-byte cache lines** (`alignas(64)` between them) and throughput jumps 5-10×. *This single change is the difference between a textbook lock-free queue and a production one.*
 
 ### One-liner
 
@@ -340,7 +340,7 @@ Day 5 false sharing. Producer writes `head` constantly; consumer writes `tail` c
 
 - **queues as fabric** — *what:* producer/consumer decouple / *why:* absorb rate mismatch, cross-domain handoff / *how:* ring buffer with head/tail / *connects:* NVMe SQ, NIC rings, work-stealing schedulers
 - **lock vs lock-free** — *what:* mutex blocks vs CAS retries / *why:* contention vs progress guarantee / *how:* lock = futex, lock-free = atomic ops + ABA defense / *connects:* RCU, hazard pointers, where you can't take a lock (ISR, device)
-- **atomics** — *what:* indivisible RMW / *why:* no torn reads under concurrency / *how:* LL/SC (ARM) or `LOCK` prefix (x86) / *connects:* must be aligned, takes line into M (Day 5)
+- **atomics** — *what:* indivisible RMW / *why:* no torn reads under concurrency / *how:* LL/SC (ARM) or `LOCK` prefix (x86) / *connects:* must be aligned, takes line into M (Day 17)
 - **ring buffer (SPSC)** — *what:* fixed-size circular, single producer + single consumer / *why:* O(1) enq/deq, no allocator on hot path / *how:* power-of-2 mask, no CAS needed / *connects:* false sharing if head and tail share a line
 - **ABA** — *what:* value matches but the world changed under you / *why:* naive CAS sees same pointer, different object / *how:* tagged pointers (counter in low bits) or hazard pointers / *connects:* lock-free stack/queue correctness
 
@@ -348,10 +348,10 @@ Day 5 false sharing. Producer writes `head` constantly; consumer writes `tail` c
 
 ## Bug Anchor
 
-- **Day 5 (MESI / false sharing):** ring `head`/`tail` cache-line padding lives there.
-- **Day 8 (DMA / doorbells):** the same SPSC pattern for hardware queues.
-- **Day 11 (NVMe SQ/CQ):** the production instance of SPSC + phase bit.
-- **Day 16 (memory model):** acquire/release map onto ARM `LDAR/STLR` and `DMB`.
+- **Day 17 (MESI / false sharing):** ring `head`/`tail` cache-line padding lives there.
+- **Day 20 (DMA / doorbells):** the same SPSC pattern for hardware queues.
+- **Day 23 (NVMe SQ/CQ):** the production instance of SPSC + phase bit.
+- **Day 30 (memory model):** acquire/release map onto ARM `LDAR/STLR` and `DMB`.
 
 ## Exit Check
 

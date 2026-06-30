@@ -1,4 +1,4 @@
-# Day 16 — Pre-Silicon PM Validation
+# Day 30 — Pre-Silicon PM Validation
 
 ## Concept
 
@@ -6,7 +6,7 @@ Pre-silicon PM validation is the discipline of proving — *before* tape-out —
 
 ## Why this day in the flow
 
-D12 named the states. D13 named the package + idle states. D14 named the cells that physically implement them. **Today is when the val engineer builds the vplan, the LP-sim env, and the coverage that proves those states actually work.** Tomorrow (D17) we move to post-Si — where the same states have to be measured on real silicon with telemetry instead of waveforms.
+D26 named the states. D27 named the package + idle states. D28 named the cells that physically implement them. **Today is when the val engineer builds the vplan, the LP-sim env, and the coverage that proves those states actually work.** Tomorrow (D31) we move to post-Si — where the same states have to be measured on real silicon with telemetry instead of waveforms.
 
 This is the day that maps most directly to a CPU IP Functional Val JD's bullets on PM coverage, scenario-based testing, and Perspec.
 
@@ -313,16 +313,16 @@ Stage H — Sign-off
 **D3. The team can run either (a) 10× more random sim cycles or (b) more emulation hours. Reason about which buys more PM-bug-find-rate.**
 *Constraints to weigh:* sim depth-of-debug (waveform) vs emul speed (real SW), bug classes findable in each, sequencer races vs SW-PM-policy bugs.
 
-**D4. PCU FSM has 60 states. Reason about whether to prove it correct with formal vs cover it with simulation.**
+**D16. PCU FSM has 60 states. Reason about whether to prove it correct with formal vs cover it with simulation.**
 *Constraints to weigh:* formal explosion on 60-state FSM, what properties are tractable (safety vs liveness), what sim catches that formal misses (interaction with surrounding RTL), team formal skill cost.
 
-**D5. A vplan row says "C6 entry with cross-cluster traffic." Reason about how to turn this into a concrete testcase + coverpoint + scoreboard.**
+**D17. A vplan row says "C6 entry with cross-cluster traffic." Reason about how to turn this into a concrete testcase + coverpoint + scoreboard.**
 *Constraints to weigh:* what "cross-cluster traffic" means precisely, how to score correctness (no data loss + no deadlock + residency reached), what coverpoint cells the row implies.
 
-**D6. Perspec scenarios are reusable across sim/emul/post-Si. Reason about what makes a scenario portable vs what locks it to one target.**
+**D18. Perspec scenarios are reusable across sim/emul/post-Si. Reason about what makes a scenario portable vs what locks it to one target.**
 *Constraints to weigh:* abstraction level of the model, target-specific timing assumptions, scoring API differences, what "the same scenario" actually means across 3 orders of magnitude in speed.
 
-**D7. The coverage dashboard shows 99% closure but the architect wants 100%. Reason about how to make the call between "close the last 1%" vs "waive with justification."**
+**D19. The coverage dashboard shows 99% closure but the architect wants 100%. Reason about how to make the call between "close the last 1%" vs "waive with justification."**
 *Constraints to weigh:* unreachable-coverpoint analysis, customer exposure of the uncovered scenario, schedule cost of closure, risk if it escapes.
 
 ---
@@ -381,10 +381,10 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 13 (C-states):** every C-state spec'd there must have a PM-vplan row here.
-- **Day 14 (UPF):** every iso/retention strategy must have an SVA here.
-- **Day 17 (post-Si PM val):** anything escaped here surfaces there as a lab bug.
-- **Day 22 (PCIe PM intersection):** PkgC + PCIe L1.2 cross-IP scenarios live in both.
+- **Day 27 (C-states):** every C-state spec'd there must have a PM-vplan row here.
+- **Day 28 (UPF):** every iso/retention strategy must have an SVA here.
+- **Day 31 (post-Si PM val):** anything escaped here surfaces there as a lab bug.
+- **Day 37 (PCIe PM intersection):** PkgC + PCIe L1.2 cross-IP scenarios live in both.
 - **Master bug story (ADR opcode ordering):** caught by PCU-opcode-trace + cross-IP coverage cell.
 
 ## Exit Check

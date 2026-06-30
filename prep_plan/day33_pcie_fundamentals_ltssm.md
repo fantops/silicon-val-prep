@@ -1,4 +1,4 @@
-# Day 18 — PCIe Fundamentals + LTSSM + Power States
+# Day 33 — PCIe Fundamentals + LTSSM + Power States
 
 ## Concept
 
@@ -6,7 +6,7 @@ PCIe is a **3-layer point-to-point serial fabric**: physical (lanes, encoding, e
 
 ## Why this day in the flow
 
-Days 4-8 built the cache/MMU/IOMMU/DMA picture. Day 18 is the **bus that carries all that traffic**. PCIe is the substrate for NVMe (Day 11), thermal events (Day 15), accelerator submission (Day 18-19) and a huge fraction of debug (Day 20). Today is also where the Day 13 PkgC6 story lives — PkgC6 needs PCIe links in **L1.2** specifically.
+Days 16-20 built the cache/MMU/IOMMU/DMA picture. Day 33 is the **bus that carries all that traffic**. PCIe is the substrate for NVMe (Day 23), thermal events (Day 29), accelerator submission (Day 33-34) and a huge fraction of debug (Day 35). Today is also where the Day 27 PkgC6 story lives — PkgC6 needs PCIe links in **L1.2** specifically.
 
 In the Layer map this is **Layer 3 (Buses)**.
 
@@ -283,7 +283,7 @@ Things to instrument in a pre-Si or post-Si enumeration test:
 
 **L0p** solves what L0s/L1 don't: workloads with low-but-constant traffic (background DMA, polling) benefit from keeping the link "on" but at reduced lane count, avoiding L1 entry/exit cost.
 
-### 11. Why PkgC6 needs L1.2 (forward link to Day 13/14)
+### 11. Why PkgC6 needs L1.2 (forward link to Day 27/14)
 
 - **L1** alone: PLL off but common-mode bias still drawn → platform rail can't fully drop.
 - **L1.1**: refclk gated, but common-mode still on.
@@ -300,12 +300,12 @@ If your endpoint doesn't advertise L1.2 in the L1 PM Substates capability, PkgC6
 - **Frequent Recovery entries during traffic:** signal integrity (eye margin too small). Look at PCIe AER, FEC error counter (Gen6), Recovery counter; check Tx coefficients selected by EQ.
 - **Link up but no traffic:** flow-control credit return broken (UpdateFC DLLPs lost). Check FC credit counters per VC.
 - **Vendor ID reads `0xFFFFFFFF` after a power-state transition:** link down. Re-read after PHY/LTSSM recovery; if still 0xFF — endpoint didn't survive the PM transition.
-- **PkgC6 never entered:** endpoint missing L1.2 in L1 PM Substates; or platform CLKREQ# routing wrong; or LTR setting too tight. Day 13 anchor.
-- **`DSTRD` miscomputed on NVMe (forward link to Day 11):** doorbell goes to wrong offset; controller never sees the kick.
+- **PkgC6 never entered:** endpoint missing L1.2 in L1 PM Substates; or platform CLKREQ# routing wrong; or LTR setting too tight. Day 27 anchor.
+- **`DSTRD` miscomputed on NVMe (forward link to Day 23):** doorbell goes to wrong offset; controller never sees the kick.
 - **CfgRd burst dominates boot time:** every probe pass re-reads config; cache it once.
 - **Bridge `Memory Base/Limit` mis-sized during enumeration:** EP enumerates fine, but its BAR sits outside the bridge window — every MMIO load from the host returns `0xFFFFFFFF` even though `lspci` shows the device. Validator hook: read bridge window after enum and verify it contains every downstream BAR.
 - **Class code reads `00:00:00` at probe time:** EP firmware still initialising when host issues first CfgRd — PERST# de-assert too close to first config access (`Trhfa` violated). Re-probe after spec delay.
-- **L0p re-scaling races a TLP in flight (transactor bug story — see Day 20 Story 6):** lane-count change committed mid-FLIT; receiver de-skewed against the old width and dropped the partial FLIT. Symptom: link stays in L0 but FEC error counter spikes coincident with every L0p transition.
+- **L0p re-scaling races a TLP in flight (transactor bug story — see Day 35 Story 6):** lane-count change committed mid-FLIT; receiver de-skewed against the old width and dropped the partial FLIT. Symptom: link stays in L0 but FEC error counter spikes coincident with every L0p transition.
 - **Multi-function EP — host stops at fn0:** Header Type bit[7] (multi-function) not set in EP straps; fn1…fn7 invisible to OS even though present.
 
 ---
@@ -329,16 +329,16 @@ If your endpoint doesn't advertise L1.2 in the L1 PM Substates capability, PkgC6
 **D3. Posted memory writes are fire-and-forget; reads block. Reason from first principles why doorbell-as-MWr won the design.**
 *Constraints to weigh:* round-trip latency × IOPS, ordering vs response coupling, bandwidth amortisation, what "completion" would even mean for a doorbell. Construct the workload where non-posted doorbells would be safer, even at the perf cost.
 
-**D4. LTSSM has 11 states. Why so many — could it be expressed in 4?**
+**D16. LTSSM has 11 states. Why so many — could it be expressed in 4?**
 *Constraints to weigh:* each state isolates a different failure mode (refclk, EQ, polarity, FC credit, power), debug-protocol exposure, link-power transitions need their own state space. Which states are vestigial vs load-bearing in 2025?
 
-**D5. PCIe trains at Gen1 first then negotiates up. Reason about why no spec ever just "starts at the highest rate."**
+**D17. PCIe trains at Gen1 first then negotiates up. Reason about why no spec ever just "starts at the highest rate."**
 *Constraints to weigh:* receiver equalisation needs a known training sequence, cross-vendor interop matrix, downshift recovery on signal-integrity failure, LTSSM Recovery as the universal back-channel. What would a "start-at-Gen6" spec sacrifice?
 
-**D6. Flow-control credits — why aren't they implicit (just stop sending if you don't get an ACK)?**
+**D18. Flow-control credits — why aren't they implicit (just stop sending if you don't get an ACK)?**
 *Constraints to weigh:* receive-buffer sizing visibility, head-of-line blocking, per-VC isolation, protocol overhead of credit-return DLLPs. What did PCI-X's bus-mastering retry teach the PCIe spec authors that they encoded into the credit scheme?
 
-**D7. Imagine PCIe's successor lets devices share CPU coherence (CXL.cache). Which LTSSM/TLP artefacts survive, and which are obsoleted?**
+**D19. Imagine PCIe's successor lets devices share CPU coherence (CXL.cache). Which LTSSM/TLP artefacts survive, and which are obsoleted?**
 *Constraints to weigh:* the PHY and DLL stay (they're the wire), TL might evolve for cache-line semantics, LTSSM still needs power states and equalisation, doorbell-as-MWr loses to coherent loads/stores. What new failure mode appears for `.cache` that PCIe never had?
 
 ---
@@ -450,7 +450,7 @@ Because ACK/NAK pacing wastes bandwidth: the sender must wait for permission per
 
 ### Q: Why power states (L0, L0s, L1, L1.1, L1.2)?
 
-Because PHY and link-level power dominates idle PCIe energy on laptops. Same ladder logic as CPU C-states (Day 13): each lower state saves more, costs more wake latency. **L1.2** is the deepest — PHY off, refclk gated, ~10 μs wake. PkgC6 / S0ix on the host *requires* every PCIe link to be in L1.2 (Day 13 dependency). One device that won't enter L1.2 (bad ASPM firmware) blocks platform deep idle — visible as missing PkgC10 residency.
+Because PHY and link-level power dominates idle PCIe energy on laptops. Same ladder logic as CPU C-states (Day 27): each lower state saves more, costs more wake latency. **L1.2** is the deepest — PHY off, refclk gated, ~10 μs wake. PkgC6 / S0ix on the host *requires* every PCIe link to be in L1.2 (Day 27 dependency). One device that won't enter L1.2 (bad ASPM firmware) blocks platform deep idle — visible as missing PkgC10 residency.
 
 ### One-liner
 
@@ -470,10 +470,10 @@ Because PHY and link-level power dominates idle PCIe energy on laptops. Same lad
 
 ## Bug Anchor
 
-- **Day 11 (NVMe `CSTS.RDY` / `DSTRD`):** the canonical bring-up bug on top of PCIe.
-- **Day 13 (PkgC6 / S0ix):** L1.2 dependency lives here.
-- **Day 14 (ADR/PCU):** the firmware analogue of "doorbell before descriptor."
-- **Day 20 (Debug method):** `lspci`, AER, FEC counters, protocol analyser.
+- **Day 23 (NVMe `CSTS.RDY` / `DSTRD`):** the canonical bring-up bug on top of PCIe.
+- **Day 27 (PkgC6 / S0ix):** L1.2 dependency lives here.
+- **Day 28 (ADR/PCU):** the firmware analogue of "doorbell before descriptor."
+- **Day 35 (Debug method):** `lspci`, AER, FEC counters, protocol analyser.
 
 ## Exit Check
 

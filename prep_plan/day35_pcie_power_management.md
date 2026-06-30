@@ -1,4 +1,4 @@
-# Day 20 — PCIe Power Management (ASPM, D-states, L1.2, CLKREQ#, LTR)
+# Day 35 — PCIe Power Management (ASPM, D-states, L1.2, CLKREQ#, LTR)
 
 ## Concept
 
@@ -6,9 +6,9 @@ PCIe defines two orthogonal power-management dimensions: **link-state PM** (ASPM
 
 ## Why this day in the flow
 
-D19 enumerated the device. **Today is how that device and its link save power once enumerated.** PCIe PM is the most-validated cross-IP PM surface — every PkgC on a modern x86 SoC depends on PCIe being in L1.2, and every L1.2 entry depends on the refclk/CLKREQ#/LTR plumbing being correct. **You cannot validate PkgC without validating PCIe PM first.**
+D34 enumerated the device. **Today is how that device and its link save power once enumerated.** PCIe PM is the most-validated cross-IP PM surface — every PkgC on a modern x86 SoC depends on PCIe being in L1.2, and every L1.2 entry depends on the refclk/CLKREQ#/LTR plumbing being correct. **You cannot validate PkgC without validating PCIe PM first.**
 
-In the Layer map this is the **third day of Phase 4 (PCIe)**, the bridge between link-bring-up (D18, D19) and full functional validation (D21) — and the necessary precondition for D22's PkgC ↔ L1.2 intersection.
+In the Layer map this is the **third day of Phase 7 (Interconnect & PCIe)**, the bridge between link-bring-up (D33, D34) and full functional validation (D36) — and the necessary precondition for D37's PkgC ↔ L1.2 intersection.
 
 ---
 
@@ -154,7 +154,7 @@ A PCIe IP val team owns this cross-product:
                                          denial}             button}             zero}
 ```
 
-Plus PVT × link-speed × link-width × cross-IP (with PkgC for D22 anchor).
+Plus PVT × link-speed × link-width × cross-IP (with PkgC for D37 anchor).
 
 ### 9. Side-band signal timing
 
@@ -182,7 +182,7 @@ PkgC6 entry blockers (typical x86 platform):
 
 If any one rootport's downstream device fails to enter L1.2 (because its LTR is too tight, or its driver disables ASPM L1.2, or its CLKREQ# is stuck), **PkgC6 never enters.** socwatch reports the blocker; root-cause is in this day's content.
 
-This is **why D22 exists** — the intersection is so critical it gets its own day.
+This is **why D37 exists** — the intersection is so critical it gets its own day.
 
 ---
 
@@ -234,7 +234,7 @@ Stage G — LTR exercise
 
 Stage H — Cross-IP / PkgC
    ├─ All rootports L1.2 + other blockers cleared → PkgC6 entry
-   └─ See Day 22 for the deep dive
+   └─ See Day 37 for the deep dive
 ```
 
 ---
@@ -304,16 +304,16 @@ Stage H — Cross-IP / PkgC
 **D3. Two endpoints share one CLKREQ# pin on a budget board. Reason about all the things that can go wrong.**
 *Constraints to weigh:* open-drain wired-OR semantics, wake amplification, asymmetric LTR, debug visibility on which device woke, whether SW can know.
 
-**D4. LTR is "infinite tolerance." Reason about whether this is safe.**
+**D16. LTR is "infinite tolerance." Reason about whether this is safe.**
 *Constraints to weigh:* worst-case wake latency at L1.2 + PkgC6 + DRAM-SR-exit, what breaks (real-time audio, NIC RX dropping), why platforms default infinite when device doesn't say.
 
-**D5. Reason about D3cold: it removes function rails. What does the device's PM cap say to SW about this?**
+**D17. Reason about D3cold: it removes function rails. What does the device's PM cap say to SW about this?**
 *Constraints to weigh:* PMCSR only reads/writes when device powered, cfg access in D3cold requires platform path, ACPI _PS3 method, link state L2 vs L3.
 
-**D6. PME from D3hot must wake the link from L1.2. Reason about the ordering of CLKREQ# assert and PME-TLP send.**
+**D18. PME from D3hot must wake the link from L1.2. Reason about the ordering of CLKREQ# assert and PME-TLP send.**
 *Constraints to weigh:* TLP can't be sent without a link, link can't come up without refclk, refclk needs CLKREQ#, so PME → CLKREQ# → refclk → train → L0 → PME TLP.
 
-**D7. The val team has 200 hours of emulation budget for PCIe PM. Reason about how to allocate across ASPM directed, L1.2 stress, cross-IP with PkgC, LTR sweeps, and PVT corners.**
+**D19. The val team has 200 hours of emulation budget for PCIe PM. Reason about how to allocate across ASPM directed, L1.2 stress, cross-IP with PkgC, LTR sweeps, and PVT corners.**
 *Constraints to weigh:* bug-find-rate per scenario class, what only emul catches (real driver behaviour), what sim catches more cheaply, where post-Si is unforgiving.
 
 ---
@@ -399,11 +399,11 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 18 (LTSSM):** L1.2 exit goes through Recovery (an LTSSM state).
-- **Day 19 (enum):** L1SS Cap programmed during enum; mis-program here kills PM.
-- **Day 13 (C-states / S0ix):** S0ix requires PCIe L1.2 — every PCIe PM bug is also a PkgC bug.
-- **Day 17 (post-Si PM val):** socwatch reports PCIe as PkgC blocker — root-cause sits in this day.
-- **Day 22 (PkgC ↔ L1.2):** the deep cross-IP intersection.
+- **Day 33 (LTSSM):** L1.2 exit goes through Recovery (an LTSSM state).
+- **Day 34 (enum):** L1SS Cap programmed during enum; mis-program here kills PM.
+- **Day 27 (C-states / S0ix):** S0ix requires PCIe L1.2 — every PCIe PM bug is also a PkgC bug.
+- **Day 31 (post-Si PM val):** socwatch reports PCIe as PkgC blocker — root-cause sits in this day.
+- **Day 37 (PkgC ↔ L1.2):** the deep cross-IP intersection.
 
 ## Exit Check
 

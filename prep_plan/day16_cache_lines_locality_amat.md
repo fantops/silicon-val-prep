@@ -1,4 +1,4 @@
-# Day 04 — Cache Lines, Locality, Write Policies, AMAT
+# Day 16 — Cache Lines, Locality, Write Policies, AMAT
 
 ## Concept
 
@@ -8,10 +8,10 @@ Caches exist because DRAM is hundreds of cycles away. Data moves in fixed-size *
 
 After mastering addresses (Day 1), layout (Day 2), and registers (Day 3), this is the first day where the *path between CPU and memory* matters. Every later concept builds on it:
 
-- Day 5 — coherence + false sharing (cache lines crossing cores).
-- Day 8 — DMA / doorbells (cache-line clean/flush before device DMA).
-- Day 14 — ADR (write-back makes the WPQ a thing in the first place).
-- Day 19 — NPU memory bugs (page faults vs cache misses are not the same thing — today is where you draw the line).
+- Day 17 — coherence + false sharing (cache lines crossing cores).
+- Day 20 — DMA / doorbells (cache-line clean/flush before device DMA).
+- Day 28 — ADR (write-back makes the WPQ a thing in the first place).
+- Day 34 — NPU memory bugs (page faults vs cache misses are not the same thing — today is where you draw the line).
 
 This is **Layer 1** of the system flow.
 
@@ -67,7 +67,7 @@ The whole hierarchy above is one cell-tech tradeoff repeated:
 
 **Validation-relevant gotchas:**
 - **DRAM refresh stalls** — a refresh on the bank you're about to read costs you ~100 ns of extra latency. Looks like a perf jitter bug; root cause is just refresh collision.
-- **DRAM self-refresh entry/exit** — entering self-refresh saves power but exit latency is microseconds; PkgC6 / S0ix entry has to coordinate this with the memory controller (Day 13).
+- **DRAM self-refresh entry/exit** — entering self-refresh saves power but exit latency is microseconds; PkgC6 / S0ix entry has to coordinate this with the memory controller (Day 27).
 - **SRAM retention voltage** — in C6 the core's V-rail drops to a *retention* voltage that keeps SRAM state (arch regs, L2 if retained) but can't switch. Drop too low → silent SRAM bit flip on wake. Classic pre-Si validation corner.
 - **eDRAM / on-die DRAM** existed (Intel Crystalwell L4) but is rare now — HBM stacks took over for high-BW use cases.
 - **3D-stacked HBM** — still DRAM cells; gets bandwidth via wide bus + TSVs, not faster cells.
@@ -125,7 +125,7 @@ Typical: L1 4-8 way, L2 8-16 way, L3 16-32 way.
 
 - Write hits cache; line marked **dirty**.
 - Memory written later on eviction or flush.
-- Saves bandwidth; adds the "WPQ must drain before power loss" problem (Day 14 ADR).
+- Saves bandwidth; adds the "WPQ must drain before power loss" problem (Day 28 ADR).
 
 **Write-through:**
 
@@ -151,7 +151,7 @@ Typical: L1 4-8 way, L2 8-16 way, L3 16-32 way.
 | Conflict | two addresses map to same set | higher associativity, address layout |
 | **Coherence** | invalidations from peer cores | layout, padding, true-vs-false sharing analysis |
 
-Coherence misses are the bridge to Day 5.
+Coherence misses are the bridge to Day 17.
 
 ### 9. AMAT (the one formula to remember)
 
@@ -177,7 +177,7 @@ device DMA reads descriptor
 
 This is why DMA buffers are aligned to a cache line and sized in multiples of one. If a descriptor shares a line with unrelated data, a clean/invalidate on that line affects the neighbour.
 
-You will revisit this on Day 8.
+You will revisit this on Day 20.
 
 ### 11. What this is **not** — vocabulary discipline
 
@@ -186,11 +186,11 @@ Don't conflate layers (interviewers catch this):
 | Layer | Granularity | Managed by |
 |---|---|---|
 | CPU cache | 64 B line | hardware (locality, coherence) |
-| Virtual memory | 4 KB page | OS / MMU (translation, faults) — Day 6 |
-| IOMMU/SMMU | IO page | OS / device map — Day 7 |
-| VTCM | tile / buffer | NPU compiler/runtime — Day 18 |
+| Virtual memory | 4 KB page | OS / MMU (translation, faults) — Day 18 |
+| IOMMU/SMMU | IO page | OS / device map — Day 19 |
+| VTCM | tile / buffer | NPU compiler/runtime — Day 33 |
 
-The Day 19 QNN/ORT page-fault story is a *page-table* event (4 KB, OS-managed), **not** a cache-line miss. VTCM in Hexagon HTP is a *software-managed* local store, **not** a CPU cache.
+The Day 34 QNN/ORT page-fault story is a *page-table* event (4 KB, OS-managed), **not** a cache-line miss. VTCM in Hexagon HTP is a *software-managed* local store, **not** a CPU cache.
 
 ---
 
@@ -222,16 +222,16 @@ The Day 19 QNN/ORT page-fault story is a *page-table* event (4 KB, OS-managed), 
 **D3. Why an associativity ladder (L1 8-way, L3 16-way) and not all fully associative?**
 *Constraints to weigh:* parallel tag comparator cost (energy + area) vs conflict-miss rate vs hit-time on critical path. Why can a TLB get away with FA but L3 cannot? What's the cost curve as ways double?
 
-**D4. Inclusive vs exclusive vs non-inclusive-non-exclusive — what workload makes each the right call?**
+**D16. Inclusive vs exclusive vs non-inclusive-non-exclusive — what workload makes each the right call?**
 *Constraints to weigh:* snoop-filter cost (inclusive lets L3 act as a directory), effective capacity (exclusive sums), back-invalidation traffic, multi-socket coherence. What does AMD vs Intel do, and why are they different?
 
-**D5. Imagine DRAM latency dropped 10× tomorrow. Does the cache hierarchy still earn its area?**
+**D17. Imagine DRAM latency dropped 10× tomorrow. Does the cache hierarchy still earn its area?**
 *Constraints to weigh:* AMAT recomputation, energy-per-access (cache hit ≪ DRAM access even at parity latency), bandwidth wall, what "hit" means if DRAM is as fast as L3. Where does the hierarchy collapse, and where does it survive?
 
-**D6. Caches are transparent to software but TLBs need explicit invalidation. Why the asymmetry?**
+**D18. Caches are transparent to software but TLBs need explicit invalidation. Why the asymmetry?**
 *Constraints to weigh:* coherence protocol scope (caches snoop, TLBs don't), what the "truth" being cached is (data lives in DRAM and is owned by the coherence domain; translations live in page tables owned by the OS), cost of broadcasting page-table writes. What would a coherent-TLB system look like, and why don't we have one?
 
-**D7. Write-back + write-allocate is the default pairing. Construct a workload where write-through + no-write-allocate wins.**
+**D19. Write-back + write-allocate is the default pairing. Construct a workload where write-through + no-write-allocate wins.**
 *Constraints to weigh:* streaming stores that won't be re-read, observation/debug buffers, coherence with non-snooping agents, DRAM write bandwidth headroom. Why does the GPU/NPU world use streaming-store hints?
 
 ---
@@ -321,7 +321,7 @@ These are the "why" framings the interviewer is testing. Practice saying them ou
 **The CPU does not "decide" — it reacts to the access pattern. Three mechanisms collaborate:**
 
 1. **Demand fetch (reactive).** On a miss, the line containing the requested address is brought in. *Default policy is "bring it in" — caches are inclusive of recent demand.*
-2. **Prefetch (predictive).** Hardware prefetchers (next-line, stride, NLP — see Day 16) watch the miss stream and speculatively pull lines they predict you'll need. Wrong guesses pollute the cache; right guesses hide DRAM latency.
+2. **Prefetch (predictive).** Hardware prefetchers (next-line, stride, NLP — see Day 30) watch the miss stream and speculatively pull lines they predict you'll need. Wrong guesses pollute the cache; right guesses hide DRAM latency.
 3. **Replacement (eviction).** When a set is full, **replacement policy** picks who leaves. PLRU approximates LRU cheaply (1 bit per pair, tree-walked). Random is used in some L1s because PLRU state itself costs area. The *assumption* is temporal locality: the least-recently-used line is least likely to be needed.
 
 **Allocation policy** is the other half:
@@ -343,7 +343,7 @@ Given a load to virtual address `VA`:
 5. **Hit:** the matching way's data array is muxed out using the offset → byte/word delivered to the pipeline. Update PLRU bits for this set.
 6. **Miss:** allocate a victim (PLRU), if dirty write it back to L2, send the fill request down. When L2 returns the line, install it, set valid+tag, forward the requested word to the pipeline (critical-word-first).
 
-**Add the coherence wrinkle:** on a write hit, the line must be in **M or E** state (MESI, Day 5) — if it's S, send an invalidate to peers first. *That's why false sharing hurts: the line bounces M→I→M between cores even though the data words don't overlap.*
+**Add the coherence wrinkle:** on a write hit, the line must be in **M or E** state (MESI, Day 17) — if it's S, send an invalidate to peers first. *That's why false sharing hurts: the line bounces M→I→M between cores even though the data words don't overlap.*
 
 ### Q: SRAM vs DRAM — explain it like I've never heard of it.
 
@@ -363,7 +363,7 @@ Given a load to virtual address `VA`:
 **Why this matters for validation:**
 - DRAM **refresh stalls** create periodic latency spikes — visible as jitter in tail latency benchmarks.
 - DRAM **self-refresh** entry/exit (during S0ix / PkgC10) is a multi-microsecond cost — the reason aggressive idle states have a residency floor.
-- SRAM has a **retention voltage** below which the latch loses state — relevant during power-gating sequences (Day 13).
+- SRAM has a **retention voltage** below which the latch loses state — relevant during power-gating sequences (Day 27).
 
 **One-liner:** *"SRAM is a 6T latch — fast, big, volatile only on power loss. DRAM is a 1T1C capacitor — dense, cheap, leaks in milliseconds and needs refresh. You use SRAM where latency dominates and DRAM where capacity dominates. The hierarchy is just: SRAM near the pipe, DRAM far away."*
 
@@ -377,16 +377,16 @@ Given a load to virtual address `VA`:
 - **why a hierarchy** — *what:* L1/L2/L3/DRAM / *why:* no single tech is fast + big + cheap / *how:* each level larger and slower / *connects:* AMAT, inclusion vs exclusion, victim cache
 - **AMAT** — *what:* hit_time + miss_rate × miss_penalty / *why:* the design knob / *how:* shrink miss rate (bigger), shrink penalty (lower-level), shrink hit time (smaller L1) / *connects:* why L1 stays 32–64 KB despite cheap SRAM
 - **locality** — *what:* temporal + spatial / *why:* the reason caches work at all / *how:* recently used + neighbors / *connects:* loop tiling, struct-of-arrays vs array-of-structs
-- **cache line** — *what:* 64B transfer + coherence unit / *why:* amortize tag/snoop overhead / *how:* fill whole line on miss / *connects:* false sharing (Day 5), DMA coherence (Day 8)
+- **cache line** — *what:* 64B transfer + coherence unit / *why:* amortize tag/snoop overhead / *how:* fill whole line on miss / *connects:* false sharing (Day 17), DMA coherence (Day 20)
 
 ---
 
 ## Bug Anchor
 
-- **Day 5:** false sharing is a coherence-miss class.
-- **Day 8:** DMA visibility = clean line + barrier + doorbell.
-- **Day 14:** write-back is *why* WPQ exists and *why* ADR has to drain it.
-- **Day 19:** the QNN/ORT bug is page-fault, not cache-miss — own that distinction.
+- **Day 17:** false sharing is a coherence-miss class.
+- **Day 20:** DMA visibility = clean line + barrier + doorbell.
+- **Day 28:** write-back is *why* WPQ exists and *why* ADR has to drain it.
+- **Day 34:** the QNN/ORT bug is page-fault, not cache-miss — own that distinction.
 
 ## Exit Check
 

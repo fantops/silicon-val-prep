@@ -1,4 +1,4 @@
-# Day 19 — PCIe Enumeration, Config Space, BAR Sizing, MSI/MSI-X
+# Day 34 — PCIe Enumeration, Config Space, BAR Sizing, MSI/MSI-X
 
 ## Concept
 
@@ -6,9 +6,9 @@ PCIe enumeration is the **depth-first recursive walk** that the root complex (or
 
 ## Why this day in the flow
 
-D18 gave you the link layer (LTSSM, link-up). **Today is what happens once the link comes up** — the host has to discover the device exists, decide where in memory its registers live, and wire up its interrupts. **Without enumeration, link-up is useless.** Validating enumeration is one of the largest scenario surfaces in PCIe IP val: every header type, every BAR size class, every cap, every cross with another device on the same bus.
+D33 gave you the link layer (LTSSM, link-up). **Today is what happens once the link comes up** — the host has to discover the device exists, decide where in memory its registers live, and wire up its interrupts. **Without enumeration, link-up is useless.** Validating enumeration is one of the largest scenario surfaces in PCIe IP val: every header type, every BAR size class, every cap, every cross with another device on the same bus.
 
-In the Layer map this is the **second day of Phase 4 (PCIe)**, building on D18's LTSSM with the SW visibility layer.
+In the Layer map this is the **second day of Phase 7 (Interconnect & PCIe)**, building on D33's LTSSM with the SW visibility layer.
 
 ---
 
@@ -329,16 +329,16 @@ Stage G — Real-OS boot
 **D3. MSI vs MSI-X — when would a modern device choose MSI?**
 *Constraints to weigh:* vector count limits, table memory cost, SW affinity flexibility, legacy compatibility, IP complexity.
 
-**D4. Reason about a topology with 8 levels of bridge nesting. What goes wrong before what?**
+**D16. Reason about a topology with 8 levels of bridge nesting. What goes wrong before what?**
 *Constraints to weigh:* bus-number space (256 buses), BAR window aggregation, latency through bridges, real silicon (almost never sees this).
 
-**D5. The cap chain points back into itself (loop). Reason about whether the SW or HW should be responsible for catching this.**
+**D17. The cap chain points back into itself (loop). Reason about whether the SW or HW should be responsible for catching this.**
 *Constraints to weigh:* HW assertion vs SW bounds-check, what each catches in real life, escape if HW is "correct" but the chain SW programmed is wrong.
 
-**D6. A 64-vector MSI-X device wants per-CPU queue affinity. Reason about where the val team's coverage must intersect with the host IRQ subsystem.**
+**D18. A 64-vector MSI-X device wants per-CPU queue affinity. Reason about where the val team's coverage must intersect with the host IRQ subsystem.**
 *Constraints to weigh:* per-vector address (one per CPU LAPIC), Linux `irq_set_affinity`, NUMA implications, hot-add CPU paths.
 
-**D7. Enumeration coverage is 100% in pre-Si; post-Si finds a bug where a specific endpoint behind a specific bridge fails to enumerate when the link comes up at 2 instead of 3. Reason about what was missing.**
+**D19. Enumeration coverage is 100% in pre-Si; post-Si finds a bug where a specific endpoint behind a specific bridge fails to enumerate when the link comes up at 2 instead of 3. Reason about what was missing.**
 *Constraints to weigh:* link-speed × enum-timing cross, what TLP traffic looks different at different speeds, vplan dimension that wasn't covered.
 
 ---
@@ -440,10 +440,10 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 18 (LTSSM):** link must be L0 before enum can read config.
-- **Day 20 (PCIe PM):** PM cap programming happens during enum.
-- **Day 21 (PCIe bring-up):** enum failures are the second-most-common bring-up issue after link-train.
-- **Day 22 (PkgC ↔ L1.2):** MSI delivery during deep PM stresses the enumerated address path.
+- **Day 33 (LTSSM):** link must be L0 before enum can read config.
+- **Day 35 (PCIe PM):** PM cap programming happens during enum.
+- **Day 36 (PCIe bring-up):** enum failures are the second-most-common bring-up issue after link-train.
+- **Day 37 (PkgC ↔ L1.2):** MSI delivery during deep PM stresses the enumerated address path.
 
 ## Exit Check
 

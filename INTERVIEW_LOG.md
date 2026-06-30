@@ -1,6 +1,6 @@
 # Interview Log — Apr 2026 Cycle
 
-> One row per round: what happened, what I learned, status, next action. Detailed prep frameworks live in the [25-day plan](prep_plan/) (Day 24 = final mock / flashcard sweep).
+> One row per round: what happened, what I learned, status, next action. Detailed prep frameworks live in the [42-day plan](prep_plan/) (Day 41 = final mock; [REVISION.md](prep_plan/REVISION.md) = flashcard sweep).
 >
 > **Why this log exists:** so the *next* search is referral-first and targeted — not the apply-to-everything spray this cycle became while leaving Microsoft. Keep every loop, outcome, and role-shape as reference for what to repeat and skip.
 
@@ -8,9 +8,9 @@
 
 ---
 
-## 🧭 Current status (29 Jun 2026)
+## 🧭 Current status (30 Jun 2026)
 
-**Remaining active evaluations:** (1) Broadcom Switch Pre-Si Validation (**R1 cleared 22 Jun → R2 upcoming**).
+**Remaining active evaluations:** none live. Broadcom Switch Pre-Si Validation **R2 done 30 Jun — below expectations** (R1 cleared 22 Jun); cycle effectively closed. Intel BLR join (27 Jul) proceeds; full focus now shifts to the **Core Silicon Foundation build** — the [42-day plan](prep_plan/) (8-phase bottom-up; foundations D5–D25 + D39) — and Intel onboarding prep.
 
 ### Interview Freeze Policy (effective 19 Jun 2026)
 
@@ -26,20 +26,20 @@ No new interview loops after 22 Jun unless **ALL** hold: role advances the long-
 - **Tier B — evaluate selectively:** Qualcomm CPU · Cerebras · Amazon Lab126 (good learning, not clearly superior to Intel).
 - **Tier C — avoid unless exceptional:** Renesas · Arm Verification · Qualcomm Verification · Qualcomm Thermal/PnP · Micron HBM Customer Validation (repeated role-shape mismatch).
 
-**Highest-ROI to 27 Jul:** (1) Broadcom prep · (2) Intel onboarding prep (PCIe, CXL, emulation, PM flows). No new loops after Broadcom unless recruiter immediately shows comp above Intel, stronger scope, and a decision timeline before 18 Jul.
+**Highest-ROI to 27 Jul:** (1) **Core Silicon Foundation build** — the 42-day plan's foundation phases (digital design D5–D10 · CDC/metastability D11–D14 · memory/ECC D15 · verification D24–D25 · bit-manip D4 · puzzles D39), the exact cluster Broadcom R2 exposed · (2) Intel onboarding prep (PCIe, CXL, emulation, PM flows). No new loops unless a recruiter immediately shows comp above Intel, stronger scope, and a decision timeline before 18 Jul.
 
 ---
 
-## 📈 Cycle scoreboard (as of 29 Jun 2026)
+## 📈 Cycle scoreboard (as of 30 Jun 2026)
 
-**Total rounds: 22 completed** across **10 companies** / **16 distinct role-loops**.
+**Total rounds: 23 completed** across **10 companies** / **16 distinct role-loops**.
 
 Round-by-round (rounds + outcome), grouped by status:
 
 | Loop | Rds | Status | Detail |
 |---|---:|---|---|
 | Intel Bangalore · IP Functional Val | 2 | ✅ Selected | offer accepted 21 May · joining 27 Jul (F2F R1+R2) |
-| Broadcom · Switch Pre-Si Validation | 1 | 🔵 R2 upcoming | R1 cleared 22 Jun (FIFO depth=32 · CDC bug · 101-detector · test plan); R2 = digital logic · functional/error tests · CDC · aptitude · metastability |
+| Broadcom · Switch Pre-Si Validation | 2 | 🟠 R2 below bar | R1 cleared 22 Jun (FIFO depth=32 · CDC bug · 101-detector · test plan); **R2 30 Jun below expectations** — strong on MS/Intel exp + coding (first-dup-char), weak on verification-planning (4/10), CDC (3/10), memory (4/10), bit-manip/floor-pow2 (4/10), 100-coin puzzle (5/10) |
 | Micron · HBM Customer Systems Val | 0 | ⬜ Declined by me | 2 roles; interview 20 May, opted out (off-track HBM customer memory val) — loop opened, not attended |
 | Qualcomm · CPU Core (Pre-Si) | 3 | 🔴 Ghosted | R1+R2+HM; no reply post-HM (12 May) |
 | Qualcomm · CPU Post-Silicon | 2 | 🔴 Ghosted | R1+R2 on 2 Jun (planned 3, actually 2) |
@@ -54,11 +54,11 @@ Round-by-round (rounds + outcome), grouped by status:
 | Qualcomm · System Performance | 1 | 🔴 Ghosted | R1 20 Jun weak/fumbled; assumed reject but no reply; low regret |
 | Arm · Verification | 1 | ❌ Rejected | SV/UVM DV screen; role-shape mismatch (rejection mail) |
 | Qualcomm · Pre-Si Verification | 1 | ❌ Rejected | same shape as Arm; role-shape mismatch (rejection mail) |
-| **Total** | **22** | **16 loops** | **1 ✅ · 1 🔵 · 1 ⬜ · 5 🔴 · 8 ❌** |
+| **Total** | **23** | **16 loops** | **1 ✅ · 1 🟠 · 1 ⬜ · 5 🔴 · 8 ❌** |
 
-**Conversion (loops, not rounds):** 1 / 16 loops = **6.25%** (Intel Bangalore, accepted; Broadcom Switch Pre-Si still pending R2, R1 cleared 22 Jun).
+**Conversion (loops, not rounds):** 1 / 16 loops = **6.25%** (Intel Bangalore, accepted; Broadcom Switch Pre-Si R2 done 30 Jun — below expectations, effectively closed). `🟠 = round done, below bar / likely-no.`
 
-**Velocity:** 22 rounds over ~70 days (13 Apr → 22 Jun). Intel join proceeds 27 Jul unless a written offer meeting all displacement criteria is received by 18 Jul.
+**Velocity:** 23 rounds over ~78 days (13 Apr → 30 Jun). Intel join proceeds 27 Jul; no live loops remain, so the window to 27 Jul is a pure foundation-build (the 42-day plan's foundation phases) + onboarding-prep block.
 
 ---
 
@@ -74,7 +74,7 @@ Round-by-round (rounds + outcome), grouped by status:
 | Arm | 10 | 1 | 10% | 1 reject (Verification, DV role-shape — rejection mail) |
 | Nvidia | 7 | 1 | 14% | 1 technical screen (Verification Engineer) — ❌ rejected this cycle; warm contact retained for next cycle |
 | Amazon | 2 | 1 | 50% | 1 reject (Lab126 Echo full-Si) |
-| Broadcom | 2 | 1 | 50% | 1 reject (direct-applied role, pre-interview) + 🟢 1 referral loop (switch pre-si val) — R1 cleared 22 Jun, R2 upcoming |
+| Broadcom | 2 | 1 | 50% | 1 reject (direct-applied role, pre-interview) + 1 referral loop (switch pre-si val) — R1 cleared 22 Jun, **R2 30 Jun below expectations** |
 | Micron | 2 | 1 | 50% | 2 roles; interview scheduled 20 May — **declined by me, not attended** (HBM customer system validation, off-track) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
@@ -181,6 +181,12 @@ Round-by-round (rounds + outcome), grouped by status:
 - **R2 ask (same interviewer):** thorough on **every CV line**; **digital-logic** (FSMs, comb/seq); write **functional + error/negative tests**; **CDC**; **aptitude/puzzle**; **metastability-avoidance methods**.
 - **Learning:** Panel weights RTL-adjacent fundamentals + verification test-design + CV depth; full prep in [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html) (§1–§9).
 
+### 30 Jun — Broadcom · Switch Pre-Si Validation (R2) — 🟠 Below expectations (clean diagnostic)
+- **Asked (8 Q, same interviewer, CV-thorough):** (1) **MS experience** ✅ strong — clear ownership; (2) **Intel experience** ✅ strong — practical depth landed; (3) **verification plan for a 16-port 1.6T switch** ❌ no structured framework, solved from scratch instead of a reusable test-plan methodology (coverage / corner cases / perf-val / error-injection / assertions); (4) **CDC** ❌ *major* gap — metastability, setup/hold, 2-flop synchronizer, multi-bit CDC, gray code, async FIFO, handshake sync, reset sync; (5) **memory** ❌ address mapping / organization / read-write behaviour / address-vs-data / SRAM weak; (6) **100-coin puzzle** ❌ didn't solve; (7) **first duplicate character** ✅ good — coding still a strength; (8) **floor power of 2** ❌ missed (bit manipulation / binary thinking).
+- **Self-rated:** Resume 9 · Practical 8.5 · Coding 8 · Verification-planning 4 · CDC 3 · Memory 4 · Bit-manip 4 · Logic 5.
+- **Diagnosis:** *experience is ahead of fundamentals.* Not a bad day — a clean diagnostic of where to invest. Fix = strengthen the RTL / verification / digital-design foundation so answers come naturally, not memorize interview questions.
+- **Action:** rebuilt the prep plan into a **42-day, 8-phase bottom-up build (D0–D41)** — the digital-design, CDC, memory, verification, bit-manip and puzzle foundations are now *interleaved into the incremental flow* (Phase 1 digital design D5–D10, Phase 2 CDC D11–D14, Phase 3 memory D15–D16, Phase 5 verification D24–D25, plus D4 bit-manip and D39 puzzles), not bolted on at the end. See [prep_plan/README.md](prep_plan/README.md) + [REVISION.md](prep_plan/REVISION.md). Identity shift: *“I continuously build deep expertise; interviews become a by-product.”*
+
 ---
 
 ## Patterns
@@ -194,27 +200,29 @@ Round-by-round (rounds + outcome), grouped by status:
 **The one win, decoded:** the only offer (Intel BLR) had a formula the 14 non-offers lacked — **referral + role-fit 1:1 + probes answerable from prior work**. Replicate that shape, not the application volume.
 
 **Gaps ranked by what they cost (most → least):**
-1. **Role-shape mismatch → 3 rejects** (Arm, QC Pre-Si Verif, Renesas) — a *filtering* miss, not a skill gap; fix by not applying (no automotive, no pure SV/UVM).
-2. **EE fundamentals → 2 rejects** (Intel P&P, Ireland NPU) — CMOS / setup-hold / CDC / SI.
-3. **HW-fluency framing → 1 reject** (Amazon Echo) — board/lab/debug; lean on L&T board + Intel post-Si lab.
-4. **Boot-flow + PCIe execution-trace narration → 1 reject** (Nvidia/PythonSV) — reset→ROM→RC→MMIO→LTSSM→emulation-boundary as a trace.
-5. **Owned-narrative fluency → 2 ghosts (self-assessed)** (QC CPU Core R2, SysPerf) — couldn't trace own résumé on demand; no employer confirmation, so weight accordingly.
-6. **Live-C terminate-condition / edge-case pre-amble** (Cerebras, Amazon coding slips) — contributing, never solely fatal.
+1. **RTL / EE fundamentals → 2 rejects + 1 below-bar** (Intel P&P, Ireland NPU, **Broadcom R2**) — digital design, setup/hold, **CDC + metastability** (Broadcom's biggest hit, self-rated 3/10), memory organization / SRAM / ECC. The largest *fixable* cluster and now the #1 actionable item → **Phases 1–3 (D5–D16)** of the 42-day plan. (Was ranked #2; promoted after Broadcom R2 confirmed it as the recurring closer.)
+2. **Role-shape mismatch → 3 rejects** (Arm, QC Pre-Si Verif, Renesas) — a *filtering* miss, not a skill gap; fix by not applying (no automotive, no pure SV/UVM).
+3. **Verification planning from first principles → Broadcom R2 (4/10)** — no reusable *test-plan-from-spec* methodology (spec → features → stimulus → checks → coverage → corners → error-injection → perf/power → pre-Si/post-Si); recurring (also Cerebras, Amazon openers). → new **Days 32–33**.
+4. **Bit-manip + logical puzzles → Broadcom R2** (floor-pow2 missed, 100-coin unsolved) — binary thinking + a puzzle method (restate → strategy → math → sanity). → new **Days 34–35**.
+5. **HW-fluency framing → 1 reject** (Amazon Echo) — board/lab/debug; lean on L&T board + Intel post-Si lab.
+6. **Boot-flow + PCIe execution-trace narration → 1 reject** (Nvidia/PythonSV) — reset→ROM→RC→MMIO→LTSSM→emulation-boundary as a trace.
+7. **Owned-narrative fluency → 2 ghosts (self-assessed)** (QC CPU Core R2, SysPerf) — couldn't trace own résumé on demand; no employer confirmation, so weight accordingly.
+8. **Live-C terminate-condition / edge-case pre-amble** (Cerebras, Amazon coding slips) — contributing, never solely fatal.
 
 **Priority split:**
-- **Now — Broadcom R2 (only live loop):** FSM + **FIFO-depth (§1.4)** · CDC + metastability methods · functional-vs-error tests · aptitude · **owned-narrative / résumé-trace drill (§9.6)** + CV-line defense → [broadcom_switch_presi_notes.html](broadcom_switch_presi_notes.html).
-- **Next cycle (post-Intel-join, dead loops):** HW-fluency framing · boot-flow/PCIe narration (Nvidia warm) · AMD fixed-freq perf/benchmark vocab.
+- **Now — foundation build (no live loops), to 27 Jul + ongoing at Intel:** the **42-day plan's foundation phases** — digital design (D5–D10) → clocking/CDC (D11–D14) → memory (D15) → verification (D24–D25) → bit-manip (D4) + puzzles (D39). The exact cluster Broadcom R2 exposed, now *woven into* the incremental 0→41 flow rather than appended.
+- **Next cycle (post-Intel-join):** HW-fluency framing · boot-flow/PCIe narration (Nvidia warm) · AMD fixed-freq perf/benchmark vocab — layered on the now-solid foundation.
 
 ---
 
 ## � Flywheel (per round, next cycle)
 
-After each round: same-day timeline row (what · learning · status · suggestion) → map each "didn't land" to a Day-file drill → re-run the [Day 24 mock](prep_plan/day24_final_mock.md) flashcard sweep before the next interview.
+After each round: same-day timeline row (what · learning · status · suggestion) → map each "didn't land" to a Day-file drill → re-run the [Day 41 mock](prep_plan/day41_final_mock.md) + [REVISION.md](prep_plan/REVISION.md) flashcard sweep before the next interview.
 
 ---
 
 ## �📝 Retro / carry-forward
 
-- **Cycle outcome (16 loops):** 1 offer (Intel BLR ✅ accepted) · 1 pending (Broadcom 🔵 R2) · 1 declined (Micron ⬜) · **5 ghosted** (4 Qualcomm + 1 AMD) · **8 rejected**. App→loop 16/97 = 16.5%; loop→offer 1/16 = 6.25%.
+- **Cycle outcome (16 loops):** 1 offer (Intel BLR ✅ accepted) · 1 below-bar (Broadcom 🟠 R2, 30 Jun) · 1 declined (Micron ⬜) · **5 ghosted** (4 Qualcomm + 1 AMD) · **8 rejected**. App→loop 16/97 = 16.5%; loop→offer 1/16 = 6.25%. **Cycle now closed — no live loops; pivot fully to the foundation build.**
 - **Re-approach / evaluate:** Of the **5 ghosted** loops, only two are worth re-approaching — **QC CPU Post-Si** (2 rounds, 2 Jun) + **AMD Core PnP** (R2, 5 Jun), the most recent + furthest-progressed; re-engage only if a recruiter revives with offer/level/scope. The other three (QC CPU Core HM, QC PnP/Thermal, QC SysPerf) → fully closed. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
-- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops. But **referral ≠ guarantee**: SanDisk's 4 referral apps → 0 loops and **all archived/rejected on portal (30 Jun)** — a generic, off-team name-drop. The wins (Intel, Broadcom) each had an **engaged referrer + recruiter/HM pull** — next cycle, the referrer must be **internal to the actual hiring team** (an active advocate who follows up internally), not a generic referral submission. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 16 loops this cycle (Arm, QC Pre-Si Verif, Renesas).
+- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops. But **referral ≠ guarantee**: SanDisk's 4 referral apps → 0 loops and **all archived/rejected on portal (30 Jun)** — a generic, off-team name-drop. The wins (Intel offer, Broadcom R1-clear) each had an **engaged referrer + recruiter/HM pull** — next cycle, the referrer must be **internal to the actual hiring team** (an active advocate who follows up internally), not a generic referral submission. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 16 loops this cycle (Arm, QC Pre-Si Verif, Renesas).

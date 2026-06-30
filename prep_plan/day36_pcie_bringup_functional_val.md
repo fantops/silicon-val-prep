@@ -1,4 +1,4 @@
-# Day 21 — PCIe Bring-up + Functional Validation
+# Day 36 — PCIe Bring-up + Functional Validation
 
 ## Concept
 
@@ -6,9 +6,9 @@ PCIe bring-up is the structured process of taking a designed link from reset to 
 
 ## Why this day in the flow
 
-D18 gave you the LTSSM state machine. D19 enumerated the device. D20 added PM. **Today is the validation craft** — how a PCIe IP val engineer triages a failure, runs compliance, sweeps eye/SI, captures TLPs, and proves the IP works at every speed/width under every traffic pattern. This is the day that maps to "I can run PCIe link bring-up in the lab and tell you what's wrong from the analyser trace."
+D33 gave you the LTSSM state machine. D34 enumerated the device. D35 added PM. **Today is the validation craft** — how a PCIe IP val engineer triages a failure, runs compliance, sweeps eye/SI, captures TLPs, and proves the IP works at every speed/width under every traffic pattern. This is the day that maps to "I can run PCIe link bring-up in the lab and tell you what's wrong from the analyser trace."
 
-In the Layer map this is the **fourth day of Phase 4 (PCIe)**, the val-craft cap before D22's PM intersection.
+In the Layer map this is the **fourth day of Phase 7 (Interconnect & PCIe)**, the val-craft cap before D37's PM intersection.
 
 ---
 
@@ -76,9 +76,9 @@ Gen3 introduced 8b/10b → 128b/130b encoding and a much more aggressive eye, re
 
 ```
 Phase 0  — start of eq, baseline; uses preset coefficients
-Phase 1  — exchange TX coefficients; receivers measure eye
-Phase 2  — receiver requests TX coefficient adjustments
-Phase 3  — final convergence; lock in chosen coefficients
+Phase 4  — exchange TX coefficients; receivers measure eye
+Phase 6  — receiver requests TX coefficient adjustments
+Phase 7  — final convergence; lock in chosen coefficients
 ```
 
 Eq settings live in **TX FFE coefficients (C-1, C0, C+1)** and **RX CTLE setting**. Mis-converged eq means the link "trains" but every few seconds drops to Recovery for re-training — the classic L0p loop.
@@ -340,16 +340,16 @@ Compliance:
 **D3. AER correctable count is climbing at 100/s under traffic. Reason about whether this is acceptable.**
 *Constraints to weigh:* spec allows correctable (link still works), what it predicts about future uncorrectable rate, customer SLA, whether SI margin is being eroded.
 
-**D4. The link is in L0 but a `setpci` read returns all-1s. Reason about the next 3 diagnostics.**
+**D16. The link is in L0 but a `setpci` read returns all-1s. Reason about the next 3 diagnostics.**
 *Constraints to weigh:* device cfg vs MMIO access path differences, AER state, link width at L0 (could be 1 instead of 16), driver vs raw access.
 
-**D5. FLR completed but the device is still issuing DMA. Reason about where the FLR completion check failed.**
+**D17. FLR completed but the device is still issuing DMA. Reason about where the FLR completion check failed.**
 *Constraints to weigh:* spec says FLR must quiesce inflight transactions before signalling completion, IP FSM may have signaled completion at wrong point, validation gap.
 
-**D6. The interop matrix finds a bug with one vendor's endpoint only. Reason about how to decide if it's our bug or theirs.**
+**D18. The interop matrix finds a bug with one vendor's endpoint only. Reason about how to decide if it's our bug or theirs.**
 *Constraints to weigh:* spec wording vs implementation interpretation, what other rootports do with the same endpoint, what other endpoints do on our rootport, who has the larger market share (and thus dictates the de-facto interpretation).
 
-**D7. A pre-Si vplan covered every LTSSM state but post-Si saw L0p loops not seen in sim. Reason about what's missing.**
+**D19. A pre-Si vplan covered every LTSSM state but post-Si saw L0p loops not seen in sim. Reason about what's missing.**
 *Constraints to weigh:* long-window properties not expressible at sim runtime, SI/electrical reality absent from sim, what assertion (over many cycles) would catch the symptom in emul.
 
 ---
@@ -429,11 +429,11 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 18 (LTSSM):** the stuck-state ladder is the practical use of that day's FSM.
-- **Day 19 (enum):** enum can't start until L0 reached here.
-- **Day 20 (PCIe PM):** PM transitions stress the same LTSSM paths.
-- **Day 17 (post-Si PM val):** L0p surfaces as a PM blocker (link can't reach L1.2 if it's re-training every few seconds).
-- **Day 22 (PkgC ↔ L1.2):** L1.2 only entered from a clean L0 — bring-up failures here block PM there.
+- **Day 33 (LTSSM):** the stuck-state ladder is the practical use of that day's FSM.
+- **Day 34 (enum):** enum can't start until L0 reached here.
+- **Day 35 (PCIe PM):** PM transitions stress the same LTSSM paths.
+- **Day 31 (post-Si PM val):** L0p surfaces as a PM blocker (link can't reach L1.2 if it's re-training every few seconds).
+- **Day 37 (PkgC ↔ L1.2):** L1.2 only entered from a clean L0 — bring-up failures here block PM there.
 
 ## Exit Check
 

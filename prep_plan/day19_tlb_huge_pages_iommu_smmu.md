@@ -1,4 +1,4 @@
-# Day 07 — TLB, Huge Pages, IOMMU / SMMU
+# Day 19 — TLB, Huge Pages, IOMMU / SMMU
 
 ## Concept
 
@@ -6,7 +6,7 @@ The **TLB** caches recent VA→PA translations. **Huge pages** (2 MB / 1 GB) mul
 
 ## Why this day in the flow
 
-Day 6 built the page-table walk and the cost of a full walk. Day 7 explains why the cost is tolerable in practice (TLB), the lever to make it cheaper (huge pages), the cross-core cost when the OS edits a PTE (shootdown), and the device-side analogue (IOMMU). All four are needed for Day 8 (DMA / doorbells / barriers) and Day 11 (NVMe queues).
+Day 18 built the page-table walk and the cost of a full walk. Day 19 explains why the cost is tolerable in practice (TLB), the lever to make it cheaper (huge pages), the cross-core cost when the OS edits a PTE (shootdown), and the device-side analogue (IOMMU). All four are needed for Day 20 (DMA / doorbells / barriers) and Day 23 (NVMe queues).
 
 In the Layer map this completes **Layer 2**.
 
@@ -122,7 +122,7 @@ Either way you've narrowed the suspect to one of two layers fast.
 
 A typical CPU load checks the TLB first (translation), then the cache hierarchy (data). They are independent — you can hit the TLB and miss the cache, or vice versa.
 
-### 8. The doorbell / DMA picture (preview of Day 8)
+### 8. The doorbell / DMA picture (preview of Day 20)
 
 ```
 1. Driver fills descriptor in normal memory.
@@ -134,7 +134,7 @@ A typical CPU load checks the TLB first (translation), then the cache hierarchy 
 7. CPU invalidates / reads completion.
 ```
 
-Every layer in this picture comes from Days 4-7.
+Every layer in this picture comes from Days 16-19.
 
 ---
 
@@ -144,7 +144,7 @@ Every layer in this picture comes from Days 4-7.
 - **Random-access perf collapse on a model that fits in DRAM but not in TLB coverage:** with 4 KB pages, a 4 GB tensor needs 1 M TLB entries; STLB has thousands. Fix: enable transparent huge pages (THP) or `MAP_HUGETLB` for tensor arenas.
 - **IOMMU fault on first DMA after driver init:** OS never called the DMA-mapping API. Fault register shows the device's IOVA with "no entry". Fix: add the missing `dma_map_*` call.
 - **IOMMU fault from a device sending a stale IOVA:** OS unmapped the buffer but the device used a queued IOVA from before the unmap. Fix: synchronise device queue draining before unmap; revisit lifetime contract.
-- **Cross-link to QNN/ORT page-fault story (Day 19):** the bug looked superficially like "the model just got slower," but ETL traces showed minor-fault spikes — that's a TLB pressure / page-table population symptom, not an IOMMU symptom.
+- **Cross-link to QNN/ORT page-fault story (Day 34):** the bug looked superficially like "the model just got slower," but ETL traces showed minor-fault spikes — that's a TLB pressure / page-table population symptom, not an IOMMU symptom.
 
 ---
 
@@ -167,16 +167,16 @@ Every layer in this picture comes from Days 4-7.
 **D3. Why does the device need a separate IOMMU when the host has an MMU — why not share the page tables?**
 *Constraints to weigh:* devices don't take page faults the way CPUs do (no pre-PRI), per-device isolation (one bad NIC), multiple address spaces (passthrough VMs), legacy 32-bit DMA windows, ATC semantics. What does ATS+PRI buy and what does it cost in latency and complexity?
 
-**D4. SMMU/VT-d/AMD-Vi all solved the same problem differently. Pick two and reason about why each landed where it did.**
+**D16. SMMU/VT-d/AMD-Vi all solved the same problem differently. Pick two and reason about why each landed where it did.**
 *Constraints to weigh:* stream-ID vs requester-ID granularity, two-stage translation for virtualisation, fault-queue semantics, in-flight ATC invalidation. Why did ARM ship a stream table and Intel a domain table — what does the difference reveal about the design priors?
 
-**D5. Imagine ARM's hardware-broadcast TLBI lands on x86. What changes about kernel design — and what new bug class appears?**
+**D17. Imagine ARM's hardware-broadcast TLBI lands on x86. What changes about kernel design — and what new bug class appears?**
 *Constraints to weigh:* serialisation cost on the originator, TLB coherence traffic on the interconnect, NUMA latency, kernel `flush_tlb_*` API surface area, lost-IPI debug stories. Why didn't x86 add it — area, ABI, or simply the constraint hadn't shifted?
 
-**D6. The QNN/ORT page-fault story looked like a TLB problem but wasn't. Construct the triage path that would identify it as virtual-memory rather than TLB.**
+**D18. The QNN/ORT page-fault story looked like a TLB problem but wasn't. Construct the triage path that would identify it as virtual-memory rather than TLB.**
 *Constraints to weigh:* page-fault counter vs `dtlb_load_misses.walk_completed`, kernel-time spike, allocator call-site correlation, repro with hugepages forced on (does it disappear?). What single counter ratio decides the layer before you read any logs?
 
-**D7. Imagine a future SoC with fully-coherent accelerators sharing the CPU page tables (CXL.mem + ATS). Which Day-7 artefacts survive?**
+**D19. Imagine a future SoC with fully-coherent accelerators sharing the CPU page tables (CXL.mem + ATS). Which Day-7 artefacts survive?**
 *Constraints to weigh:* DMA-mapping API, bounce buffers, IOVA allocator, IOMMU fault register (still needed for device-side faults), TLB shootdown radius (now includes accelerators). What new shootdown class appears, and which IP becomes the new on-call problem?
 
 ---
@@ -239,7 +239,7 @@ int main(void) {
 
 ## System Thinking — Why translation needs its *own* cache, and why devices need it too
 
-**Frame:** virtual memory (Day 6) gave us the page table. But every load now needs to walk it — 4 levels deep on x86-64, 100+ cycles to DRAM if cold. That cost would erase the entire VM benefit. The TLB exists for the same reason L1 cache exists: the *translation* itself has locality. Huge pages and IOMMUs are the natural extensions: huge pages stretch TLB reach, IOMMU gives devices the same protection model as processes.
+**Frame:** virtual memory (Day 18) gave us the page table. But every load now needs to walk it — 4 levels deep on x86-64, 100+ cycles to DRAM if cold. That cost would erase the entire VM benefit. The TLB exists for the same reason L1 cache exists: the *translation* itself has locality. Huge pages and IOMMUs are the natural extensions: huge pages stretch TLB reach, IOMMU gives devices the same protection model as processes.
 
 ### Q: Why is the TLB so critical that it's a separate structure from L1?
 
@@ -263,7 +263,7 @@ Because as soon as a device can DMA, it can DMA *anywhere* — including kernel 
 2. **Scatter-gather.** A buffer that's contiguous in VA can be physically scattered (it's heap memory). The IOMMU translates a contiguous device VA (IOVA) to scattered physical pages → drivers stop needing physically-contiguous DMA buffers (which were a major Linux pain pre-IOMMU).
 3. **32-bit device on a 64-bit system.** A legacy device with 32-bit DMA reach can be given an IOVA in its 4 GB window that maps to physical RAM above 4 GB.
 
-**Same idea as the MMU, applied to devices.** The validation surface (Stream ID assignment, ATC invalidation, SMMU fault queue) is large and underexplored — bugs here are interview gold (Day 19 QNN/HTP angle).
+**Same idea as the MMU, applied to devices.** The validation surface (Stream ID assignment, ATC invalidation, SMMU fault queue) is large and underexplored — bugs here are interview gold (Day 34 QNN/HTP angle).
 
 ### One-liner
 
@@ -285,9 +285,9 @@ Because as soon as a device can DMA, it can DMA *anywhere* — including kernel 
 
 ## Bug Anchor
 
-- **Day 8 (DMA/doorbells):** the doorbell example is where TLB + IOMMU + cache + barrier all converge.
-- **Day 19 (QNN/ORT):** minor-fault spike on context-buffer touch is the symptom that links VM and TLB pressure.
-- **Day 11 (NVMe):** doorbell + descriptor + IOMMU mapping for SQ/CQ.
+- **Day 20 (DMA/doorbells):** the doorbell example is where TLB + IOMMU + cache + barrier all converge.
+- **Day 34 (QNN/ORT):** minor-fault spike on context-buffer touch is the symptom that links VM and TLB pressure.
+- **Day 23 (NVMe):** doorbell + descriptor + IOMMU mapping for SQ/CQ.
 
 ## Exit Check
 

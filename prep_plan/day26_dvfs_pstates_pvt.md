@@ -1,4 +1,4 @@
-# Day 12 — DVFS, P-states, PVT Corners, Binning
+# Day 26 — DVFS, P-states, PVT Corners, Binning
 
 ## Concept
 
@@ -6,7 +6,7 @@ Power has two pieces: **dynamic** $P_{dyn} = C V^2 F$ and **static** (leakage), 
 
 ## Why this day in the flow
 
-After Days 1-11 (CPU/memory/PCIe/NVMe — the *what*), Days 12-15 cover **how the platform manages power and thermals around all of it**. DVFS is the active-power lever; Day 13 (C-states) is the idle-power lever; Day 14 (ADR/PCU/Core C6 bugs) is the firmware-side bug story; Day 15 is thermals + perf counters. Together they form **Layer 5 (Power/Thermal)** in the system-flow layers.
+After Days 1-23 (CPU/memory/PCIe/NVMe — the *what*), Days 26-29 cover **how the platform manages power and thermals around all of it**. DVFS is the active-power lever; Day 27 (C-states) is the idle-power lever; Day 28 (ADR/PCU/Core C6 bugs) is the firmware-side bug story; Day 29 is thermals + perf counters. Together they form **Layer 5 (Power/Thermal)** in the system-flow layers.
 
 ---
 
@@ -127,7 +127,7 @@ Each bin gets its own **DVFS table**. An FF chip can sustain higher P0 at lower 
 
 ### 8. ARM / Qualcomm DVFS — RPMh, PMIC, per-core frequency
 
-On Snapdragon (Day 9 anchor), DVFS is voted into **RPMh**:
+On Snapdragon (Day 21 anchor), DVFS is voted into **RPMh**:
 
 - Each requester (Apps cluster, Modem, ADSP, CDSP/NPU) sends `(active, sleep, wake)` votes.
 - RPMh aggregates **max** per resource.
@@ -138,7 +138,7 @@ On Snapdragon (Day 9 anchor), DVFS is voted into **RPMh**:
 
 ### 8a. Multi-SoC / multi-IP DVFS coordination (the AMD design probe)
 
-*"Design the power/perf tradeoff for an NPU + CPU + multi-SoC system" — walk this 6-step scaffold. Steps 1-4 land here; steps 5-6 land in [Day 15 Sec 5a](day15_thermal_power_perf_counters.md).*
+*"Design the power/perf tradeoff for an NPU + CPU + multi-SoC system" — walk this 6-step scaffold. Steps 1-4 land here; steps 5-6 land in [Day 29 Sec 5a](day29_thermal_power_perf_counters.md).*
 
 ```
 1. WORKLOAD CHARACTERISATION  — who is hot when?
@@ -160,9 +160,9 @@ On Snapdragon (Day 9 anchor), DVFS is voted into **RPMh**:
 
 **Reflex one-liner (steps 1-4):** *"Workload → budget split → rail topology → DVFS coordination. The hard tradeoff is rail-sharing: cheap silicon + leakage waste vs per-IP freedom + VRM/bug cost. The hard coordination question is arbiter centralisation — single master is simpler but bottlenecks at scale; distributed scales but introduces cross-SoC ordering bugs."*
 
-Validation matrix that falls out: cross-product of (per-IP P-state) × (per-SoC PM-state) × (rail topology mode), with seam tests at every boundary — see [Day 20 Sec 2a](day20_debug_method_bug_polish.md).
+Validation matrix that falls out: cross-product of (per-IP P-state) × (per-SoC PM-state) × (rail topology mode), with seam tests at every boundary — see [Day 30 — pre-Si PM validation](day30_pre_si_pm_validation.md).
 
-### 9. Perf counters and IPC (forward to Day 15)
+### 9. Perf counters and IPC (forward to Day 29)
 
 $$\text{IPC} = \frac{\text{instructions retired}}{\text{cycles}}$$
 
@@ -203,16 +203,16 @@ Useful counters: `instructions`, `cycles`, `cache-misses`, `branches`, `branch-m
 **D3. Why a discrete P-state ladder and not continuous V/F control?**
 *Constraints to weigh:* characterisation matrix (each OPP needs validation), VRM transient response, OS predictability, common-OPP libraries reused across SKUs. What does Apple Silicon's near-continuous OPPs cost that Intel's discrete ladder saves — and what does it buy?
 
-**D4. Speed binning sorts post-fab silicon into SKUs. Imagine perfect process control (no spread). What would the industry have to redesign?**
+**D16. Speed binning sorts post-fab silicon into SKUs. Imagine perfect process control (no spread). What would the industry have to redesign?**
 *Constraints to weigh:* yield economics of SKU mixing, datacenter procurement (fast vs slow bin pricing), power-perf curve as ensemble vs per-die. Where does binning create perverse incentives, and what would replace it?
 
-**D5. Leakage is exponential in T and is now 30-40% of total at 7 nm. Reason about what's driving the curve toward 50%+.**
+**D17. Leakage is exponential in T and is now 30-40% of total at 7 nm. Reason about what's driving the curve toward 50%+.**
 *Constraints to weigh:* shorter channels, lower threshold voltages, more cores idle vs active, on-chip thermal hotspots, power-gating granularity. What architectural choice (chiplets, big.LITTLE, dedicated accelerators) is a *response* to the leakage trend?
 
-**D6. Per-core voltage on DynamIQ shares a rail. Construct the workload where this design loses *more* power than it saves.**
+**D18. Per-core voltage on DynamIQ shares a rail. Construct the workload where this design loses *more* power than it saves.**
 *Constraints to weigh:* one heavy core pulling rail to Vmax for the cluster, idle siblings still at high V (high leakage), heterogeneous workload mix. What does Apple's per-core LDO actually buy in P-core/E-core asymmetric workloads, and at what silicon cost?
 
-**D7. Aging-related Vth shift over 2 years degrades slow-OPP timing margin. Reason about what a "self-tuning" DVFS table would look like.**
+**D19. Aging-related Vth shift over 2 years degrades slow-OPP timing margin. Reason about what a "self-tuning" DVFS table would look like.**
 *Constraints to weigh:* in-field characterisation (PVT sensors, ring oscillators), telemetry storage in fuses/NVRAM, OS-visible vs FW-only adaptation, security of in-field re-tuning. What stops shipping this today — cost, validation, or trust?
 
 ---
@@ -323,10 +323,10 @@ PVT sensors let the firmware (PCU on Intel, RPMh on QC, MCC on others) **adapt v
 
 ## Bug Anchor
 
-- **Day 13 (C-states, S0ix):** the idle-power side of this story.
-- **Day 14 (ADR / PCU / Core C6):** the firmware bug stories that come from PVT + sequence violations.
-- **Day 15 (Thermal + perf counters):** DTS, throttle telemetry, IPC scoring.
-- **Day 9 (Snapdragon RPMh + PMIC):** the QC name for the same loop.
+- **Day 27 (C-states, S0ix):** the idle-power side of this story.
+- **Day 28 (ADR / PCU / Core C6):** the firmware bug stories that come from PVT + sequence violations.
+- **Day 29 (Thermal + perf counters):** DTS, throttle telemetry, IPC scoring.
+- **Day 21 (Snapdragon RPMh + PMIC):** the QC name for the same loop.
 
 ## Exit Check
 

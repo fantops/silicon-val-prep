@@ -1,4 +1,4 @@
-# Day 08 — DMA, Doorbells, Memory Ordering, Barriers
+# Day 20 — DMA, Doorbells, Memory Ordering, Barriers
 
 ## Concept
 
@@ -6,7 +6,7 @@ A typical device-submission flow is **descriptor → barrier → MMIO doorbell �
 
 ## Why this day in the flow
 
-Days 4-5 gave you cache lines and coherence. Days 6-7 gave you VM and IOMMU. Day 8 is the day they all converge: **the device is just another agent that needs to see the latest copy of memory, in the right order, at the right physical address.** Once today is solid, NVMe (Day 11), PCIe TLP/credit (Day 10), and NPU runtime DMA (Day 18-19) are scaffolding work.
+Days 16-17 gave you cache lines and coherence. Days 18-19 gave you VM and IOMMU. Day 20 is the day they all converge: **the device is just another agent that needs to see the latest copy of memory, in the right order, at the right physical address.** Once today is solid, NVMe (Day 23), PCIe TLP/credit (Day 22), and NPU runtime DMA (Day 33-34) are scaffolding work.
 
 In the Layer map this is the **Layer 2 → Layer 3 bridge**.
 
@@ -83,7 +83,7 @@ A doorbell is a single store to an MMIO register. Three properties matter:
 
 That last property means: on PCIe, the CPU can issue a doorbell store before the descriptor write has reached system memory. A barrier between them on the CPU side ensures the descriptor is at least globally visible before the device fetches it; the IOMMU/PCIe fabric handles the rest.
 
-### 7. Ring buffers (preview of NVMe SQ/CQ on Day 11)
+### 7. Ring buffers (preview of NVMe SQ/CQ on Day 23)
 
 A submission queue (SQ) is a producer/consumer ring of fixed-size entries:
 
@@ -107,7 +107,7 @@ The phase bit avoids the host needing a separate "valid" doorbell from the devic
 4. **IOMMU fault:** OS forgot `dma_map_*`, or device used a stale IOVA.
 5. **Wrong doorbell stride / register:** NVMe `DSTRD` (CAP[35:32]) miscomputed; doorbell goes to the wrong offset, device never sees it.
 
-Each maps to a Day on this plan: 1 → Day 4-5, 2 → today, 3 → Day 6, 4 → Day 7, 5 → Day 11.
+Each maps to a Day on this plan: 1 → Day 16-17, 2 → today, 3 → Day 18, 16 → Day 19, 17 → Day 23.
 
 ---
 
@@ -116,14 +116,14 @@ Each maps to a Day on this plan: 1 → Day 4-5, 2 → today, 3 → Day 6, 4 → 
 - **Doorbell visible before descriptor on ARM:** weak-memory reorder; device DMA-reads stale descriptor and either ignores it or executes garbage. Fix: `__asm__ volatile("dmb st" ::: "memory")` between descriptor write and doorbell.
 - **Polling loop spins on cached MMIO:** PTE marked cacheable; status reads return the same cached value forever. Fix: ensure PTE is device/uncached; on bare-metal, set MAIR or the right `ioremap` flag.
 - **IOMMU fault on first submission:** OS never mapped the descriptor buffer; fault log shows BDF + IOVA + "no entry". Fix: `dma_map_single` (Linux) or equivalent.
-- **NVMe `DSTRD` miscomputed (Day 11 anchor):** SQ/CQ doorbells are at `0x1000 + (2*i + (CQ?1:0)) * (4 << CAP.DSTRD)`; getting `DSTRD` wrong puts the doorbell at the wrong offset; device never sees the kick. The `CSTS.RDY` bug surfaces this when the host can't even bring up the admin queue.
-- **PCU/ADR `WPQ_FLUSH` before `IO_QUIESCE_ACK` (Day 14 link):** the firmware analogue of issuing the doorbell before the descriptor — same bug class, different domain.
+- **NVMe `DSTRD` miscomputed (Day 23 anchor):** SQ/CQ doorbells are at `0x1000 + (2*i + (CQ?1:0)) * (4 << CAP.DSTRD)`; getting `DSTRD` wrong puts the doorbell at the wrong offset; device never sees the kick. The `CSTS.RDY` bug surfaces this when the host can't even bring up the admin queue.
+- **PCU/ADR `WPQ_FLUSH` before `IO_QUIESCE_ACK` (Day 28 link):** the firmware analogue of issuing the doorbell before the descriptor — same bug class, different domain.
 
 ---
 
 ## Interview Explanation (60-90 sec)
 
-> "Device submission is descriptor, barrier, MMIO doorbell, device DMA via the IOMMU, completion. Each arrow has a failure mode. On ARM the descriptor write can be reordered after the doorbell, so I always put a `dmb st` between them; `volatile` on its own only orders compiler-side, not CPU-side. The way this fails in the wild is intermittent — it works at low throughput because the store buffer drains naturally between submits, then under sustained load the doorbell wins the race and the device fetches a half-written descriptor; you see queue stalls or completion errors that don't reproduce on x86 because TSO masks the ordering. On non-coherent DMA paths I clean the descriptor line so the device reads DRAM, not stale cache; after the device writes the completion I invalidate before reading. MMIO ranges must be uncached in the PTE — the classic bring-up bug is a status register that reads back the same value forever because the cache cached it. The IOMMU is the device-side MMU and its fault register tells me whether the OS forgot to map a buffer or the device sent a stale IOVA. The whole picture is the same physics as MESI on Day 5 — the device is just another coherence agent that has to see the latest copy in the right order at the right physical address."
+> "Device submission is descriptor, barrier, MMIO doorbell, device DMA via the IOMMU, completion. Each arrow has a failure mode. On ARM the descriptor write can be reordered after the doorbell, so I always put a `dmb st` between them; `volatile` on its own only orders compiler-side, not CPU-side. The way this fails in the wild is intermittent — it works at low throughput because the store buffer drains naturally between submits, then under sustained load the doorbell wins the race and the device fetches a half-written descriptor; you see queue stalls or completion errors that don't reproduce on x86 because TSO masks the ordering. On non-coherent DMA paths I clean the descriptor line so the device reads DRAM, not stale cache; after the device writes the completion I invalidate before reading. MMIO ranges must be uncached in the PTE — the classic bring-up bug is a status register that reads back the same value forever because the cache cached it. The IOMMU is the device-side MMU and its fault register tells me whether the OS forgot to map a buffer or the device sent a stale IOVA. The whole picture is the same physics as MESI on Day 17 — the device is just another coherence agent that has to see the latest copy in the right order at the right physical address."
 
 ---
 
@@ -140,16 +140,16 @@ Each maps to a Day on this plan: 1 → Day 4-5, 2 → today, 3 → Day 6, 4 → 
 **D3. Why is there a per-device IOMMU translation when the CPU already has an MMU? Why not just give the device the CPU's page table?**
 *Constraints to weigh:* devices don't take page faults the way CPUs do, ATC/PRI complexity, isolation between devices (one bad NIC shouldn't see another's buffers), virtualisation (passthrough to a VM with its own VA space), legacy 32-bit DMA. What does ATS buy and what does it cost?
 
-**D4. Why are MMIO writes posted by default? Construct the workload where you'd want them all non-posted.**
+**D16. Why are MMIO writes posted by default? Construct the workload where you'd want them all non-posted.**
 *Constraints to weigh:* CPU stall per write vs throughput, ordering guarantees you give up, cost of an explicit read-back fence, error reporting (a posted write that faults can't return SIGBUS to the issuing instruction). When does an FPGA/accelerator team actually demand non-posted MMIO, and what do they give up?
 
-**D5. Three ARM barrier scopes (`ish`/`osh`/`sy`). Why three? What's the cost of always using `sy`?**
+**D17. Three ARM barrier scopes (`ish`/`osh`/`sy`). Why three? What's the cost of always using `sy`?**
 *Constraints to weigh:* snoop traffic radius, drain time scales with how far the barrier reaches, energy cost of waking a sleeping interconnect ring, observability of bugs (narrower-than-needed = silent corruption; wider-than-needed = perf only). If the SoC had only one shareability domain, what design simplification appears, and what perf is lost?
 
-**D6. A future SoC promises fully-coherent accelerators (NPU/GPU snoop CPU caches natively). Which artefacts in today's driver stack become obsolete? Which survive?**
+**D18. A future SoC promises fully-coherent accelerators (NPU/GPU snoop CPU caches natively). Which artefacts in today's driver stack become obsolete? Which survive?**
 *Constraints to weigh:* `dma_map_*` and bounce buffers, cache clean/invalidate, IOVA→PA translation, ordering barriers, doorbell semantics. The interconnect still has finite bandwidth and latency — what stays load-bearing? CXL.cache vs CXL.mem is the real-world version of this question.
 
-**D7. Why is the descriptor → barrier → doorbell → DMA → completion → MSI pipeline *six* stages and not four? What collapses if you merge any pair?**
+**D19. Why is the descriptor → barrier → doorbell → DMA → completion → MSI pipeline *six* stages and not four? What collapses if you merge any pair?**
 *Constraints to weigh:* who owns each stage (CPU, interconnect, device, IOMMU), what failure mode each stage isolates, how the on-call engineer would triage if two stages were fused (e.g. doorbell-as-descriptor). The pipeline shape is a debug contract as much as a perf one.
 
 ---
@@ -213,7 +213,7 @@ int main(void) {
 
 ## System Thinking — Why CPU↔device handoff has its own physics
 
-**Frame:** when CPU writes to RAM, the cache and the coherence protocol guarantee a consistent view across cores (Day 5). When a *device* reads RAM via DMA, **none of those guarantees apply by default**. The device is on a different bus, with its own ordering rules, looking at memory the CPU may not have flushed yet. Every barrier, every cache-clean operation, every doorbell pattern in this day exists to bridge two worlds that don't share a clock or a coherence protocol.
+**Frame:** when CPU writes to RAM, the cache and the coherence protocol guarantee a consistent view across cores (Day 17). When a *device* reads RAM via DMA, **none of those guarantees apply by default**. The device is on a different bus, with its own ordering rules, looking at memory the CPU may not have flushed yet. Every barrier, every cache-clean operation, every doorbell pattern in this day exists to bridge two worlds that don't share a clock or a coherence protocol.
 
 ### Q: Why the descriptor-then-doorbell pattern, *always in that order*?
 
@@ -230,7 +230,7 @@ Because the cache is *transparent to CPU memory accesses*, not to device memory 
 - **Stale device read:** CPU writes a buffer, lines sit dirty in L1. Device DMAs from RAM and reads old data. **Fix:** `clean` the cache (write dirty lines back to RAM) before triggering DMA.
 - **Stale CPU read:** Device DMAs new data into RAM. CPU still has the old value cached. **Fix:** `invalidate` the cache (drop cached lines) before CPU reads.
 
-On IO-coherent systems (modern x86, ARM with `ACE`/`CCI`), the device participates in the coherence protocol and these are handled in hardware. On non-coherent paths (most embedded, many DSPs/NPUs — Day 19), the driver must do explicit `clean`/`invalidate` ops. **Getting this wrong is the canonical NPU/HTP DMA bug: half-coherent fabric, software assumes full coherence, occasional stale reads under load.**
+On IO-coherent systems (modern x86, ARM with `ACE`/`CCI`), the device participates in the coherence protocol and these are handled in hardware. On non-coherent paths (most embedded, many DSPs/NPUs — Day 34), the driver must do explicit `clean`/`invalidate` ops. **Getting this wrong is the canonical NPU/HTP DMA bug: half-coherent fabric, software assumes full coherence, occasional stale reads under load.**
 
 ### Q: Why barriers? Doesn't `volatile` already enforce order?
 
@@ -261,9 +261,9 @@ Using the wrong scope = subtle correctness bug that passes most tests.
 
 ## Bug Anchor
 
-- **Day 11 (NVMe `CSTS.RDY` / AQA / DSTRD):** the canonical bring-up bug for this picture.
-- **Day 14 (PCU/ADR opcode ordering):** firmware analogue of "doorbell before descriptor."
-- **Day 19 (QNN/ORT):** the same picture appears in NPU submission, just with VTCM tiles instead of NVMe blocks.
+- **Day 23 (NVMe `CSTS.RDY` / AQA / DSTRD):** the canonical bring-up bug for this picture.
+- **Day 28 (PCU/ADR opcode ordering):** firmware analogue of "doorbell before descriptor."
+- **Day 34 (QNN/ORT):** the same picture appears in NPU submission, just with VTCM tiles instead of NVMe blocks.
 
 ## Exit Check
 

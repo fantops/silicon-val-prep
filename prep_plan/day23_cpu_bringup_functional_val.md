@@ -1,4 +1,4 @@
-# Day 11 — CPU Bring-up + IP Functional Validation
+# Day 23 — CPU Bring-up + IP Functional Validation
 
 ## Concept
 
@@ -6,9 +6,9 @@ A CPU IP comes up in a **strict, layered sequence**: reset is released, the arch
 
 ## Why this day in the flow
 
-Days 5-10 gave you the mechanics of a CPU: coherence, virtual memory, IOMMU, DMA, pipeline, memory consistency. Today is **the validation lens on all of it** — what a CPU IP val team actually does day-to-day. This is also the day that names the **deliverables** of a CPU IP Functional Val role (testbench, coverage plan, assertions, regression).
+Days 17-22 gave you the mechanics of a CPU: coherence, virtual memory, IOMMU, DMA, pipeline, memory consistency. Today is **the validation lens on all of it** — what a CPU IP val team actually does day-to-day. This is also the day that names the **deliverables** of a CPU IP Functional Val role (testbench, coverage plan, assertions, regression).
 
-In the Layer map this is the **cap of Phase 1**: the CPU IP exists, you can describe it from reset to user-space; now we move to Phase 2 (CPU PM) on top of it.
+In the Layer map this is the **cap of Phase 4**: the CPU IP exists, you can describe it from reset to user-space. Its **bottom rung** — rails → PLL lock → reset release — is [Day 11 (clocking & reset)](day11_clocking_reset_architecture.md); today's ladder picks up the instant reset is deasserted and climbs to a booted OS. Next is **Phase 5 (Verification, [Day 24–25](day24_verification_planning_coverage.md))** — the methodology behind the deliverables this day names — then Phase 6 (CPU PM).
 
 ---
 
@@ -44,7 +44,7 @@ In the Layer map this is the **cap of Phase 1**: the CPU IP exists, you can desc
 8. Full Linux / Android boot (real workload, page tables, scheduler, drivers)
 ```
 
-Each step has a corresponding **test bucket** in the IP val plan. The principle: **"the cheapest passing test that proves this step is on"** — not a smoke test that proves nothing.
+Each step has a corresponding **test bucket** in the IP val plan. The principle: **"the cheapest passing test that proves this step is on"** — not a smoke test that proves nothing. **Step 0 (rails → PLL lock → reset release) is [Day 11](day11_clocking_reset_architecture.md) in depth** — this ladder starts the cycle reset is deasserted, giving a clean **bottom-to-top** chain: clocking/reset (D11) → first instruction → MMU → cache → SMP → OS.
 
 ### 1a. Who triggers startup code after reset?
 
@@ -329,7 +329,7 @@ To bring up a CPU IP in a pre-Si testbench you need:
 
 **Reflex one-liner:** *"Spec → features → modes → stimulus + checks → coverage → negative → perf/power → pre-Si vs post-Si. Eight steps. Every device. Don't skip."*
 
-*Cross-link: same scaffold is the PM-coverage backbone in [Day 16 Sec pre-Si PM val](day16_pre_si_pm_validation.md) and [Day 17 post-Si PM val](day17_post_si_pm_validation.md). For PCIe-specific axes see [Day 19 enumeration coverage](day19_pcie_enumeration_config_msi.md) and [Day 21 PCIe bring-up](day21_pcie_bringup_functional_val.md).*
+*Cross-link: same scaffold is the PM-coverage backbone in [Day 30 Sec pre-Si PM val](day30_pre_si_pm_validation.md) and [Day 31 post-Si PM val](day31_post_si_pm_validation.md). For PCIe-specific axes see [Day 34 enumeration coverage](day34_pcie_enumeration_config_msi.md) and [Day 36 PCIe bring-up](day36_pcie_bringup_functional_val.md).*
 
 ---
 
@@ -346,16 +346,16 @@ To bring up a CPU IP in a pre-Si testbench you need:
 **D3. The vplan has one row per spec requirement. Reason about what goes wrong if you skip the vplan and just write random tests.**
 *Constraints to weigh:* coverage-without-intent, regression that proves nothing, the day the architect asks "did we validate Sec 5.2.3?" and you can't answer. What's the smallest-vplan that still beats no-vplan?
 
-**D4. Code coverage is 100%; functional coverage is 40%. What does this gap mean?**
+**D16. Code coverage is 100%; functional coverage is 40%. What does this gap mean?**
 *Constraints to weigh:* every line ran, but not under the intended scenario; random tests hit easy paths repeatedly; coverpoints are tighter than line-cov. What test changes close the gap *without* gaming the coverpoint definitions?
 
-**D5. SVA assertions in the design (white-box) vs in a bind file (black-box). Reason about the tradeoff.**
+**D17. SVA assertions in the design (white-box) vs in a bind file (black-box). Reason about the tradeoff.**
 *Constraints to weigh:* design-team ownership vs val-team ownership, RTL re-spin cost when an assertion changes, formal-tool friendliness, what each enables that the other doesn't. Which one survives a designer who pushes back on "asserts cluttering my code"?
 
-**D6. You find a bug in post-Si that should have been caught in RTL sim. Reason about what process change prevents the next escape.**
+**D18. You find a bug in post-Si that should have been caught in RTL sim. Reason about what process change prevents the next escape.**
 *Constraints to weigh:* coverpoint addition vs assertion addition vs random-seed expansion, whether the bug class was reachable in sim at all, what testbench limitation made it unreachable. What's the *minimum* process change — and where does over-engineering start?
 
-**D7. Imagine the IP you're validating has a brand-new architectural feature (e.g., a new memory ordering primitive). Reason about the order in which you write tests for it.**
+**D19. Imagine the IP you're validating has a brand-new architectural feature (e.g., a new memory ordering primitive). Reason about the order in which you write tests for it.**
 *Constraints to weigh:* directed tests prove the spec interpretation, formal proves the property holds, random builds confidence, scoreboard catches cross-feature interactions. Which goes first, and why does the order matter for catching the architect's spec ambiguity?
 
 ---
@@ -431,13 +431,14 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 5 (MESI):** cache-enable bugs in Stage F.
-- **Day 6 (VM):** MMU identity-map bugs in Stage E.
-- **Day 7 (TLB/IOMMU):** SMMU bugs in Stage H.
-- **Day 8 (DMA/barriers):** SMP release-flag-without-barrier bug in Stage G.
-- **Day 9 (pipeline):** ref-model mismatches in Stage C often live here.
-- **Day 10 (memory consistency):** SMP spinlock + IPI bugs.
-- **Day 17 (post-Si PM val):** bring-up surfaces the same PM-related cross-IP bugs.
+- **Day 11 (clocking/reset):** Stage 0 rails / PLL-lock / reset-release / reset-sequencing bugs — the bottom rung this ladder starts from.
+- **Day 17 (MESI):** cache-enable bugs in Stage F.
+- **Day 18 (VM):** MMU identity-map bugs in Stage E.
+- **Day 19 (TLB/IOMMU):** SMMU bugs in Stage H.
+- **Day 20 (DMA/barriers):** SMP release-flag-without-barrier bug in Stage G.
+- **Day 21 (pipeline):** ref-model mismatches in Stage C often live here.
+- **Day 22 (memory consistency):** SMP spinlock + IPI bugs.
+- **Day 31 (post-Si PM val):** bring-up surfaces the same PM-related cross-IP bugs.
 
 ## Exit Check
 

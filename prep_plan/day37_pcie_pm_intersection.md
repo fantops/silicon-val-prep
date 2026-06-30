@@ -1,4 +1,4 @@
-# Day 22 — PCIe ↔ Package PM Intersection
+# Day 37 — PCIe ↔ Package PM Intersection
 
 ## Concept
 
@@ -6,9 +6,9 @@ PCIe and CPU package PM are **cross-domain dependencies** — neither can reach 
 
 ## Why this day in the flow
 
-D16 covered pre-Si PM val. D17 covered post-Si PM val with the ADR + C6 bug stories. D20 covered PCIe PM with L1.2 in isolation. **Today is the day those threads merge into the actual platform behaviour** — and the day the val engineer learns to debug across the IP boundary. This is the most-asked-about topic in PM val interviews because it's where two big specs collide.
+D30 covered pre-Si PM val. D31 covered post-Si PM val with the ADR + C6 bug stories. D35 covered PCIe PM with L1.2 in isolation. **Today is the day those threads merge into the actual platform behaviour** — and the day the val engineer learns to debug across the IP boundary. This is the most-asked-about topic in PM val interviews because it's where two big specs collide.
 
-In the Layer map this is the **closing day of Phase 4 (PCIe)**, and the synthesis day across PM + PCIe — the right place to land before the wrap days (D23 Microsoft pointers + D24 Intel mock).
+In the Layer map this is the **closing day of Phase 7 (Interconnect & PCIe)**, and the synthesis day across PM + PCIe — the right place to land before the wrap days (D40 Intel-role narrative + D41 mock).
 
 ---
 
@@ -115,7 +115,7 @@ ADR (Asynchronous DRAM Refresh) is the emergency path that flushes the CPU's wri
    └─ Header off                     └─ Header off
 ```
 
-The bug from the D17 story: under one stepping the PCU FSM inserted the WPQ flush **between** PCIe rootport quiesce and the snoop flush, racing an in-flight DMA write through PCIe. Fix was a microcode-enforced barrier; the lasting fix was a coverage row `(ADR-event × PCIe-RP-state × DRAM-state)` and an SVA `p_adr_flush_after_pcie_quiesce`.
+The bug from the D31 story: under one stepping the PCU FSM inserted the WPQ flush **between** PCIe rootport quiesce and the snoop flush, racing an in-flight DMA write through PCIe. Fix was a microcode-enforced barrier; the lasting fix was a coverage row `(ADR-event × PCIe-RP-state × DRAM-state)` and an SVA `p_adr_flush_after_pcie_quiesce`.
 
 ### 6. The L0p mid-FLIT story (90 sec)
 
@@ -233,8 +233,8 @@ This is the **playbook** for the most common post-Si PM ticket on the planet.
 
 ```
 Stage A — Confirm each axis works in isolation
-   ├─ Cores reach CC6 (Day 13)
-   ├─ Each PCIe rootport reaches L1.2 alone (Day 20)
+   ├─ Cores reach CC6 (Day 27)
+   ├─ Each PCIe rootport reaches L1.2 alone (Day 35)
    ├─ Display can self-refresh
    ├─ DRAM can self-refresh
    └─ All blocker IPs verified individually
@@ -302,7 +302,7 @@ Stage F — Sign-off
 ## Bugs in this Topic
 
 - **L0p mid-FLIT on PC abort** (story above): PCU refclk re-enable raced rootport FIFO drain. *Fix: microcode handshake; SVA + cross-IP coverage.*
-- **ADR-WPQ flush re-ordered** (D17 story): cross-IP PCU FSM. *Fix: barrier insertion; cross-coverage.*
+- **ADR-WPQ flush re-ordered** (D31 story): cross-IP PCU FSM. *Fix: barrier insertion; cross-coverage.*
 - **One rootport's driver disables L1.2 in /sys; PkgC stuck at 0%:** distro chose conservative default. *Fix: doc + product-validation script that enables L1.2 per platform.*
 - **LTR sticky at tight value after first packet:** endpoint never updates LTR after init. *Fix: driver fix or PCU re-aggregation policy.*
 - **Two rootports race for blocker bit:** PCU latches one's value, misses the other; intermittent premature PkgC. *Fix: atomic blocker bus.*
@@ -332,16 +332,16 @@ Stage F — Sign-off
 **D3. Reason about whether LTR should be authoritative or advisory.**
 *Constraints to weigh:* what an authoritative LTR breaks if device is buggy/conservative, what an advisory LTR doesn't help with if platform ignores, the spec's positioning.
 
-**D4. ADR is a time-critical flush. Reason about how the cross-IP val team proves the flush completes within the rail-decay window.**
+**D16. ADR is a time-critical flush. Reason about how the cross-IP val team proves the flush completes within the rail-decay window.**
 *Constraints to weigh:* analog simulation cost, worst-case path through PCU + IMC + WPQ, what cross-IP coverage cells prove the path, whether formal can express the deadline.
 
-**D5. The val team has 8 cross-IP scenarios it can afford to author for emul. Reason about which 8 cover the highest bug surface.**
+**D17. The val team has 8 cross-IP scenarios it can afford to author for emul. Reason about which 8 cover the highest bug surface.**
 *Constraints to weigh:* bug-history weighting (ADR, L0p, LTR, refclk race), cross-product coverage, whether random emul can cover the gaps.
 
-**D6. socwatch attributes a PkgC blocker to PCIe RP1 but the analyser shows RP1 actually in L1.2 most of the time. Reason about where the discrepancy could live.**
+**D18. socwatch attributes a PkgC blocker to PCIe RP1 but the analyser shows RP1 actually in L1.2 most of the time. Reason about where the discrepancy could live.**
 *Constraints to weigh:* socwatch sample rate vs L1.2 window, PCU's blocker view may lag the actual state, telemetry vs ground-truth mismatch, whose clock is authoritative.
 
-**D7. A future SoC promises "no PC blocker from PCIe — always L1.2 capable instantly." Reason about what HW changes this would require.**
+**D19. A future SoC promises "no PC blocker from PCIe — always L1.2 capable instantly." Reason about what HW changes this would require.**
 *Constraints to weigh:* refclk power islands, per-port refclk gating, CLKREQ# scaling, side-band per-port, validation surface explosion.
 
 ---
@@ -441,12 +441,12 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 13 (C-states / S0ix):** PkgC architecture lives there.
-- **Day 14 (UPF):** uncore power gating lives there; PCU sequencer races UPF cells.
-- **Day 16 (pre-Si PM val):** cross-IP vplan rows from this day go there.
-- **Day 17 (post-Si PM val):** ADR and C6 wake-loss stories; this day adds the L0p mid-FLIT story.
-- **Day 20 (PCIe PM):** L1.2 mechanics; this day uses them in cross-IP context.
-- **Day 21 (PCIe bring-up):** the L0p loop pattern surfaces here when PM races traffic.
+- **Day 27 (C-states / S0ix):** PkgC architecture lives there.
+- **Day 28 (UPF):** uncore power gating lives there; PCU sequencer races UPF cells.
+- **Day 30 (pre-Si PM val):** cross-IP vplan rows from this day go there.
+- **Day 31 (post-Si PM val):** ADR and C6 wake-loss stories; this day adds the L0p mid-FLIT story.
+- **Day 35 (PCIe PM):** L1.2 mechanics; this day uses them in cross-IP context.
+- **Day 36 (PCIe bring-up):** the L0p loop pattern surfaces here when PM races traffic.
 
 ## Exit Check
 

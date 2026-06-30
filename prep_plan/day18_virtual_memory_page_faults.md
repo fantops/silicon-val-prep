@@ -1,4 +1,4 @@
-# Day 06 — Virtual Memory, Page Tables, Page Faults
+# Day 18 — Virtual Memory, Page Tables, Page Faults
 
 ## Concept
 
@@ -6,11 +6,11 @@ Each process gets its own **virtual address space**; the **MMU** translates virt
 
 ## Why this day in the flow
 
-After caches (Days 4-5), the next layer is *what address the cache is even asked about*. Every later concept layers on this:
+After caches (Days 16-17), the next layer is *what address the cache is even asked about*. Every later concept layers on this:
 
-- Day 7 — TLB caches the translations and adds shootdown / huge pages.
-- Day 8 — IOMMU/SMMU is the same idea for devices, plus MMIO PTE attributes that decide whether a register access is cached or device-typed.
-- Day 19 — the QNN/ORT page-fault bug is *exactly* a virtual-memory regression, not a cache miss.
+- Day 19 — TLB caches the translations and adds shootdown / huge pages.
+- Day 20 — IOMMU/SMMU is the same idea for devices, plus MMIO PTE attributes that decide whether a register access is cached or device-typed.
+- Day 34 — the QNN/ORT page-fault bug is *exactly* a virtual-memory regression, not a cache miss.
 
 This is **Layer 2** of the system flow.
 
@@ -68,7 +68,7 @@ ARM is similar (4-level on AArch64 with 48-bit VAs); the names differ (`L0..L3`,
 
 ### 4. Cost of a full walk
 
-Up to **4 memory accesses**, each ~100 ns if uncached. ~400 ns just to translate a single address. That is unacceptable, so the **TLB** caches recent translations (Day 7).
+Up to **4 memory accesses**, each ~100 ns if uncached. ~400 ns just to translate a single address. That is unacceptable, so the **TLB** caches recent translations (Day 19).
 
 ### 5. The PTE bits a validation engineer cares about
 
@@ -120,7 +120,7 @@ Software pointer
   → cache / DRAM / MMIO access
 ```
 
-For devices (Day 7-8):
+For devices (Day 19-20):
 
 ```
 Device DMA address (IOVA)
@@ -143,7 +143,7 @@ These are distinct layers. Calling the QNN/ORT regression a "cache miss" is a vo
 
 ## Bugs in this Topic
 
-- **QNN/ORT page-fault + virtual-memory regression (Day 19 anchor):** after a context-loading change, ORT's QNN execution provider began touching context buffers in a different lifetime pattern. Many host virtual pages were touched per inference, spiking minor faults and bumping virtual-memory footprint. **Mechanism:** demand-zero faults at 4 KB granularity, not cache misses. **Surface:** ETL/WPA showed `MajorFault`/`MinorFault` events correlating with the new code path. **Fix:** persist context buffers across iterations rather than rebuild per inference; pre-touch and lock pages where appropriate.
+- **QNN/ORT page-fault + virtual-memory regression (Day 34 anchor):** after a context-loading change, ORT's QNN execution provider began touching context buffers in a different lifetime pattern. Many host virtual pages were touched per inference, spiking minor faults and bumping virtual-memory footprint. **Mechanism:** demand-zero faults at 4 KB granularity, not cache misses. **Surface:** ETL/WPA showed `MajorFault`/`MinorFault` events correlating with the new code path. **Fix:** persist context buffers across iterations rather than rebuild per inference; pre-touch and lock pages where appropriate.
 - **MMIO accidentally cached:** PTE PWT/PCD wrong for the device range; register accesses get cached; status bits don't update from the device side. Symptom: status register reads stale, often "stuck" at the value it had at first read.
 - **Unexpected SIGSEGV in driver:** kernel handed user-space a buffer it shouldn't have access to; PTE permission bits wrong (U/S, R/W).
 - **`fork()` storm causes minor-fault thrash:** every COW page in the parent becomes a private copy on first child write; under heavy concurrency this dirties cache, swamps the page allocator, and hurts tail latency.
@@ -169,16 +169,16 @@ These are distinct layers. Calling the QNN/ORT regression a "cache miss" is a vo
 **D3. Why is the page offset never translated — what design freedom does that lock in?**
 *Constraints to weigh:* pages are physically contiguous within themselves, offset bits skip the TLB entirely, page-size choice trades TLB coverage vs internal fragmentation. If pages were *not* required to be physically contiguous, what does the MMU need to look like instead?
 
-**D4. MMIO PTEs need PWT/PCD set. Why doesn't the CPU just detect "this address is in a device range" and bypass the cache automatically?**
+**D16. MMIO PTEs need PWT/PCD set. Why doesn't the CPU just detect "this address is in a device range" and bypass the cache automatically?**
 *Constraints to weigh:* range registers (MTRRs) actually do this on x86 but are coarse and limited; per-page attribute is finer; who owns the device-range knowledge (BIOS/firmware, OS, neither). What does the hybrid (MTRR + PAT) buy — and what bug class would PAT-only invite?
 
-**D5. TLB shootdown is an IPI storm. Construct the workload where it dominates wall time, and reason about how to design it away.**
+**D17. TLB shootdown is an IPI storm. Construct the workload where it dominates wall time, and reason about how to design it away.**
 *Constraints to weigh:* `munmap` rate, cores-per-process, per-PTE invalidation cost, ASID/PCID amortisation, range-flush hardware (`TLBI VMALLE1` vs `TLBI VAALE1`). ARM has hardware-broadcast TLBI; x86 doesn't. Why the divergence — area vs ABI?
 
-**D6. Imagine DRAM becomes byte-addressable persistent (NVDIMM-style throughout). Does the page-fault model survive?**
+**D18. Imagine DRAM becomes byte-addressable persistent (NVDIMM-style throughout). Does the page-fault model survive?**
 *Constraints to weigh:* zero-copy memory-mapped IO, CoW semantics on persistent state, what "minor fault" means when the page is always present, durability barriers, file-system-as-memory-allocator. Where do faults still earn their place, and where do they collapse?
 
-**D7. Page faults vs TLB misses vs cache misses are three different layers. From a perf trace alone — without naming any counter first — derive a heuristic to tell them apart.**
+**D19. Page faults vs TLB misses vs cache misses are three different layers. From a perf trace alone — without naming any counter first — derive a heuristic to tell them apart.**
 *Constraints to weigh:* user/kernel time split, per-event latency distributions (ns vs µs vs ms), correlation with `mmap`/`brk` syscalls, CPI breakdown shape. What does the latency histogram tell you before you read any specific counter?
 
 ---
@@ -230,7 +230,7 @@ int main(void) {
 
 ## System Thinking — Why virtual memory exists at all
 
-**Frame:** virtual memory is an indirection layer between the program's view ("my address space") and physical RAM. The indirection is not free — every load goes through a TLB lookup (Day 7), and a miss costs a multi-level page walk. Why pay this cost on *every memory access for the entire life of the machine*? Because VM solves three problems simultaneously, and no other mechanism solves all three.
+**Frame:** virtual memory is an indirection layer between the program's view ("my address space") and physical RAM. The indirection is not free — every load goes through a TLB lookup (Day 19), and a miss costs a multi-level page walk. Why pay this cost on *every memory access for the entire life of the machine*? Because VM solves three problems simultaneously, and no other mechanism solves all three.
 
 ### Q: What three problems does VM solve?
 
@@ -252,7 +252,7 @@ A page fault is the kernel's signal to do work *only when actually needed*. The 
 
 ### Q: Why multi-level page tables instead of one big flat table?
 
-A flat table for a 48-bit address space at 4 KB pages would be `2^36` entries × 8 bytes = 512 GB *per process*. Multi-level tables (4 levels on x86-64, ARMv8) only allocate the levels actually used: a sparse address space costs only the populated levels (~tens of KB total). The cost is a 4-step walk on TLB miss — which is exactly why TLBs and huge pages exist (Day 7).
+A flat table for a 48-bit address space at 4 KB pages would be `2^36` entries × 8 bytes = 512 GB *per process*. Multi-level tables (4 levels on x86-64, ARMv8) only allocate the levels actually used: a sparse address space costs only the populated levels (~tens of KB total). The cost is a 4-step walk on TLB miss — which is exactly why TLBs and huge pages exist (Day 19).
 
 ### One-liner
 
@@ -274,9 +274,9 @@ A flat table for a 48-bit address space at 4 KB pages would be `2^36` entries ×
 
 ## Bug Anchor
 
-- **Day 19 (QNN/ORT page-fault):** the canonical bug for this layer.
-- **Day 8 (MMIO PTE attributes):** PWT/PCD wrong = silent MMIO caching.
-- **Day 7 (TLB / huge pages):** the cost lever for VM-heavy workloads.
+- **Day 34 (QNN/ORT page-fault):** the canonical bug for this layer.
+- **Day 20 (MMIO PTE attributes):** PWT/PCD wrong = silent MMIO caching.
+- **Day 19 (TLB / huge pages):** the cost lever for VM-heavy workloads.
 
 ## Exit Check
 

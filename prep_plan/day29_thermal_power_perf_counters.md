@@ -1,4 +1,4 @@
-# Day 15 — Thermal, Perf Counters, Multi-IP Interference
+# Day 29 — Thermal, Perf Counters, Multi-IP Interference
 
 ## Concept
 
@@ -6,7 +6,7 @@ The chip operates inside a **junction-temperature** (Tj) envelope: $T_j = T_{amb
 
 ## Why this day in the flow
 
-Days 12-14 covered active power, idle power, and the firmware bug stories around them. Day 15 is **how you measure all of it** + **what goes wrong when many IPs share resources**. Forms the bridge into Day 16 (pipeline / SIMD) and Day 17 (concurrency / DSA). In the Layer map this completes **Layer 5** and feeds Layer 6.
+Days 26-28 covered active power, idle power, and the firmware bug stories around them. Day 29 is **how you measure all of it** + **what goes wrong when many IPs share resources**. Forms the bridge into Day 30 (pipeline / SIMD) and Day 31 (concurrency / DSA). In the Layer map this completes **Layer 5** and feeds Layer 6.
 
 ---
 
@@ -57,7 +57,7 @@ PROCHOT# can be bidirectional — a hot neighbour chip on a shared signal can th
 
 Different die regions dissipate at very different power densities (CPU AVX core ≥ 50 W/cm², idle PCIe block < 5 W/cm²). Hotspot can be **10-15 °C above die average**. Throttling must respond to the hotspot sensor, not the average — single-sensor throttle leaves the rest of the chip running cool while one corner degrades.
 
-Per-core DVFS (Day 12) lets you throttle the hot core while neighbours stay at P0.
+Per-core DVFS (Day 26) lets you throttle the hot core while neighbours stay at P0.
 
 ### 4. Voltage droop and AVX license
 
@@ -100,7 +100,7 @@ Skipping step 1 is the #1 mistake — without baseline you can't measure interfe
 
 ### 5a. Multi-SoC thermal envelope sharing (the AMD design probe, part 2)
 
-*Continuing the scaffold from [Day 12 Sec 8a](day12_dvfs_pstates_pvt.md). Steps 5-6 of the "design NPU + CPU + multi-SoC PnP tradeoff" answer.*
+*Continuing the scaffold from [Day 26 Sec 8a](day26_dvfs_pstates_pvt.md). Steps 5-6 of the "design NPU + CPU + multi-SoC PnP tradeoff" answer.*
 
 ```
 5. THERMAL ENVELOPE SHARING   — one chassis, many hotspots
@@ -215,7 +215,7 @@ Using arithmetic mean on ratios changes ranking when you change the baseline —
 | Low IPC, high cache-miss | LLC-misses high, DRAM BW high | working set > LLC; missing tile/blocking |
 | Low IPC, low cache miss | front-end bound, μop cache miss | I-cache thrash, large code |
 | High IPC, slow wallclock | ref cycles ≫ core cycles | freq throttle (thermal/RAPL) — read `MSR_CORE_PERF_LIMIT_REASONS` |
-| Single-thread fast, multi-thread doesn't scale | LLC contention high, snoop traffic high | false sharing or coherence storm (Day 5) |
+| Single-thread fast, multi-thread doesn't scale | LLC contention high, snoop traffic high | false sharing or coherence storm (Day 17) |
 | Latency variance run-to-run | C-state residency high | idle states between bursts; pin governor |
 
 ---
@@ -252,16 +252,16 @@ Using arithmetic mean on ratios changes ranking when you change the baseline —
 **D3. RAPL underestimates wall power by 20-30%. Construct the cause stack and reason about which gap is fixable.**
 *Constraints to weigh:* VR efficiency (model vs measurement), DRAM not in client RAPL, platform devices, PSU efficiency. What would a "true platform RAPL" need that today's doesn't have — sensors, calibration, or scope?
 
-**D4. Top-down PMU classifies every slot into 4 buckets. Why exactly 4 — could it be 2 or 8?**
+**D16. Top-down PMU classifies every slot into 4 buckets. Why exactly 4 — could it be 2 or 8?**
 *Constraints to weigh:* what each bucket isolates (frontend / backend / bad-spec / retiring), counter budget on the PMU, actionability for a perf engineer, cross-vendor portability of the methodology. What does Intel's TMA L2 add at 6+ buckets, and where does the marginal information die?
 
-**D5. HW prefetchers can hide a missing software prefetch. Reason about why disabling HW PF is a triage step, not a fix.**
+**D17. HW prefetchers can hide a missing software prefetch. Reason about why disabling HW PF is a triage step, not a fix.**
 *Constraints to weigh:* silicon-A vs silicon-B prefetcher heuristic differences, BIOS-disabled scenarios, perf cost of explicit prefetch, what the bug-report should say (data, not "disable PF"). When does software prefetch genuinely beat HW prefetch?
 
-**D6. AVX-512 license-level cuts F to maintain V margin. Construct a workload where AVX-512 is a net loss vs AVX-256.**
+**D18. AVX-512 license-level cuts F to maintain V margin. Construct a workload where AVX-512 is a net loss vs AVX-256.**
 *Constraints to weigh:* fraction of time in vector code, recovery window after license drop, scalar-around-vector latency, license-transition cost. What does Intel's AMX do differently to avoid this trap, and why didn't earlier vector ISAs?
 
-**D7. Five interference classes on a multi-IP SoC (BW, LLC, NoC, power, IOTLB). Construct the diagnostic decision tree from a single "perf is bad" signal.**
+**D19. Five interference classes on a multi-IP SoC (BW, LLC, NoC, power, IOTLB). Construct the diagnostic decision tree from a single "perf is bad" signal.**
 *Constraints to weigh:* counter-per-class, what symptoms overlap (BW-starvation looks like LLC-thrash if you only see IPC), order of cheap-to-expensive checks. Build the triage in the right order — which class do you rule in/out first and why?
 
 ---
@@ -376,10 +376,10 @@ Without intervention, this is a runaway. The control loop must (a) detect $T_j$ 
 
 ## Bug Anchor
 
-- **Day 12 (DVFS):** Turbo / V-droop / license-level interactions live there.
-- **Day 13 (PkgC6 / S0ix):** residency counters scored here.
-- **Day 19 (NPU runtime bugs):** EP fallback and Paint SR / Camera starvation are multi-IP perf bugs.
-- **Day 20 (Debug method):** `perf stat`, RAPL, ETL/WPA, throttle-reason MSR.
+- **Day 26 (DVFS):** Turbo / V-droop / license-level interactions live there.
+- **Day 27 (PkgC6 / S0ix):** residency counters scored here.
+- **Day 34 (NPU runtime bugs):** EP fallback and Paint SR / Camera starvation are multi-IP perf bugs.
+- **Day 35 (Debug method):** `perf stat`, RAPL, ETL/WPA, throttle-reason MSR.
 
 ## Exit Check
 

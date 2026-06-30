@@ -1,12 +1,12 @@
-# Day 24 — Final Mock Interview Day
+# Day 41 — Final Mock Interview Day
 
 ## Concept
 
-The final day is a **rehearsal day, not a learning day.** You've covered Foundations (Phase 0), CPU architecture + IP functional val (Phase 1), CPU power management pre-Si and post-Si (Phase 2), and PCIe end-to-end including PCIe × PM (Phase 3). Today you run **one timed mock interview loop**, sweep the flashcards, and lock the bug stories. The goal is **density and recall**, not new material.
+The final day is a **rehearsal day, not a learning day.** You've covered all eight phases — **C foundations (P0), digital design (P1), clocking & CDC (P2), memory (P3), CPU architecture + IP func-val (P4), verification engineering (P5), CPU power management (P6), interconnect & PCIe (P7)** — plus the reasoning + narrative wrap (P8). Today you run **one timed mock interview loop**, sweep the flashcards, and lock the bug stories. The goal is **density and recall**, not new material. The framing throughout is **Intel IP-Val as the current role** ([Day 40](day40_intel_role_narrative.md)).
 
 ## Why this day in the flow
 
-Days 0-22 built the technical foundation. Day 23 closed out any current-role hand-off and retained one anchor bug story. Today is the **packaging day** — speaking the material out loud, on a clock, in interview shape.
+Days 0-39 built the technical foundation. [Day 40](day40_intel_role_narrative.md) locked the **Intel-role career narrative** and the retained bug stories. Today is the **packaging day** — speaking the material out loud, on a clock, in interview shape.
 
 In the Layer map this is the **closing day of the plan.**
 
@@ -25,6 +25,8 @@ Run one timed loop (90 minutes total). Run alone with a self-tape, with a peer, 
 | **Hard bug story** | 10 min | One of ADR / Core C6 / L0p / QNN — 90 sec story + 8 min Q&A |
 | **Coding** (systems C) | 20 min | One of: bring-up ladder, blocker arbiter, LTSSM classifier, residency parser |
 | **Questions for them** | 10 min | Have 5 questions ready (see below) |
+
+> **RTL/DV-shaped loop (Broadcom-style)?** Swap one deep-dive slot for **digital design / CDC / verification**: FSM `101` detector + FIFO depth=32, metastability + async-FIFO Gray pointers, or the 8-step test-plan scaffold for a 16-port switch. Swap the coding slot for `d09_fsm_detect`, `d14_async_fifo`, or `d24_vplan_coverage`.
 
 ### Generic questions to ask the interviewer
 
@@ -63,6 +65,57 @@ Run these as 1-minute drills. Out loud. Time yourself.
 - `volatile` — three things it prevents, two things it doesn't.
 - W1C status bit — why RMW silently breaks it.
 - Aligned-malloc trick + how `aligned_free` finds the original pointer.
+
+### Digital design + arithmetic + timing (Phase 1)
+- Combinational vs sequential — the "does it depend on history?" test.
+- K-map a 4-var function; name Quine–McCluskey for >4 vars.
+- Build XOR from 4 NANDs; why NAND/NOR are universal.
+- Ripple vs carry-lookahead adder (delay ∝ N vs log N); Booth + Wallace multiplier.
+- Two's-complement overflow = carry-in ≠ carry-out of the MSB.
+- FP gotchas: non-associative, NaN≠NaN, never `==`; bf16 vs fp16.
+- Latch vs flip-flop; why incomplete `case` infers a latch.
+- `fmax = 1/(Tcq + Tcomb + Tsu + Tskew)`; setup slack.
+- Why slowing the clock can't fix a hold violation; two fixes that do.
+- STA: setup = slow corner, hold = fast corner; false vs multicycle vs CDC exception.
+- FSM 7-step recipe; `101` overlapping detector (`10101` fires twice).
+- Moore vs Mealy; one-hot gives a free `$onehot` assertion.
+- Verilog: nonblocking-seq / blocking-comb; what produces `X` and how it propagates.
+
+### Clocking & CDC (Phase 2) — the biggest Broadcom gap
+- PLL: PFD → charge-pump → VCO → ÷feedback; lock + jitter.
+- Glitchless clock mux — where the runt pulse comes from.
+- Metastability + `MTBF = e^(t_r/τ)/(T0·f_clk·f_data)`; the lever is `t_r`.
+- 2-FF synchronizer — and what it CAN'T carry (bus, pulse, counter).
+- Crossing taxonomy: level→2FF, pulse→toggle/handshake, bus→handshake/FIFO, counter→Gray, reset→reset-sync.
+- Async FIFO: Gray pointers + extra MSB full/empty; **depth = 32** (burst backlog at equal avg rates).
+- Reset synchronizer: async assert / sync de-assert; RDC vs CDC.
+
+### Memory (Phase 3)
+- Address vs data in one sentence; a memory is `2^N × W`.
+- 6T SRAM vs 1T1C DRAM (volatile / refresh / destructive-read).
+- Address decode: precharge → row decoder → wordline → sense amp → column mux.
+- `[bank|row|col|byte]` split; open vs closed page.
+- Hamming SECDED: check bits at power-of-2 positions; syndrome locates 1-bit, overall parity flags 2-bit.
+
+### Verification (Phase 5)
+- The 8-step scaffold: Spec → Features → Stimulus → Checks → Coverage → Corners → Perf → Platform.
+- Functional vs code coverage — the 100%-code / 40%-functional trap.
+- Driver / monitor / scoreboard / reference-model; first-divergence debug.
+- Functional vs error/negative tests — assert graceful handling, not a hang.
+- SVA: `req |-> ##[1:8] grant`; `$onehot`; `cover property`.
+- Deliver a verification plan for a 16-port 1.6T switch (the scaffold, not ad-hoc tests).
+
+### Interconnect (Phase 7)
+- AXI 5 channels + VALID/READY; **VALID must not wait on READY** (deadlock).
+- Same-ID ordered / cross-ID reorderable; 4KB burst boundary.
+- CHI = MESI at interconnect scale: RN/HN/SN, snoop-filter directory.
+
+### Reasoning & bit-manipulation (Phases 1 + 8)
+- Power of 2: `x && !(x&(x-1))`; **floor-pow2** (smear then `x-(x>>1)`); next-pow2.
+- popcount (Kernighan `x&=x-1`); find-first-set = priority encoder.
+- Widen before `<<32` (two 32-bit regs → 64-bit value).
+- Puzzle method: restate → name strategy → math → sanity.
+- 100-coins blindfolded (flip a pile of K); 100-prisoners cycle-following (≈31%).
 
 ### CPU architecture
 - 5 MESI states + the 3 transitions on a write-from-Invalid.
@@ -128,7 +181,7 @@ Carry into the interview:
 2. **The 7-step debug framework** — observe → reproduce → isolate → hypothesise → test → root-cause → fix. Use it as the structure for any debug-style question.
 3. **The "coverage closes, bugs escape, vplan grows" loop** — this is the day-to-day rhythm of IP Functional Val. Speak it.
 4. **One sentence to lead with:**
-   > *"I've built a structured CPU architecture + power management + PCIe foundation and a post-Si debug methodology; I want to apply it where the coverage leverage is highest — at the IP boundary."*
+   > *"I'm an Intel IP-Val engineer with a structured RTL-to-system foundation — digital design, CDC, memory, CPU architecture, power management, and PCIe — plus a cross-IP debug methodology; I apply it where coverage leverage is highest, at the IP boundary."*
 
 ---
 
@@ -146,7 +199,7 @@ Four sentences, then stop. Let them drill.
 2. **Loop invariant**: one sentence — what's true at the top of every iteration.
 3. **Termination condition**: exactly what stops the loop, and why that's right for the edge cases above.
 
-*Full drill + anchor bugs (digital-root `while (sum % 10)` slip, moving-avg wrap-around) in [Day 00 — Pre-amble discipline](day00_c_basics.md).*
+*Full drill + anchor bugs (digital-root `while (sum % 10)` slip, moving-avg wrap-around) in [Day 0 — Pre-amble discipline](day00_c_basics.md).*
 
 ### Behavioural questions (90-sec STAR)
 
@@ -161,9 +214,9 @@ Four sentences, then stop. Let them drill.
 Lead-in: *"My HW-exposure anchors are L&T board bring-up (PCIe/NVMe, scope + LA + protocol analyser, SI eye margin, rail droop) and Intel post-Si PM lab (turbostat / SoCWatch / MSR sweeps, thermal chamber, SVTools, PCU blocking-reason traces)."*
 
 Bug anchors to pull:
-- **PCIe lane-polarity reversed on board** ([Day 21 Sec 7](day21_pcie_bringup_functional_val.md)) — board-level catch, spec-mandated polarity reversal coverage.
-- **Core C6 wake-vector lost via CFC FIFO race** ([Day 17](day17_post_si_pm_validation.md)) — post-Si lab debug, scope + MSR + PCU trace correlation.
-- **ADR opcode-ordering hang** ([Day 17](day17_post_si_pm_validation.md)) — post-Si signature, lab repro, opcode reorder fix.
+- **PCIe lane-polarity reversed on board** ([Day 36 Sec 7](day36_pcie_bringup_functional_val.md)) — board-level catch, spec-mandated polarity reversal coverage.
+- **Core C6 wake-vector lost via CFC FIFO race** ([Day 31](day31_post_si_pm_validation.md)) — post-Si lab debug, scope + MSR + PCU trace correlation.
+- **ADR opcode-ordering hang** ([Day 31](day31_post_si_pm_validation.md)) — post-Si signature, lab repro, opcode reorder fix.
 
 ### EE basics quick-refresh (60-sec each)
 
@@ -171,9 +224,9 @@ Bug anchors to pull:
 
 - **CMOS power** — dynamic = `α·C·V²·f`, static = leakage (`V·I_leak`, grows with temp + shrinking nodes). Why DVFS targets V first (quadratic), f second (linear). Why power gating exists (kill leakage entirely).
 - **Setup / hold + clock skew** — setup = data stable before clock edge; hold = data stable after. Skew shifts the window; positive skew helps setup, hurts hold. Clock-tree synthesis (CTS) balances skew. *Anchor:* hold violations don't fix with slower clock — must add buffer delay.
-- **Metastability + 2-FF synchroniser** — async signal sampled near clock edge → output undefined for MTBF window. Fix: two cascaded flops on the destination clock; first flop may go metastable, second sees a settled value. MTBF improves exponentially per stage. *Anchor:* [Day 14 — header-on-but-logic-stuck metastability storm](day14_clock_power_gating_upf.md).
-- **CDC handshake patterns** — 2-FF sync for single-bit; req/ack 4-phase for multi-bit; gray-coded pointers for async FIFOs. Lint tool: SpyGlass-CDC. *Anchor:* [Day 13 Sec clock-gating ICG glitch protection](day13_cstates_pkgc_s0ix.md) — runt pulse on `clk & en` without level-latch.
-- **SI — eye / jitter / crosstalk** — eye diagram = overlaid bit periods; eye opening = margin. Jitter = timing variance (random + deterministic); crosstalk = aggressor-victim coupling. Mitigation: equalisation (CTLE / DFE), FEC, layout spacing. *Anchor:* [Day 21 Sec 7](day21_pcie_bringup_functional_val.md) PCIe eye-margin + lane polarity.
+- **Metastability + 2-FF synchroniser** — async signal sampled near clock edge → output undefined for MTBF window. Fix: two cascaded flops on the destination clock; first flop may go metastable, second sees a settled value. MTBF improves exponentially per stage. *Anchor:* [Day 28 — header-on-but-logic-stuck metastability storm](day28_clock_power_gating_upf.md).
+- **CDC handshake patterns** — 2-FF sync for single-bit; req/ack 4-phase for multi-bit; gray-coded pointers for async FIFOs. Lint tool: SpyGlass-CDC. *Anchor:* [Day 27 Sec clock-gating ICG glitch protection](day27_cstates_pkgc_s0ix.md) — runt pulse on `clk & en` without level-latch.
+- **SI — eye / jitter / crosstalk** — eye diagram = overlaid bit periods; eye opening = margin. Jitter = timing variance (random + deterministic); crosstalk = aggressor-victim coupling. Mitigation: equalisation (CTLE / DFE), FEC, layout spacing. *Anchor:* [Day 36 Sec 7](day36_pcie_bringup_functional_val.md) PCIe eye-margin + lane polarity.
 
 **Reflex one-liner:** *"Dynamic = αCV²f, static = leakage; setup/hold = window around edge; 2-FF for sync; CDC handshake for multi-bit; eye opening = SI margin. Five concepts, 60 sec each."*
 
@@ -222,10 +275,14 @@ Bug anchors to pull:
 
 You've covered the full arc:
 
-- **Phase 0 (D0-D4):** C / pointers / bits / cache / address fluency.
-- **Phase 1 (D5-D11):** CPU architecture + IP functional validation.
-- **Phase 2 (D12-D17):** CPU power management, pre-Si and post-Si.
-- **Phase 3 (D18-D22):** PCIe functional + PM, cross-IP intersection.
-- **Wrap (D23-D24):** Current-role hand-off + retained bug story + final mock.
+- **Phase 0 (D0-D4):** C / pointers / bits / bit-manipulation.
+- **Phase 1 (D5-D10):** digital design — Boolean, arithmetic, sequential, timing/STA, FSM, Verilog.
+- **Phase 2 (D11-D14):** clocking, reset, metastability, CDC, async FIFO.
+- **Phase 3 (D15-D16):** memory systems + ECC, cache/AMAT.
+- **Phase 4 (D17-D23):** CPU architecture + IP functional validation.
+- **Phase 5 (D24-D25):** verification planning, coverage, testbench, assertions.
+- **Phase 6 (D26-D31):** CPU power management, pre-Si and post-Si.
+- **Phase 7 (D32-D38):** interconnect (AXI/CHI) + PCIe functional/PM + NVMe.
+- **Phase 8 (D39-D41):** puzzles + Intel-role narrative + final mock.
 
 Stay on this map; don't add new study areas in the last 48 hours.

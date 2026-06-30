@@ -1,4 +1,4 @@
-# Day 02 — Pointers, Memory Layout, Alignment, container_of
+# Day 2 — Pointers, Memory Layout, Alignment, container_of
 
 ## Concept
 
@@ -6,7 +6,7 @@ Where data lives (stack / heap / BSS / data / text), how the compiler lays out a
 
 ## Why this day in the flow
 
-Day 1 gave you "what is an address." Day 2 gives you "what lives at addresses, in what order, with what padding." Every later bug — DMA buffers crossing a cache line (Day 4), MMIO struct overlay misalignment (Day 8), VTCM tile alignment in NPU runtime (Day 18), false sharing (Day 5) — reduces to a layout-or-alignment question. Doing this badly means re-debugging the same class of bug for the rest of the plan.
+Day 1 gave you "what is an address." Day 2 gives you "what lives at addresses, in what order, with what padding." Every later bug — DMA buffers crossing a cache line (Day 16), MMIO struct overlay misalignment (Day 20), VTCM tile alignment in NPU runtime (Day 33), false sharing (Day 17) — reduces to a layout-or-alignment question. Doing this badly means re-debugging the same class of bug for the rest of the plan.
 
 In the Layer map this is **Layer 0 → Layer 1 bridge**: from "addresses" to "addresses inside structures and aligned regions."
 
@@ -225,9 +225,9 @@ Replaces large `switch` blocks; each state is self-contained.
 
 ## Bugs in this Topic
 
-- **Struct-overlay MMIO bug (Day 3 / Day 8 link):** declaring a struct over a register block and relying on `__attribute__((packed))` ordering. Compilers may add padding differently than the hardware register map; struct assignment can read adjacent W1C bits as a side effect; field write order is not guaranteed. **Fix:** explicit `reg_read32`/`reg_write32` per offset.
-- **DMA buffer crossing a cache line (Day 4 link):** a 60-byte buffer at a 16-byte aligned address crosses two 64-byte cache lines, causing partial-line writebacks and stale-data races against the device. **Fix:** `aligned_alloc(64, ALIGN_UP(size, 64))`.
-- **NPU buffer not page-aligned (Day 19 link):** the QNN/ORT page-fault story has a flavour of this — context buffers touched in non-page-aligned strides spike minor page faults at the start of each layer. **Fix:** allocate context buffers at page granularity and respect tile alignment.
+- **Struct-overlay MMIO bug (Day 3 / Day 20 link):** declaring a struct over a register block and relying on `__attribute__((packed))` ordering. Compilers may add padding differently than the hardware register map; struct assignment can read adjacent W1C bits as a side effect; field write order is not guaranteed. **Fix:** explicit `reg_read32`/`reg_write32` per offset.
+- **DMA buffer crossing a cache line (Day 16 link):** a 60-byte buffer at a 16-byte aligned address crosses two 64-byte cache lines, causing partial-line writebacks and stale-data races against the device. **Fix:** `aligned_alloc(64, ALIGN_UP(size, 64))`.
+- **NPU buffer not page-aligned (Day 34 link):** the QNN/ORT page-fault story has a flavour of this — context buffers touched in non-page-aligned strides spike minor page faults at the start of each layer. **Fix:** allocate context buffers at page granularity and respect tile alignment.
 - **Stack overflow in ISR:** a deep call chain inside an interrupt handler corrupts the next task's locals. Symptom is "random" wrong values that move with build changes. **Fix:** keep ISRs flat, size stacks per-task, use a stack-canary build.
 
 ---
@@ -251,16 +251,16 @@ Replaces large `switch` blocks; each state is self-contained.
 **D3. Struct field reordering can save 33% of memory. Why doesn't the C compiler reorder fields automatically?**
 *Constraints to weigh:* ABI stability across translation units, ordered initialisers `{a,b,c}`, struct-overlay onto MMIO/protocol headers (where order is a contract), `offsetof` predictability for `container_of`. Rust *does* reorder by default — what gives Rust permission that C doesn't have?
 
-**D4. `container_of` is the foundation of Linux callbacks. What would force a future kernel to drop it?**
+**D16. `container_of` is the foundation of Linux callbacks. What would force a future kernel to drop it?**
 *Constraints to weigh:* C lacks generics, fat pointers cost a word, the alternative (parallel hash map from member→parent) costs a lookup per callback, intrusive lists vs allocated wrappers, debuggability under crash dumps. If C added zero-cost interfaces, where would `container_of` survive anyway?
 
-**D5. Bare-metal firmware bans `malloc`. Construct the workload where you'd genuinely need it back, and reason about what you'd accept losing.**
+**D17. Bare-metal firmware bans `malloc`. Construct the workload where you'd genuinely need it back, and reason about what you'd accept losing.**
 *Constraints to weigh:* fragmentation, ISR context, deterministic latency budgets, slab/pool alternatives, OOM recovery without an MMU. What does Zephyr's `k_heap` actually buy that pure pools don't, and at what cost in worst-case latency?
 
-**D6. `__attribute__((packed))` is a footgun on ARM. What architectural choice would make it safe — and at what cost?**
+**D18. `__attribute__((packed))` is a footgun on ARM. What architectural choice would make it safe — and at what cost?**
 *Constraints to weigh:* unaligned-access trap-and-emulate cost, per-load alignment check in the LSU, code-size cost (compiler emits byte-by-byte access for packed fields), wire-format pragmatism (network / disk headers want packed). Why is x86 "just fine" with packed and ARM punishes it — what's the silicon trade?
 
-**D7. Five segments (text/data/bss/heap/stack) is the textbook layout. Imagine an MCU with one 64 KB SRAM and no MMU — does the segmentation still earn its keep?**
+**D19. Five segments (text/data/bss/heap/stack) is the textbook layout. Imagine an MCU with one 64 KB SRAM and no MMU — does the segmentation still earn its keep?**
 *Constraints to weigh:* link-time symbol resolution, stack-overflow detection without an MPU, R/W/X permissions, ROM-constant savings (text in flash), zero-init guarantee for BSS. When does a hand-rolled "everything in one .data" win, and what defects does it invite?
 
 ---
@@ -507,9 +507,9 @@ Same C source. Now compile with `arm-none-eabi-gcc -T link.ld -nostartfiles star
 
 ## Bug Anchor
 
-- **Day 4 link:** DMA buffer crossing a cache line — alignment is the fix.
-- **Day 8 link:** struct-overlay MMIO — explicit accessors are the fix.
-- **Day 19 link:** QNN/ORT page-fault story — page-aligned context buffers are part of the mitigation.
+- **Day 16 link:** DMA buffer crossing a cache line — alignment is the fix.
+- **Day 20 link:** struct-overlay MMIO — explicit accessors are the fix.
+- **Day 34 link:** QNN/ORT page-fault story — page-aligned context buffers are part of the mitigation.
 
 ## Exit Check
 

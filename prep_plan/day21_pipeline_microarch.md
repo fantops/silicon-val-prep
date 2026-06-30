@@ -1,4 +1,4 @@
-# Day 09 — CPU Pipeline, OoO, Memory Consistency, SIMD
+# Day 21 — CPU Pipeline, OoO, Memory Consistency, SIMD
 
 ## Concept
 
@@ -6,7 +6,7 @@ Modern cores are **deeply pipelined out-of-order machines**: front-end (fetch / 
 
 ## Why this day in the flow
 
-Days 4-15 covered the platform — caches, MMU, IOMMU, DMA, PCIe, NVMe, power, thermal, perf counters. Day 09 is the **CPU itself** as a microarchitecture, the layer where IPC actually happens. You need this to talk credibly about pipeline-stall counters from Day 15, and to write the concurrency primitives on Day 10 with the right memory orders.
+Days 16-29 covered the platform — caches, MMU, IOMMU, DMA, PCIe, NVMe, power, thermal, perf counters. Day 21 is the **CPU itself** as a microarchitecture, the layer where IPC actually happens. You need this to talk credibly about pipeline-stall counters from Day 29, and to write the concurrency primitives on Day 22 with the right memory orders.
 
 In the Layer map this is **Layer 6 (CPU microarch)**.
 
@@ -121,7 +121,7 @@ Allocate → Rename (RAT) → Reservation Station → Execute (FUs) → ROB → 
 Implications:
 
 - **x86:** `volatile` is usually enough for MMIO; `mfence` only needed for store-then-load across cores.
-- **ARM:** explicit `dmb`, `dsb`, `isb`. Producer-consumer flag pattern needs `dmb st` on the producer (data store, then ready store) and `dmb ld` on the consumer (read flag, then read data). Day 8 doorbell story is exactly this.
+- **ARM:** explicit `dmb`, `dsb`, `isb`. Producer-consumer flag pattern needs `dmb st` on the producer (data store, then ready store) and `dmb ld` on the consumer (read flag, then read data). Day 20 doorbell story is exactly this.
 
 **The classic memory-model bug:** on ARM, producer writes `data; ready=1`; consumer polls `ready==1; reads data`. Consumer can see `ready=1` with **stale data** because the two stores can become globally visible out of order. Fix: barriers on both sides (or `STLR`/`LDAR`).
 
@@ -136,7 +136,7 @@ Hardware prefetchers fetch lines before demand:
 | Spatial / region | neighbours |
 | NLP | L1 → L2 hint |
 
-Validation lever: HW prefetchers can **hide** a missing software prefetch (silicon A passes; silicon B with different heuristic regresses). Always re-run with HW prefetch off (Intel MSR `0x1A4`) as a triage step. Aggressive prefetch can cause BW contention in multi-IP systems (Day 15).
+Validation lever: HW prefetchers can **hide** a missing software prefetch (silicon A passes; silicon B with different heuristic regresses). Always re-run with HW prefetch off (Intel MSR `0x1A4`) as a triage step. Aggressive prefetch can cause BW contention in multi-IP systems (Day 29).
 
 ### 6. SIMD and Intel license levels
 
@@ -244,16 +244,16 @@ Calling conventions: x86-64 SysV vs Microsoft x64 vs AArch64 AAPCS — relevant 
 **D3. TSO vs weak memory ordering. Imagine ARM moved to TSO tomorrow; reason about who wins and loses.**
 *Constraints to weigh:* every kernel weak-memory bug stops happening, store-buffer drain energy + complexity, snoop traffic on every store-to-shared-line, retire-side complexity. Why didn't ARM make the change at v8 when given the chance?
 
-**D4. Branch mispredict costs $\approx \text{depth} \times \text{IPC}$ µops. Derive the workload where predictor improvements stop mattering.**
+**D16. Branch mispredict costs $\approx \text{depth} \times \text{IPC}$ µops. Derive the workload where predictor improvements stop mattering.**
 *Constraints to weigh:* branch density per dynamic instruction, mispredict rate floor (irreducible randomness), depth growth, alternative — predication / cmov / branchless. Where does a perfect predictor still lose to a branchless rewrite?
 
-**D5. SIMD width keeps doubling (128 → 256 → 512 → AMX tiles). Reason about why this trend slowed at 512.**
+**D17. SIMD width keeps doubling (128 → 256 → 512 → AMX tiles). Reason about why this trend slowed at 512.**
 *Constraints to weigh:* license-level F penalty, ISA fragmentation across cores, tail-loop overhead on small data, register-file area, dataflow accelerators (AMX, NPU) eating long-vector workloads. What's the architecture-level limit, and what comes after?
 
-**D6. Why is the producer-consumer ring-buffer race the canonical TSO-vs-weak bug?**
+**D18. Why is the producer-consumer ring-buffer race the canonical TSO-vs-weak bug?**
 *Constraints to weigh:* two-store ordering (data, then flag), where the reorder occurs (retire vs propagate), what `dmb st` actually does, why x86 hides it. Construct the bug, the trace, and the minimal fix — then explain why the fix has a perf cost the x86 version never paid.
 
-**D7. Imagine a future ISA mandates seq_cst as the default. Reason about who wins and what dies.**
+**D19. Imagine a future ISA mandates seq_cst as the default. Reason about who wins and what dies.**
 *Constraints to weigh:* every barrier-bug disappears, store-buffer + snoop cost on every store, lock-free DS throughput, single-thread perf. Where does the perf cliff live, and would the industry pay for it — or only pay it where it earns its way (security domain crossings)?
 
 ---
@@ -374,16 +374,16 @@ Because speculation — a performance optimization — left **microarchitectural
 - **memory consistency** — *what:* HW visible order vs program order / *why:* perf via reorder / *how:* x86 = TSO (loads can pass earlier loads only via store buffer), ARM = weak / *connects:* why ARM needs more explicit fences, lock impl differences
 - **speculation** — *what:* execute past unresolved branches / *why:* hide branch latency / *how:* BPU prediction + checkpoint + flush on misp / *connects:* Spectre/Meltdown side channels, mispredict cost
 - **SIMD** — *what:* one instruction, N elements / *why:* DLP cheaper than ILP / *how:* wide vector regs (128/256/512b) / *connects:* SSE/AVX/NEON/SVE, alignment, masked ops
-- **barriers** — *what:* fence reordering / *why:* HW reorders both compiler and CPU layers / *how:* DMB / MFENCE / `smp_*` per arch + scope / *connects:* lock-free correctness, MMIO ordering (Day 8)
+- **barriers** — *what:* fence reordering / *why:* HW reorders both compiler and CPU layers / *how:* DMB / MFENCE / `smp_*` per arch + scope / *connects:* lock-free correctness, MMIO ordering (Day 20)
 
 ---
 
 ## Bug Anchor
 
-- **Day 5 (false sharing):** the same coherence story drives many concurrency bugs.
-- **Day 8 (DMA / doorbells):** ARM weak ordering needs `dmb st` between descriptor and doorbell.
-- **Day 15 (perf counters):** TMA, mispredict, μop cache miss, license-level counters live here.
-- **Day 17 (concurrency):** acquire/release semantics bind to today's memory model.
+- **Day 17 (false sharing):** the same coherence story drives many concurrency bugs.
+- **Day 20 (DMA / doorbells):** ARM weak ordering needs `dmb st` between descriptor and doorbell.
+- **Day 29 (perf counters):** TMA, mispredict, μop cache miss, license-level counters live here.
+- **Day 31 (concurrency):** acquire/release semantics bind to today's memory model.
 
 ## Exit Check
 

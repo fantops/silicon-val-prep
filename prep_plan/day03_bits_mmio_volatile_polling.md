@@ -1,4 +1,4 @@
-# Day 03 — Bits, MMIO, volatile, Polling, Endianness
+# Day 3 — Bits, MMIO, volatile, Polling, Endianness
 
 ## Concept
 
@@ -6,12 +6,12 @@ Hardware registers are not variables — they are bit-field collections at memor
 
 ## Why this day in the flow
 
-Day 1 gave you the macros, Day 2 gave you layout. Day 3 puts them on a real register block: program a field, poll a status bit, parse a TLP/Ethernet/NVMe header. The next layer (caches, VM, DMA, PCIe, NVMe) is all *register programming + buffer parsing*. If today is solid, Days 8 (DMA), 10 (PCIe), 11 (NVMe) are scaffolding work, not new concepts.
+Day 1 gave you the macros, Day 2 gave you layout. Day 3 puts them on a real register block: program a field, poll a status bit, parse a TLP/Ethernet/NVMe header. The next layer (caches, VM, DMA, PCIe, NVMe) is all *register programming + buffer parsing*. If today is solid, Days 20 (DMA), 10 (PCIe), 11 (NVMe) are scaffolding work, not new concepts.
 
 The two bug stories that anchor today:
 
-- **NVMe `CSTS.RDY` / AQA bug** (Day 11): wrong field width on `AQA`, polling on `CSTS.RDY` with a timeout caught the failure.
-- **PCU/ADR opcode-ordering bug** (Day 14): missing wait-for-ack between firmware opcodes — the polling-with-timeout discipline expressed in firmware.
+- **NVMe `CSTS.RDY` / AQA bug** (Day 23): wrong field width on `AQA`, polling on `CSTS.RDY` with a timeout caught the failure.
+- **PCU/ADR opcode-ordering bug** (Day 28): missing wait-for-ack between firmware opcodes — the polling-with-timeout discipline expressed in firmware.
 
 ---
 
@@ -268,16 +268,16 @@ The byte-by-byte version generates the same code on a modern compiler with optim
 **D3. Why doesn't the compiler insert a memory barrier automatically around every `volatile` access on weak-ordered targets?**
 *Constraints to weigh:* most `volatile` uses are flags not MMIO; cost of a universal `dmb` on every load; portability of C; explicit-is-safer philosophy; how a "smart" compiler would distinguish MMIO from flag without losing portability. What would a `volatile_mmio_t` extension need, and why hasn't it landed?
 
-**D4. Polling-loop timeouts are universal. Derive when polling beats interrupts for a given event arrival rate.**
+**D16. Polling-loop timeouts are universal. Derive when polling beats interrupts for a given event arrival rate.**
 *Constraints to weigh:* per-poll cost (cycles + cache pollution), interrupt latency + ISR overhead, jitter tolerance, what the CPU does between polls (busy-wait vs WFE vs yield), expected wait distribution. NVMe goes from interrupts to polling on hot completions — derive the crossover.
 
-**D5. W1C status bits exist because of a hardware/software race. Why isn't "read-to-clear" used everywhere instead?**
+**D17. W1C status bits exist because of a hardware/software race. Why isn't "read-to-clear" used everywhere instead?**
 *Constraints to weigh:* re-entrant ISR safety (a second handler must see the bit), debug printk reading status without side effects, RC requires every handler to remember not to read twice. What are the failure modes of each, and which one a multi-CPU OS prefers — and why?
 
-**D6. Struct-overlay over an MMIO block is forbidden but ergonomic. What would the language need to add to make it safe?**
+**D18. Struct-overlay over an MMIO block is forbidden but ergonomic. What would the language need to add to make it safe?**
 *Constraints to weigh:* per-field load/store semantics (no bulk memcpy), explicit no-padding, explicit field width, no implicit RMW. Rust's `bitfield` crate and Linux's `regmap` solve this differently — compare. What survives in a hypothetical `mmio struct` keyword?
 
-**D7. Imagine MMIO is replaced by CXL.io with full request/response semantics. Which Day-3 disciplines stay load-bearing, and which become legacy?**
+**D19. Imagine MMIO is replaced by CXL.io with full request/response semantics. Which Day-3 disciplines stay load-bearing, and which become legacy?**
 *Constraints to weigh:* completion semantics replace posted-write fire-and-forget, error reporting becomes synchronous, ordering becomes per-transaction, but `volatile` + barrier still constrains the *compiler*. What does a "modern" register-poke look like in CXL-land?
 
 ---
@@ -361,7 +361,7 @@ while (*status_reg & BUSY) ;
 
 the compiler sees a load with no side effects in a loop and hoists it out: "the value can't change, so check it once." Result: infinite loop. `volatile` tells the compiler **"this address has side effects you cannot see — issue exactly the loads/stores I wrote, in order, and don't cache the value in a register."** Without `volatile`, every poll loop and every MMIO write is potentially miscompiled at -O2.
 
-**`volatile` does NOT give you:** atomicity, ordering between *different* volatile addresses, or memory barriers. For those you need explicit barriers (Day 8).
+**`volatile` does NOT give you:** atomicity, ordering between *different* volatile addresses, or memory barriers. For those you need explicit barriers (Day 20).
 
 ### Q: Why are MMIO regions mapped uncached / device-type?
 
@@ -379,11 +379,11 @@ A pure tradeoff between **latency, CPU cost, and event rate**:
 - **Interrupts win** when the event is *rare* or *latency-tolerant*. CPU sleeps; one wake handles the work.
 - **Hybrid (NAPI / interrupt-coalescing / poll-after-IRQ):** trigger via IRQ for the first event, then poll while events keep coming. Used by every modern NIC and NVMe driver.
 
-The NVMe completion queue with phase bit (Day 11) is *poll-style* even though MSI-X is set up — because at high IOPS, polling beats IRQs.
+The NVMe completion queue with phase bit (Day 23) is *poll-style* even though MSI-X is set up — because at high IOPS, polling beats IRQs.
 
 ### One-liner
 
-*"Writing a hardware register isn't writing memory. `volatile` stops the compiler from caching loads in registers. Uncached/device mappings stop the CPU cache from coalescing or reordering writes. Barriers (Day 8) stop the CPU's reorder buffer. And polling beats interrupts when events arrive faster than the IRQ entry/exit cost. Each keyword exists to opt one layer of optimization back out — because hardware doesn't follow C's rules."*
+*"Writing a hardware register isn't writing memory. `volatile` stops the compiler from caching loads in registers. Uncached/device mappings stop the CPU cache from coalescing or reordering writes. Barriers (Day 20) stop the CPU's reorder buffer. And polling beats interrupts when events arrive faster than the IRQ entry/exit cost. Each keyword exists to opt one layer of optimization back out — because hardware doesn't follow C's rules."*
 
 ---
 
@@ -399,9 +399,9 @@ The NVMe completion queue with phase bit (Day 11) is *poll-style* even though MS
 
 ## Bug Anchor
 
-- **Day 11 (NVMe):** `wait_csts_rdy` and AQA field-width bug.
-- **Day 14 (PCU/ADR):** missing wait-for-ack — polling discipline in firmware.
-- **Day 8 (DMA/doorbells):** descriptor-then-doorbell needs a barrier; `volatile` alone won't do it on ARM.
+- **Day 23 (NVMe):** `wait_csts_rdy` and AQA field-width bug.
+- **Day 28 (PCU/ADR):** missing wait-for-ack — polling discipline in firmware.
+- **Day 20 (DMA/doorbells):** descriptor-then-doorbell needs a barrier; `volatile` alone won't do it on ARM.
 
 ## Exit Check
 

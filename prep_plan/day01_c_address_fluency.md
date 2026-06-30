@@ -1,4 +1,4 @@
-# Day 01 — C Address Fluency, Bit/Field Macros, MMIO Primer
+# Day 1 — C Address Fluency, Bit/Field Macros, MMIO Primer
 
 ## Concept
 
@@ -10,8 +10,8 @@ Layer 0 of the system flow ("Coding And Address Fluency") starts here because ev
 
 The two real bug stories that hinge on these basics:
 
-- **NVMe `CSTS.RDY` / AQA bug** (Day 11): a polling-with-timeout bug, a register-field-programming bug, and a spec-walking bug at once.
-- **PCU/ADR opcode-ordering bug** (Day 14): a register handshake / ack-wait bug expressed as firmware opcodes.
+- **NVMe `CSTS.RDY` / AQA bug** (Day 23): a polling-with-timeout bug, a register-field-programming bug, and a spec-walking bug at once.
+- **PCU/ADR opcode-ordering bug** (Day 28): a register handshake / ack-wait bug expressed as firmware opcodes.
 
 Both bugs reduce to "I read the register wrong, or I wrote the field wrong, or I forgot the timeout." That is why the macros below matter.
 
@@ -82,7 +82,7 @@ static inline uint32_t reg_read32(volatile uint32_t *reg) { return *reg; }
 static inline void     reg_write32(volatile uint32_t *reg, uint32_t v) { *reg = v; }
 ```
 
-**`volatile` is not a memory barrier.** On weakly ordered ISAs (ARM, RISC-V) you still need `dmb`/`dsb` (or `atomic_thread_fence`) to order MMIO against normal memory, especially the descriptor-then-doorbell pattern (covered Day 8). On x86 the hardware gives you stronger ordering for many common paths, but device mappings and posted writes still need to be reasoned about from the platform rules, not from C `volatile`.
+**`volatile` is not a memory barrier.** On weakly ordered ISAs (ARM, RISC-V) you still need `dmb`/`dsb` (or `atomic_thread_fence`) to order MMIO against normal memory, especially the descriptor-then-doorbell pattern (covered Day 20). On x86 the hardware gives you stronger ordering for many common paths, but device mappings and posted writes still need to be reasoned about from the platform rules, not from C `volatile`.
 
 ### 4. Read-modify-write a register field
 
@@ -113,12 +113,12 @@ int wait_for_bit_set(volatile uint32_t *reg, uint32_t mask, int timeout_us) {
 
 This shape recurs everywhere:
 
-- `wait_csts_rdy` in NVMe bring-up (Day 11) — exact same loop on `CSTS.RDY`.
-- `wait_link_up` in PCIe LTSSM (Day 10) — same loop on `LinkStatus.DLL_LinkActive`.
+- `wait_csts_rdy` in NVMe bring-up (Day 23) — exact same loop on `CSTS.RDY`.
+- `wait_link_up` in PCIe LTSSM (Day 22) — same loop on `LinkStatus.DLL_LinkActive`.
 - `wait_pll_lock` in clocking — same loop on `PLL_STATUS.LOCK`.
-- `IO_QUIESCE_ACK` in the PCU/ADR sequence (Day 14) — same loop in firmware.
+- `IO_QUIESCE_ACK` in the PCU/ADR sequence (Day 28) — same loop in firmware.
 
-**Always handle the timeout case.** The interviewer's red flag is forgetting it. The canonical NVMe `CSTS.RDY` bug (Day 11) was found because the timeout fired and the spec said "wait at most CAP.TO × 500 ms" — without that timeout the host would have hung silently.
+**Always handle the timeout case.** The interviewer's red flag is forgetting it. The canonical NVMe `CSTS.RDY` bug (Day 23) was found because the timeout fired and the spec said "wait at most CAP.TO × 500 ms" — without that timeout the host would have hung silently.
 
 **Variants you should be able to write in 60 seconds:**
 
@@ -171,8 +171,8 @@ void  *my_memcpy(void *d, const void *s, size_t n) {
 
 Today's macros are too foundational to "own" a single bug, but every later bug story passes through them. Two examples to keep in mind:
 
-- **NVMe `CSTS.RDY` AQA bug (Day 11):** the host wrote `AQA` with the wrong field width and `CSTS.RDY` never asserted. Caught by the timeout in `wait_for_bit_set`. Without that timeout the bring-up would have hung forever.
-- **PCU/ADR opcode-ordering bug (Day 14):** `WPQ_FLUSH` was issued before `IO_QUIESCE_ACK`. It is the same shape as forgetting to wait for a status bit before issuing the next operation.
+- **NVMe `CSTS.RDY` AQA bug (Day 23):** the host wrote `AQA` with the wrong field width and `CSTS.RDY` never asserted. Caught by the timeout in `wait_for_bit_set`. Without that timeout the bring-up would have hung forever.
+- **PCU/ADR opcode-ordering bug (Day 28):** `WPQ_FLUSH` was issued before `IO_QUIESCE_ACK`. It is the same shape as forgetting to wait for a status bit before issuing the next operation.
 
 If your `reg_field_write` and `wait_for_bit_set` are sloppy, every later bug story is harder to debug because you are fighting your own scaffolding.
 
@@ -197,16 +197,16 @@ If your `reg_field_write` and `wait_for_bit_set` are sloppy, every later bug sto
 **D3. Polling vs interrupts — under what residency/wake distribution does polling actually win?**
 *Constraints to weigh:* per-poll cost (cycles + cache pollution), interrupt latency + ISR overhead + context switch, wake energy on a sleeping core, jitter, what fraction of polls hit. NVMe completion queues poll on hot paths and interrupt on cold — derive the crossover from first principles.
 
-**D4. `volatile` is necessary but not sufficient for MMIO. Why does the C standard not just define `volatile` to imply a full barrier?**
+**D16. `volatile` is necessary but not sufficient for MMIO. Why does the C standard not just define `volatile` to imply a full barrier?**
 *Constraints to weigh:* portability (C is multi-arch but barriers are per-arch), per-access cost on TSO vs weak machines, who pays when 99% of `volatile` uses are sig_atomic_t flags not MMIO, who would even own the new semantics. What would a hypothetical `mmio_t` qualifier need to specify?
 
-**D5. RMW on a control register isn't atomic across cores. Why doesn't hardware provide an `atomic_field_write` MMIO opcode?**
+**D17. RMW on a control register isn't atomic across cores. Why doesn't hardware provide an `atomic_field_write` MMIO opcode?**
 *Constraints to weigh:* MMIO bus semantics (single-beat transactions, no per-IP arbiter for SW agents), per-IP mutex hardware area, who arbitrates across CPUs vs DMA agents vs the IP itself, software simplicity vs HW cost. What does the equivalent on coherent CXL.cache space look like, and why is it different?
 
-**D6. `wait_for_bit_set` needs a timeout. Derive the right value for `CSTS.RDY` from first principles — and explain why "1 second" is wrong.**
+**D18. `wait_for_bit_set` needs a timeout. Derive the right value for `CSTS.RDY` from first principles — and explain why "1 second" is wrong.**
 *Constraints to weigh:* spec'd worst-case ready time (`CAP.TO`), VRM ramp + PLL relock budget, what the host should *do* on timeout (reset, log, escalate), test-vs-production split. What goes wrong system-wide if every driver picks 1 s "to be safe"?
 
-**D7. The same `read/wait/write` accessor pattern shows up in NVMe, PCIe, clocking, and bare-metal probes. What would force a future SoC to abandon it?**
+**D19. The same `read/wait/write` accessor pattern shows up in NVMe, PCIe, clocking, and bare-metal probes. What would force a future SoC to abandon it?**
 *Constraints to weigh:* uniform mental model for bring-up, debuggability, transactional MMIO with completions (CXL.io), in-band error signalling, virtualised MMIO with paravirt accessors. When the bus is no longer "dumb," what survives and what must change?
 
 ---
@@ -315,9 +315,9 @@ Get these wrong and the compiler optimizes correctly *for the wrong world*. Most
 ## Bug Anchor
 
 - Foundational; every later bug uses these accessors.
-- **Cross-link to Day 11 (NVMe):** `wait_csts_rdy` is `wait_for_bit_set` on `CSTS.RDY`.
-- **Cross-link to Day 14 (PCU/ADR):** the missing wait-for-ack is the firmware analogue of forgetting the timeout in this loop.
-- **Cross-link to Day 8 (DMA/doorbells):** `volatile` alone is not enough on weakly ordered ISAs — you'll need barriers.
+- **Cross-link to Day 23 (NVMe):** `wait_csts_rdy` is `wait_for_bit_set` on `CSTS.RDY`.
+- **Cross-link to Day 28 (PCU/ADR):** the missing wait-for-ack is the firmware analogue of forgetting the timeout in this loop.
+- **Cross-link to Day 20 (DMA/doorbells):** `volatile` alone is not enough on weakly ordered ISAs — you'll need barriers.
 
 ## Exit Check
 

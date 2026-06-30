@@ -1,14 +1,14 @@
-# Day 22b — NVMe Storage-Controller SoC Validation
+# Day 38 — NVMe Storage-Controller SoC Validation
 
 ## Concept
 
-An NVMe storage controller is a PCIe endpoint SoC whose job is to turn host **block I/O** into **flash media access**. Validation means proving the full datapath — host submission queue → controller command processing → media access → completion queue → MSI-X interrupt — is correct, ordered, and robust under power transitions, error injection, and stress. This is the **storage-specific layer that sits directly on top of the PCIe stack** (Days 18–22): NVMe *is* the canonical PCIe traffic generator a storage-controller val team lives in.
+An NVMe storage controller is a PCIe endpoint SoC whose job is to turn host **block I/O** into **flash media access**. Validation means proving the full datapath — host submission queue → controller command processing → media access → completion queue → MSI-X interrupt — is correct, ordered, and robust under power transitions, error injection, and stress. This is the **storage-specific layer that sits directly on top of the PCIe stack** (Days 33–37): NVMe *is* the canonical PCIe traffic generator a storage-controller val team lives in.
 
 ## Why this day in the flow
 
-D18–D22 built the PCIe link (LTSSM, enumeration, PM, bring-up, PM-intersection). **Today puts a real protocol on top of that link.** NVMe reuses everything from PCIe — BARs, MSI-X, posted writes, ASPM/L1.2, D-states — and adds the queue/doorbell/completion datapath. This is the day that maps to "I validated NVMe storage controller SoCs at SanDisk: bring-up, datapath, power states, SDExpress." It is the storage-controller capstone of Phase 3.
+D33–D37 built the PCIe link (LTSSM, enumeration, PM, bring-up, PM-intersection). **Today puts a real protocol on top of that link.** NVMe reuses everything from PCIe — BARs, MSI-X, posted writes, ASPM/L1.2, D-states — and adds the queue/doorbell/completion datapath. This is the day that maps to "I validated NVMe storage controller SoCs at SanDisk: bring-up, datapath, power states, SDExpress." It is the storage-controller capstone of Phase 7.
 
-In the Layer map this slots **after D22 (PCIe × PM intersection)** and before the wrap days — it is the protocol-on-link day that the storage-controller JD is built around.
+In the Layer map this slots **after D37 (PCIe × PM intersection)** and before the wrap days — it is the protocol-on-link day that the storage-controller JD is built around.
 
 ---
 
@@ -38,7 +38,7 @@ Completion queue entry (CQE, 16 B) DMA-written to host DRAM
 MSI-X interrupt → host ISR → CQ head doorbell
 ```
 
-The whole thing is **PCIe TLPs underneath**: doorbell = posted memory write to BAR; SQE/CQE/data = DMA memory reads/writes; interrupt = MSI-X memory write. Everything you learned about posted-write ordering and the producer/consumer doorbell pattern (D08) applies directly.
+The whole thing is **PCIe TLPs underneath**: doorbell = posted memory write to BAR; SQE/CQE/data = DMA memory reads/writes; interrupt = MSI-X memory write. Everything you learned about posted-write ordering and the producer/consumer doorbell pattern (D20) applies directly.
 
 ### 2. Queues, doorbells, completions
 
@@ -60,7 +60,7 @@ NVMe power management is **two layers stacked**, and the cross-layer dependency 
 | Layer | Mechanism | Notes |
 |---|---|---|
 | **NVMe power states** | PS0…PSn via Set Features; **APST** (Autonomous Power State Transition) idles the controller automatically | Non-operational states (NOPS) gate media |
-| **PCIe link PM** | ASPM **L1.2**, **D3hot/D3cold**, CLKREQ#, PME | Same machinery as D20 |
+| **PCIe link PM** | ASPM **L1.2**, **D3hot/D3cold**, CLKREQ#, PME | Same machinery as D35 |
 | **Cross-layer** | APST entry must be consistent with link L1.2 / D3; **wake latency** = controller PS-exit **+** link retrain | This is where storage PM bugs hide |
 
 **SDExpress** (SD card over PCIe/NVMe): an SD form-factor card that runs NVMe over a PCIe link, with SD-legacy fallback. POC validation = prove the card trains the PCIe link, enumerates as NVMe, runs the datapath, and negotiates power/legacy modes correctly.
@@ -70,7 +70,7 @@ NVMe power management is **two layers stacked**, and the cross-layer dependency 
 ## Bring-up flow (real silicon)
 
 ```
-0. PCIe link up to L0 (Days 18–22 ladder)        — link is the prerequisite
+0. PCIe link up to L0 (Days 33–37 ladder)        — link is the prerequisite
    ▼
 1. BAR0 mapped; read CAP/VS registers            — controller registers reachable
    ▼
@@ -110,7 +110,7 @@ NVMe power management is **two layers stacked**, and the cross-layer dependency 
 | `CSTS.RDY` never asserts after `CC.EN=1` | Admin queue base/size mis-programmed; controller reset incomplete | Read back AQA/ASQ/ACQ; check reset handshake |
 | Data corruption on large transfer | **PRP list** crossing page boundary mis-built; SGL length wrong | Coverpoint on transfer size; analyser DMA address trace |
 | I/O timeout after idle | **APST × L1.2** cross-layer: wake latency exceeds host timeout; link retrain stalls | Correlate APST-exit with LTSSM Recovery; check CLKREQ#/L1.2 exit |
-| Doorbell write "lost" | Posted-write ordering / MMIO not `volatile`; write coalesced | D03/D08 ordering: barrier before doorbell, `volatile` accessor |
+| Doorbell write "lost" | Posted-write ordering / MMIO not `volatile`; write coalesced | D3/D20 ordering: barrier before doorbell, `volatile` accessor |
 | SDExpress won't enumerate as NVMe | Mode negotiation stuck in SD-legacy; PCIe link not trained | Check mode-switch sequence; analyser on link train + first config TLP |
 
 ---
@@ -135,14 +135,14 @@ Model an **NVMe submission/completion queue pair** as circular rings with a phas
 - Add a doorbell-ordering guard (a `volatile`-style fence comment) before the tail update.
 - Test: fill past wrap, verify no completion is missed and phase flips exactly once per wrap.
 
-(Reuses the SPSC producer/consumer ring from D08/D10 — NVMe is that pattern with a phase tag.)
+(Reuses the SPSC producer/consumer ring from D20/D22 — NVMe is that pattern with a phase tag.)
 
 ## Bug Anchor
 
-- Posted-write ordering / doorbell + `volatile` → [Day 03](day03_bits_mmio_volatile_polling.md), [Day 08](day08_dma_doorbells_ordering_barriers.md)
-- MSI-X / interrupt path → [Day 19](day19_pcie_enumeration_config_msi.md)
-- ASPM L1.2 / D-states / wake latency → [Day 20](day20_pcie_power_management.md), [Day 22](day22_pcie_pm_intersection.md)
-- Cross-IP coverage-gap framing → [Day 23](day23_msft_npu_exit_pointers.md)
+- Posted-write ordering / doorbell + `volatile` → [Day 3](day03_bits_mmio_volatile_polling.md), [Day 20](day20_dma_doorbells_ordering_barriers.md)
+- MSI-X / interrupt path → [Day 34](day34_pcie_enumeration_config_msi.md)
+- ASPM L1.2 / D-states / wake latency → [Day 35](day35_pcie_power_management.md), [Day 37](day37_pcie_pm_intersection.md)
+- Cross-IP coverage-gap framing → [Day 40](day40_intel_role_narrative.md)
 
 ## Exit Check
 

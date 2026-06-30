@@ -1,12 +1,12 @@
-# Day 05 — Cache Coherence (MESI), False Sharing, Snoop Debug
+# Day 17 — Cache Coherence (MESI), False Sharing, Snoop Debug
 
 ## Concept
 
-In a multicore SoC each core has private L1/L2 caches; **MESI** (or its variants MOESI / MESIF) keeps them coherent at cache-line granularity. The performance bug class that follows is **false sharing**: two cores writing different variables that happen to share a 64 B line. The debug counter is **HITM** (Hit-Modified). Today closes Layer 1 and prepares the DMA discussion of Day 8.
+In a multicore SoC each core has private L1/L2 caches; **MESI** (or its variants MOESI / MESIF) keeps them coherent at cache-line granularity. The performance bug class that follows is **false sharing**: two cores writing different variables that happen to share a 64 B line. The debug counter is **HITM** (Hit-Modified). Today closes Layer 1 and prepares the DMA discussion of Day 20.
 
 ## Why this day in the flow
 
-Day 4 introduced the cache line and write-back. Day 5 takes the next step: what happens when *two cores* see the same line. This is where the **fourth C of misses (coherence)** lives, where the most common silent-perf bug class lives, and where the snoop traffic that hurts NUMA scaling lives. Day 8 (DMA / doorbells / barriers) reuses the same picture: the device acts like another "core" that needs an up-to-date copy of the line.
+Day 16 introduced the cache line and write-back. Day 17 takes the next step: what happens when *two cores* see the same line. This is where the **fourth C of misses (coherence)** lives, where the most common silent-perf bug class lives, and where the snoop traffic that hurts NUMA scaling lives. Day 20 (DMA / doorbells / barriers) reuses the same picture: the device acts like another "core" that needs an up-to-date copy of the line.
 
 In the Layer map this is the second half of **Layer 1**.
 
@@ -142,8 +142,8 @@ Tools:
 
 ### 12. Tying back to system bugs
 
-- **DMA visibility (Day 8):** the device is just another agent that must see the latest copy. If the descriptor sits in M in a CPU cache and the platform is non-coherent, the device DMA reads stale DRAM.
-- **NUMA cross-socket performance (Day 15):** a hot shared structure pulled across UPI/CXL is the same picture as MESI snoop, just with worse latency.
+- **DMA visibility (Day 20):** the device is just another agent that must see the latest copy. If the descriptor sits in M in a CPU cache and the platform is non-coherent, the device DMA reads stale DRAM.
+- **NUMA cross-socket performance (Day 29):** a hot shared structure pulled across UPI/CXL is the same picture as MESI snoop, just with worse latency.
 - **Locks and atomics:** every contended lock is a controlled false-sharing pattern — the cache line containing the lock word ping-pongs. That's why high-contention locks scale badly.
 
 ---
@@ -176,16 +176,16 @@ Tools:
 **D3. Snoop vs directory coherence. Derive the core count where each crosses over.**
 *Constraints to weigh:* snoop traffic = $O(\text{cores})$ per coherence event vs directory state = $O(\text{sharers})$ per line, directory storage cost (1-3% of LLC), latency of an indirected request. Pick AMD's CCX, Intel's mesh, or ARM's CMN and explain its choice.
 
-**D4. Cache-line size sets the false-sharing penalty. If line size dropped to 16 B, what bug classes disappear and which appear?**
+**D16. Cache-line size sets the false-sharing penalty. If line size dropped to 16 B, what bug classes disappear and which appear?**
 *Constraints to weigh:* DRAM burst length mismatch, tag-array overhead 4×, prefetcher reach, lock-word neighbour pollution, per-thread stat counter packing. Why hasn't anyone shipped a 16 B line size — what would it take?
 
-**D5. Coherence is "free" up to the snoop fabric saturating. At 256 cores, derive what changes.**
+**D17. Coherence is "free" up to the snoop fabric saturating. At 256 cores, derive what changes.**
 *Constraints to weigh:* snoop-filter capacity, NUMA traffic, per-line directory fanout, hierarchical coherence (cluster + global). Why does GPU compute use *non*-coherent caches with explicit synchronisation, and where could a CPU borrow that without breaking software?
 
-**D6. Padded per-thread counters "fix" false sharing but waste DRAM. Construct a counter that's both compact and contention-free.**
+**D18. Padded per-thread counters "fix" false sharing but waste DRAM. Construct a counter that's both compact and contention-free.**
 *Constraints to weigh:* per-CPU storage (sum on read), CAS-free updates, cache-line packing of *unrelated* counters, RCU read-mostly patterns, observability (sum cost). What do Linux's `percpu` counters actually look like, and where do they still cost?
 
-**D7. CXL.cache lets accelerators be peers in the coherence domain. Which Day-5 bug classes follow the accelerator into the new design?**
+**D19. CXL.cache lets accelerators be peers in the coherence domain. Which Day-5 bug classes follow the accelerator into the new design?**
 *Constraints to weigh:* false sharing across CPU and NPU, MESI states held by an NPU L1, snoop-filter sizing for non-CPU peers, who holds M in a heterogeneous workload. What new bug class appears that didn't exist when accelerators were DMA-only?
 
 ---
@@ -272,7 +272,7 @@ Because an L1 shared across N cores would be slow (more ports, longer wires) and
 
 A fourth class of cache miss (after compulsory, capacity, conflict): a **coherence miss**. Two cores write to *different* variables that happen to share a cache line. The protocol can't see that the writes don't overlap — it tracks lines, not bytes. So the line bounces M→I→M between cores on every write. The data is independent, but the line is shared. Cost: hundreds of cycles per write, instead of single cycles.
 
-**The fix is structural, not algorithmic:** pad the data so each producer's hot field lives on its own cache line. `alignas(64)` per-thread struct, or a 64-byte padding member. *This is why every lock-free queue you'll ever see has cache-line padding between `head` and `tail` — Day 17.*
+**The fix is structural, not algorithmic:** pad the data so each producer's hot field lives on its own cache line. `alignas(64)` per-thread struct, or a 64-byte padding member. *This is why every lock-free queue you'll ever see has cache-line padding between `head` and `tail` — Day 31.*
 
 ### Q: Why are atomic operations so expensive?
 
@@ -300,8 +300,8 @@ The lesson: **don't measure atomic cost in isolation.** Measure it under the con
 
 ## Bug Anchor
 
-- **Day 8:** descriptor-then-doorbell ordering — same MESI picture, device as the second agent.
-- **Day 15:** NUMA snoop traffic dominates cross-socket performance.
+- **Day 20:** descriptor-then-doorbell ordering — same MESI picture, device as the second agent.
+- **Day 29:** NUMA snoop traffic dominates cross-socket performance.
 - **Locks / atomics anywhere later:** every contended atomic is a controlled false-sharing pattern.
 
 ## Exit Check

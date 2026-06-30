@@ -1,4 +1,4 @@
-# Day 17 — Post-Silicon PM Validation
+# Day 31 — Post-Silicon PM Validation
 
 ## Concept
 
@@ -6,9 +6,9 @@ Post-silicon PM validation is the discipline of proving — on **real silicon, i
 
 ## Why this day in the flow
 
-D16 closed pre-Si PM. **Today is what happens when the first samples land on a lab bench.** Power-on sequence, first PCU heartbeat, first C-state entry, first residency reading, first turbostat dump — and then the slow grind of finding the bugs that pre-Si missed. This is also the day with the two marquee debug stories you'll get asked about in interview: **ADR opcode-ordering** and **Core C6 wake-loss**.
+D30 closed pre-Si PM. **Today is what happens when the first samples land on a lab bench.** Power-on sequence, first PCU heartbeat, first C-state entry, first residency reading, first turbostat dump — and then the slow grind of finding the bugs that pre-Si missed. This is also the day with the two marquee debug stories you'll get asked about in interview: **ADR opcode-ordering** and **Core C6 wake-loss**.
 
-In the Layer map this is the **closing day of Phase 3 (CPU PM)**, the bridge from "we validated this" to "the product PM works on the customer's silicon."
+In the Layer map this is the **closing day of Phase 6 (CPU PM)**, the bridge from "we validated this" to "the product PM works on the customer's silicon."
 
 ---
 
@@ -298,16 +298,16 @@ Workload soak:
 **D3. The same PCU FW works on unit A but not unit B (same stepping, same board). Reason about the next move.**
 *Constraints to weigh:* silicon variability (Vmin, retention margin), board-level differences (PMIC trim, capacitance), wafer position binning, sample size before declaring.
 
-**D4. You add a coverpoint to the pre-Si vplan after finding a post-Si bug. Reason about how to ensure the coverpoint actually exercises the silicon failure mode rather than a sim-only abstraction of it.**
+**D16. You add a coverpoint to the pre-Si vplan after finding a post-Si bug. Reason about how to ensure the coverpoint actually exercises the silicon failure mode rather than a sim-only abstraction of it.**
 *Constraints to weigh:* what part of the failure is timing-dependent (only emul), what part is FSM-reachable (sim), whether SVA on the property is enough.
 
-**D5. turbostat shows Core%c6 90% but PkgWatt unchanged from "no PM" run. Reason about what's wrong.**
+**D17. turbostat shows Core%c6 90% but PkgWatt unchanged from "no PM" run. Reason about what's wrong.**
 *Constraints to weigh:* uncore power dominance, package not in PC6, sleep transistors not opening (FW bug), telemetry calibration.
 
-**D6. The PCU FW patch fixes the bug in lab but the architect wants to know "is this safe in the wild?" Reason about how to prove generality.**
+**D18. The PCU FW patch fixes the bug in lab but the architect wants to know "is this safe in the wild?" Reason about how to prove generality.**
 *Constraints to weigh:* sample diversity, corner sweep, soak runtime, regression scope, what could the patch break that the lab won't exercise.
 
-**D7. Pre-Si reports 100% PM coverage closed; post-Si finds a bug that was theoretically reachable in sim. Reason about whether the failure was a coverpoint gap, an SVA gap, or a stim gap.**
+**D19. Pre-Si reports 100% PM coverage closed; post-Si finds a bug that was theoretically reachable in sim. Reason about whether the failure was a coverpoint gap, an SVA gap, or a stim gap.**
 *Constraints to weigh:* what each of the three would have caught, where the abstraction broke between spec and vplan, the difference between "covered" and "exercised under the same constraints as silicon."
 
 ---
@@ -356,10 +356,10 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 14 (UPF):** retention/iso bugs from there surface here as "boots, crashes on first wake."
-- **Day 15 (thermal/perf counters):** RAPL + DTS telemetry comes from this day.
-- **Day 16 (pre-Si PM val):** every escape here generates a new vplan row there.
-- **Day 22 (PCIe PM intersection):** PkgC + L1.2 blockers surface in socwatch here.
+- **Day 28 (UPF):** retention/iso bugs from there surface here as "boots, crashes on first wake."
+- **Day 29 (thermal/perf counters):** RAPL + DTS telemetry comes from this day.
+- **Day 30 (pre-Si PM val):** every escape here generates a new vplan row there.
+- **Day 37 (PCIe PM intersection):** PkgC + L1.2 blockers surface in socwatch here.
 - **Master bug story 1: ADR opcode ordering** — anchored to this day.
 - **Master bug story 2: Core C6 wake-loss** — anchored to this day.
 

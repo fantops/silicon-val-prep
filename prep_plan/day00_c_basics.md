@@ -1,4 +1,4 @@
-# Day 00 — Embedded-C Basics Ramp
+# Day 0 — Embedded-C Basics Ramp
 
 ## Concept
 
@@ -16,7 +16,7 @@ This is still learn-by-doing:
 - fix every warning you understand,
 - explain the pointer movement out loud.
 
-Do this once before starting Day 1. Interview rehearsal + mock loop lives in [day24_final_mock.md](day24_final_mock.md). This file is for C practice, not interview narrative.
+Do this once before starting Day 1. Interview rehearsal + mock loop lives in [day41_final_mock.md](day41_final_mock.md). This file is for C practice, not interview narrative.
 
 ---
 
@@ -181,7 +181,7 @@ Before writing any loop, say out loud:
 - Day 1 — C address fluency: macros and accessors depend on pointer/type basics.
 - Day 2 — memory layout/alignment: struct padding and array decay become ABI and hardware-layout questions.
 - Day 3 — MMIO/volatile: plain pointer movement becomes side-effecting register access.
-- Day 8 / Day 11 — DMA and NVMe: descriptor rings reuse the same pointer/count/copy discipline.
+- Day 20 / Day 23 — DMA and NVMe: descriptor rings reuse the same pointer/count/copy discipline.
 
 ---
 

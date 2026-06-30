@@ -1,4 +1,4 @@
-# Day 13 — C-states, PkgC6, S0ix, Cross-IP Idle
+# Day 27 — C-states, PkgC6, S0ix, Cross-IP Idle
 
 ## Concept
 
@@ -6,7 +6,7 @@ P-states control the **active** core; C-states control the **idle** core. Deeper
 
 ## Why this day in the flow
 
-Day 12 was active-power. Day 13 is idle-power and **the cross-IP handshake** that makes deep package idle work. Day 14 then tells two real bug stories at this exact layer (ADR, Core C6 wake-lost). Together Days 12-14 are the power chapter; Day 15 closes it with thermal and counters.
+Day 26 was active-power. Day 27 is idle-power and **the cross-IP handshake** that makes deep package idle work. Day 28 then tells two real bug stories at this exact layer (ADR, Core C6 wake-lost). Together Days 26-28 are the power chapter; Day 29 closes it with thermal and counters.
 
 In the Layer map this is **Layer 5 — idle side**.
 
@@ -125,7 +125,7 @@ Debug:
 
 ### 9. ADR — Asynchronous DRAM Refresh
 
-ADR is the **emergency cache-flush + DRAM-self-refresh** flow on power loss. The sequence (full bug story comes Day 14):
+ADR is the **emergency cache-flush + DRAM-self-refresh** flow on power loss. The sequence (full bug story comes Day 28):
 
 ```
 1. Power-supply loss detected (PSON#, UPS warning, etc.)
@@ -136,7 +136,7 @@ ADR is the **emergency cache-flush + DRAM-self-refresh** flow on power loss. The
 6. On power restore, kernel + memory controller re-attach DRAM contents
 ```
 
-Crucial in **persistent-memory** systems and storage controllers (SanDisk power-loss-protection capacitor banks). The Day 14 ADR bug is about opcode ordering between PCU and the memory controller.
+Crucial in **persistent-memory** systems and storage controllers (SanDisk power-loss-protection capacitor banks). The Day 28 ADR bug is about opcode ordering between PCU and the memory controller.
 
 ### 10. S0ix / Modern Standby
 
@@ -145,7 +145,7 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 - Wake on touch, timer, network within ms.
 - Power budget < 100 mW for many designs.
 - Builds on PkgC6: if PkgC6 is broken, S0ix is over-budget.
-- Snapdragon analogue: the deep-sleep state RPMh aggregates into via PSCI (Day 9).
+- Snapdragon analogue: the deep-sleep state RPMh aggregates into via PSCI (Day 21).
 
 ### 11. Common PkgC6 bugs
 
@@ -155,10 +155,10 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 | PCIe blocking | Low residency at full system idle | ASPM L1.2 not enabled on EP |
 | Wrong uncore sequence | Hang or data corruption on entry | Power-gate ordering violation |
 | Spurious wakeup | PkgC6 entered then immediately exited | Wake mask wrong; LTR too tight |
-| Core wake lost | Core never resumes after wake; OS treats as hang | Core C6 wake-vector overwritten by reset window (Day 14 anchor) |
-| ADR opcode race | Data loss on power failure | PCU asserts WPQ_FLUSH before MC IO_QUIESCE_ACK (Day 14 anchor) |
+| Core wake lost | Core never resumes after wake; OS treats as hang | Core C6 wake-vector overwritten by reset window (Day 28 anchor) |
+| ADR opcode race | Data loss on power failure | PCU asserts WPQ_FLUSH before MC IO_QUIESCE_ACK (Day 28 anchor) |
 
-### 12. Snapdragon analogue (Day 9 link)
+### 12. Snapdragon analogue (Day 21 link)
 
 - OS issues PSCI request (`PSCI_CPU_OFF`, `PSCI_SYSTEM_SUSPEND`).
 - RPMh aggregates votes from all subsystems.
@@ -211,7 +211,7 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 
 **Reflex one-liner:** *"Entry → eligibility → save → power/clock → wake → exit → demotion → measurement → validation. Nine steps. Same scaffold for any C-state, any vendor."*
 
-*Cross-link: ladder + ICG internals = Sec 1-2 above; PkgC6 cross-IP dance = Sec 6; negative-path debug = Sec 13; thermal + counter side = [Day 15](day15_thermal_power_perf_counters.md); post-Si lab measurement = [Day 17](day17_post_si_pm_validation.md).*
+*Cross-link: ladder + ICG internals = Sec 1-2 above; PkgC6 cross-IP dance = Sec 6; negative-path debug = Sec 13; thermal + counter side = [Day 29](day29_thermal_power_perf_counters.md); post-Si lab measurement = [Day 31](day31_post_si_pm_validation.md).*
 
 ---
 
@@ -219,8 +219,8 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 
 - **PkgC6 never enters even at full system idle:** PCIe endpoint missing L1.2 in L1 PM Substates capability; or ASPM disabled in BIOS; or LTR value pins the link awake. Read PCU blocking-reason MSR, then `lspci -vvv` on the suspect EP.
 - **PkgC6 entered then immediately exited:** wake mask too permissive — a periodic timer (USB SOF, ME heartbeat, embedded controller) keeps tripping wake. Trace wake source via PCU logs.
-- **Core C6 wake-vector lost (Day 14 anchor):** firmware wrote a transient wake-vector during the same window a CFC reset routine cleared it; the core power-ungated but jumped to garbage; system appears hung. Fix: reorder wake-vector write after CFC reset clear, or stash in retention SRAM.
-- **ADR data loss on power failure (Day 14 anchor):** PCU asserted `WPQ_FLUSH` before the memory controller acknowledged `IO_QUIESCE`; in-flight writes never reached DRAM before self-refresh. Fix: opcode-ordering — wait for `IO_QUIESCE_ACK` before `WPQ_FLUSH`.
+- **Core C6 wake-vector lost (Day 28 anchor):** firmware wrote a transient wake-vector during the same window a CFC reset routine cleared it; the core power-ungated but jumped to garbage; system appears hung. Fix: reorder wake-vector write after CFC reset clear, or stash in retention SRAM.
+- **ADR data loss on power failure (Day 28 anchor):** PCU asserted `WPQ_FLUSH` before the memory controller acknowledged `IO_QUIESCE`; in-flight writes never reached DRAM before self-refresh. Fix: opcode-ordering — wait for `IO_QUIESCE_ACK` before `WPQ_FLUSH`.
 - **High S0ix power:** PkgC6 residency low; root-cause via the same PCU blocking-reason MSR ladder.
 - **Cores stuck in C0 on a quiet system:** scheduler tickling them with timers; check `tickless` config and per-CPU timer migration.
 - **Spurious thermal alerts only at deep idle:** DTS reading ungated post-wake before stable; treat as known transient.
@@ -246,16 +246,16 @@ The OS-visible **connected standby** mode. Under S0ix, the platform targets PkgC
 **D3. Retention SRAM stays powered in C6. Why retention at all — why not save core state to DRAM and skip the dedicated array?**
 *Constraints to weigh:* exit latency budget (DRAM access ~100 ns + path setup vs SRAM ~1 ns), DRAM controller itself may be in self-refresh and need wake first, energy of one SRAM array vs energy of waking the memory subsystem to read 4 KB, and the chicken-and-egg of "who restores the path that restores the cores." When does the trade flip — what would force a future SoC to drop retention SRAM?
 
-**D4. S0ix depends on PCIe L1.2. What architectural change would let a platform reach S0ix-class power without L1.2?**
+**D16. S0ix depends on PCIe L1.2. What architectural change would let a platform reach S0ix-class power without L1.2?**
 *Constraints to weigh:* common-mode current on the link (~mW per lane) is the dominant non-CPU residual; alternatives are full link-down + re-train (latency cost), side-band wake signalling, or moving the device to a different rail entirely. CXL idle states are a real-world rerun of this question — what did the spec authors land on, and why?
 
-**D5. Derive the break-even residency for entering a deeper C-state. When is going deeper a *net loss*?**
+**D17. Derive the break-even residency for entering a deeper C-state. When is going deeper a *net loss*?**
 *Constraints to weigh:* entry energy $E_{\text{in}}$, exit energy $E_{\text{out}}$, savings rate $\Delta P$ while in the state, expected residency $T_r$. Inequality: enter only if $T_r > (E_{\text{in}} + E_{\text{out}}) / \Delta P$. How does the OS/PCU estimate $T_r$ in practice, and what happens to the estimator under bursty wake patterns (the "ping-pong" failure mode)?
 
-**D6. If wake latency could be made arbitrarily fast (~ns), what changes about the C-state ladder?**
+**D18. If wake latency could be made arbitrarily fast (~ns), what changes about the C-state ladder?**
 *Constraints to weigh:* the ladder exists because exit cost is high enough to justify staying shallow for short idles. Collapse exit cost → the ladder collapses to two states (on/deep). What's then the bottleneck — is it OS scheduler granularity, interrupt-controller wake path, or the physics of restoring rail voltage? Pick one and argue why it is now load-bearing.
 
-**D7. PkgC6 residency = 0 on a quiet system. Reason about where you look *before* reading any blocking-reason MSR — what does the system shape predict?**
+**D19. PkgC6 residency = 0 on a quiet system. Reason about where you look *before* reading any blocking-reason MSR — what does the system shape predict?**
 *Constraints to weigh:* what *can* keep an IP busy on a "quiet" system (tick timers, USB SOFs, PCIe LTR, audio DMA at 10 ms cadence, GPU compositor, SMI storms). Rank these by base rate. Does "residency = 0" vs "residency = 30%" point to different culprit classes? The blocking-reason MSR is the *confirmation*, not the *hypothesis*.
 
 ---
@@ -511,10 +511,10 @@ For each state there's a **break-even residency** $t_{BE} = E_{entry+exit} / (P_
 
 ## Bug Anchor
 
-- **Day 10 (PCIe LTSSM L1.2):** the dependency that makes or breaks PkgC6.
-- **Day 14 (ADR + Core C6 bugs):** two real firmware stories at this exact layer.
-- **Day 9 (Snapdragon RPMh):** the QC analogue of the PCU + uncore handshake.
-- **Day 15 (Thermal + perf counters):** PkgC6 residency is a counter you score against budget.
+- **Day 22 (PCIe LTSSM L1.2):** the dependency that makes or breaks PkgC6.
+- **Day 28 (ADR + Core C6 bugs):** two real firmware stories at this exact layer.
+- **Day 21 (Snapdragon RPMh):** the QC analogue of the PCU + uncore handshake.
+- **Day 29 (Thermal + perf counters):** PkgC6 residency is a counter you score against budget.
 
 ## Exit Check
 

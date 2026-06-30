@@ -1,4 +1,4 @@
-# Day 14 — Clock Gating, Power Gating, Retention, Isolation, UPF
+# Day 28 — Clock Gating, Power Gating, Retention, Isolation, UPF
 
 ## Concept
 
@@ -6,9 +6,9 @@ A modern SoC saves power by **removing activity** (clock gating), **removing lea
 
 ## Why this day in the flow
 
-D12 introduced DVFS and the P-state knob; D13 introduced C-states and S0ix. Both of those rely on the *physical* mechanisms invented today — clock gating cells, header/footer transistors, retention flops, isolation cells. **You cannot validate a C-state if you don't know what physical structure the C-state turns off.** This day is the bridge from architectural PM (states) to circuit-level PM (gates).
+D26 introduced DVFS and the P-state knob; D27 introduced C-states and S0ix. Both of those rely on the *physical* mechanisms invented today — clock gating cells, header/footer transistors, retention flops, isolation cells. **You cannot validate a C-state if you don't know what physical structure the C-state turns off.** This day is the bridge from architectural PM (states) to circuit-level PM (gates).
 
-In the Layer map this is the **first concrete day of Phase 3 (CPU PM)** — every following PM day (D16 pre-Si val, D17 post-Si val) refers back to today's cells.
+In the Layer map this is the **first concrete day of Phase 6 (CPU PM)** — every following PM day (D30 pre-Si val, D31 post-Si val) refers back to today's cells.
 
 ---
 
@@ -361,16 +361,16 @@ Stage G — Sign-off
 **D3. Header (PMOS) vs footer (NMOS) sleep transistors — when do you pick which?**
 *Constraints to weigh:* PMOS vs NMOS Rds_on, IR-drop on virtual rail under load, area, body-effect, where the noise-sensitive logic lives.
 
-**D4. Reason about a system that has no UPF — it just simulates functionally with all rails always on. What classes of bug escape?**
+**D16. Reason about a system that has no UPF — it just simulates functionally with all rails always on. What classes of bug escape?**
 *Constraints to weigh:* iso missing, retention sequencing, LS coverage, sequenced wake — which of these surface only in LP-sim?
 
-**D5. The PCU FSM has 8 sequencer steps to enter PD. Reason about why you can't collapse SAVE and ISO-assert into one step.**
+**D17. The PCU FSM has 8 sequencer steps to enter PD. Reason about why you can't collapse SAVE and ISO-assert into one step.**
 *Constraints to weigh:* what SAVE captures (current flop state) vs what ISO does (clamps output), what happens if iso fires before save completes vs after.
 
-**D6. Retention flops cost area and always-on leakage. Reason about a future where they could be eliminated entirely.**
+**D18. Retention flops cost area and always-on leakage. Reason about a future where they could be eliminated entirely.**
 *Constraints to weigh:* fast save-to-SRAM (eDRAM, MRAM), per-block latency budgets, whether some state truly must survive at µs scale.
 
-**D7. A bug shows up only at SS-cold-low-V corner: retention loses state. Reason about whether to fix in design (larger retention cell), in characterisation (tighten corner), or in PM policy (don't enter that PD at that corner).**
+**D19. A bug shows up only at SS-cold-low-V corner: retention loses state. Reason about whether to fix in design (larger retention cell), in characterisation (tighten corner), or in PM policy (don't enter that PD at that corner).**
 *Constraints to weigh:* area cost, yield impact, SW complexity of PVT-aware PM, customer-visible perf hit.
 
 ---
@@ -458,11 +458,11 @@ int main(void) {
 
 ## Bug Anchor
 
-- **Day 12 (DVFS):** voltage scaling drives the level-shifter need.
-- **Day 13 (C-states):** every C-state above C1 power-gates *something* defined here.
-- **Day 16 (pre-Si PM val):** the LP-sim + UPF-formal coverage closure happens against this day's cells.
-- **Day 17 (post-Si PM val):** retention/iso bugs that escape pre-Si surface here as "boots fine, crashes on first wake."
-- **Day 22 (PCIe PM intersection):** PCIe L1.2 entry uses the same iso/retention pattern at the IP boundary.
+- **Day 26 (DVFS):** voltage scaling drives the level-shifter need.
+- **Day 27 (C-states):** every C-state above C1 power-gates *something* defined here.
+- **Day 30 (pre-Si PM val):** the LP-sim + UPF-formal coverage closure happens against this day's cells.
+- **Day 31 (post-Si PM val):** retention/iso bugs that escape pre-Si surface here as "boots fine, crashes on first wake."
+- **Day 37 (PCIe PM intersection):** PCIe L1.2 entry uses the same iso/retention pattern at the IP boundary.
 
 ## Exit Check
 
