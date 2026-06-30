@@ -78,7 +78,7 @@ Round-by-round (rounds + outcome), grouped by status:
 | Micron | 2 | 1 | 50% | 2 roles; interview scheduled 20 May — **declined by me, not attended** (HBM customer system validation, off-track) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
-| Sandisk | 4 | 0 | 0% | **referral** · 4 roles · **all archived/rejected on portal (30 Jun)** — incl. 2 roles that had a referral; generic referral got zero traction → **next time need a team-internal referrer, not a generic one** |
+| Sandisk | 4 | 0 | 0% | **referral** · 4 roles · **all archived/rejected on portal (30 Jun)** |
 | Apple | 4 | 0 | 0% | no response |
 | Meta | 5 | 0 | 0% | no response |
 | Google | 4 | 0 | 0% | recruiter replying over email, but not moving forward (no loop) |
@@ -87,7 +87,7 @@ Round-by-round (rounds + outcome), grouped by status:
 | Graphcore | 1 | 0 | 0% | online assessment (HackerRank coding test ~Apr) → ❌ rejected 25 Jun (direct mail, ~2 mo later) |
 | NXP | 1 | 0 | 0% | no response |
 | Marvell | 1 | 0 | 0% | no response |
-| Microsoft | 2 | 0 | 0% | 2 SoC roles applied — possible reject (roles US-only; geo mismatch vs BLR base) |
+| Microsoft | 2 | 0 | 0% | 2 SoC roles applied — eject (roles US-only) |
 | **Total** | **97** | **16** | **16.5%** | **1 offer = 1.03% app→offer, 6.25% loop→offer (1/16)** |
 
 **Funnel signal:**
