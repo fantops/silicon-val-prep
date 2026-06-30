@@ -78,7 +78,7 @@ Round-by-round (rounds + outcome), grouped by status:
 | Micron | 2 | 1 | 50% | 2 roles; interview scheduled 20 May — **declined by me, not attended** (HBM customer system validation, off-track) |
 | Cerebras | 1 | 1 | 100% | 1 reject (role-fit miss) |
 | Renesas | 2 | 1 | 50% | 1 reject (automotive mismatch) |
-| Sandisk | 4 | 0 | 0% | **referral** · 4 roles · 2 no response · 2 open (likely no progress) — even a referral got no traction |
+| Sandisk | 4 | 0 | 0% | **referral** · 4 roles · **all archived/rejected on portal (30 Jun)** — incl. 2 roles that had a referral; generic referral got zero traction → **next time need a team-internal referrer, not a generic one** |
 | Apple | 4 | 0 | 0% | no response |
 | Meta | 5 | 0 | 0% | no response |
 | Google | 4 | 0 | 0% | recruiter replying over email, but not moving forward (no loop) |
@@ -91,7 +91,7 @@ Round-by-round (rounds + outcome), grouped by status:
 | **Total** | **97** | **16** | **16.5%** | **1 offer = 1.03% app→offer, 6.25% loop→offer (1/16)** |
 
 **Funnel signal:**
-- **10 of 20 companies opened zero loops** — of those, **6 got zero response at all** (Sandisk, Apple, Meta, TI, NXP, Marvell) = 17 apps (the other 4 — Google, Qualinx, Graphcore, Microsoft — at least replied or sent a reject). Apple/Meta/TI/NXP/Marvell (13 apps) were cold portal applies; **SanDisk (4) was a referral and still got zero response** — referral was necessary, not sufficient.
+- **10 of 20 companies opened zero loops** — of those, **5 got zero response at all** (Apple, Meta, TI, NXP, Marvell = 13 apps, all cold portal applies); the other 5 (Google, Qualinx, Graphcore, Microsoft, **SanDisk**) at least replied or sent a reject. **SanDisk (2) was a referral and still ended archived/rejected (30 Jun)** — the referral was a *generic* one, not from the hiring team; lesson = a **team-internal referral is what's needed** (generic referral = necessary but not sufficient).
 - **Highest-volume targets** (Qualcomm 21 · AMD 14 · Intel 10 · Arm 10) = 55 apps for 10 loops — low per-app yield.
 - **Highest hit-rate shops** were smaller/warm (Cerebras 100%, Amazon 50%, Renesas 50%, Intel 30%) — loops opened where the app was targeted, not bulk.
 
@@ -217,4 +217,4 @@ After each round: same-day timeline row (what · learning · status · suggestio
 
 - **Cycle outcome (16 loops):** 1 offer (Intel BLR ✅ accepted) · 1 pending (Broadcom 🔵 R2) · 1 declined (Micron ⬜) · **5 ghosted** (4 Qualcomm + 1 AMD) · **8 rejected**. App→loop 16/97 = 16.5%; loop→offer 1/16 = 6.25%.
 - **Re-approach / evaluate:** Of the **5 ghosted** loops, only two are worth re-approaching — **QC CPU Post-Si** (2 rounds, 2 Jun) + **AMD Core PnP** (R2, 5 Jun), the most recent + furthest-progressed; re-engage only if a recruiter revives with offer/level/scope. The other three (QC CPU Core HM, QC PnP/Thermal, QC SysPerf) → fully closed. Nvidia = future warm contact (Ranjith); exclude from current-cycle eval.
-- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops. But **referral ≠ guarantee**: SanDisk's 4 referral apps → 0 loops too (a passive name-drop). The wins (Intel, Broadcom) each had an **engaged referrer + recruiter/HM pull** — next cycle, secure an *active advocate who follows up internally*, not just a referral submission. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 16 loops this cycle (Arm, QC Pre-Si Verif, Renesas).
+- **Do differently:** front-load referrals over portal apps — 20 cold FAANG apps → 0 loops. But **referral ≠ guarantee**: SanDisk's 4 referral apps → 0 loops and **all archived/rejected on portal (30 Jun)** — a generic, off-team name-drop. The wins (Intel, Broadcom) each had an **engaged referrer + recruiter/HM pull** — next cycle, the referrer must be **internal to the actual hiring team** (an active advocate who follows up internally), not a generic referral submission. Filter JD-shape upstream (no automotive, no pure SV-UVM) — cost 3 of 16 loops this cycle (Arm, QC Pre-Si Verif, Renesas).
