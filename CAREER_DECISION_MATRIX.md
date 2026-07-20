@@ -26,7 +26,7 @@
 | Joining Bonus | ₹20 L (2-yr clawback) | Split ₹10 L Y1 + ₹10 L Y2 |
 | Target Bonus | 12-15% of base (13.5% G7 mid → 15% G8) | |
 | Refresher (Y2+) | ₹4 L/yr (G7) → ₹8 L/yr (G8), 3-yr vest | Per-level scaled; cross-checked against levels.fyi G7/G8 India stock data |
-| Relocation | ₹4.5 L one-time | |
+| Relocation | ₹3.4 L one-time | **Actual**|
 
 ---
 
