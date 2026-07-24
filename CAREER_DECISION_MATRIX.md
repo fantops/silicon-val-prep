@@ -2,7 +2,7 @@
 
 > Decision locked. This doc tracks the **finalised Intel offer only**. Every other loop (Qualcomm, AMD, Broadcom, etc.) is not finalised — rejected, stalled, or still in progress — and lives in [INTERVIEW_LOG.md](INTERVIEW_LOG.md).
 
-**As of:** 24 June 2026 · **Intel BLR joining date: 27 July 2026 (confirmed).**
+**As of:** 24 July 2026 · **Intel BLR joining date: 27 July 2026 (confirmed) — joining in 3 days.**
 
 ---
 
@@ -39,7 +39,7 @@
 
 ## 4. Decision posture
 
-**Intel is the finalised anchor and the plan of record. The join proceeds 27 Jul 2026.** No other loop is finalised, so none is carried in this matrix. Any future external offer is considered only if it arrives with a written TC + scope before the Intel join date and clears the hard rules below; otherwise it stays out of the decision entirely. Non-finalised loops (rejected / stalled / in progress) are tracked in [INTERVIEW_LOG.md](INTERVIEW_LOG.md), not here.
+**✅ Cycle closed (24 Jul 2026) — decision executed. Intel is the finalised anchor and plan of record; the join proceeds 27 Jul 2026 (in 3 days).** The Apr 2026 search cycle is formally closed — all other loops are terminal (**14 rejected** — ghosted and below-bar results count as rejects — plus 1 declined-by-me), so none is carried in this matrix; they live in [INTERVIEW_LOG.md](INTERVIEW_LOG.md). No further external offers are in play and the interview freeze is permanent for this cycle. The hard rules below remain only as a standing filter for any *future* cycle.
 
 ---
 
