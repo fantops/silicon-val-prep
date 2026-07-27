@@ -7,3 +7,6 @@ _archive/
 
 # Local-only prep notes (keep out of the repo)
 *.html
+
+# Intel-internal DSA notes — NEVER commit (Maestro content, platform configs, IP internals)
+dsa-val/_internal/
