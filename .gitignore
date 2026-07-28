@@ -10,3 +10,6 @@ _archive/
 
 # Intel-internal DSA notes — NEVER commit (Maestro content, platform configs, IP internals)
 dsa-val/_internal/
+
+# Public Intel spec PDFs — keep local, re-downloadable (large binaries)
+dsa-val/*.pdf

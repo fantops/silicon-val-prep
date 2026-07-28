@@ -14,6 +14,7 @@ This repo is pushed to a **public GitHub remote** (`github.com/fantops/silicon-v
 - 🔒 **Internal-only notes** go in [`_internal/`](./_internal/) — that folder is **git-ignored** and stays on your machine. For anything truly sensitive, prefer Intel's internal systems over a local file.
 
 > **Scope assumption:** *DSA = Intel **Data Streaming Accelerator*** — the on-die Xeon data-movement/transform accelerator (Sapphire Rapids onward). If your "DSA" means something else, say so and these docs get re-scoped.
+> **Primary reference:** Intel DSA Architecture Specification **Rev 3.0** (order no. 341204-006US, June 2025). Extra scope in these docs: **ADR** (durable writes / persistence) and **NTB** (cross-node movement).
 
 ---
 
@@ -42,10 +43,14 @@ flowchart LR
 
 | Path | Purpose |
 |---|---|
-| [`fundamentals/dsa_ip_fundamentals.md`](fundamentals/dsa_ip_fundamentals.md) | **Start here** — what DSA is, architecture, programming model, address translation, val surfaces (all public). |
+| [`ramp_up.md`](ramp_up.md) | **Fast ramp-up** — one-page on-ramp: mental model, spec reading order, register/instruction cheat-sheets, first flows. |
+| [`fundamentals/dsa_ip_fundamentals.md`](fundamentals/dsa_ip_fundamentals.md) | Architecture, programming model, address translation, Rev 3.0 op set, val surfaces (all public). |
+| [`fundamentals/adr_flow.md`](fundamentals/adr_flow.md) | **ADR / durable writes** — DSA persistence-domain intersection + coverage. |
+| [`fundamentals/ntb_flow.md`](fundamentals/ntb_flow.md) | **NTB / cross-node** — DSA movement across a Non-Transparent Bridge + coverage. |
 | [`validation/validation_flow.md`](validation/validation_flow.md) | HAPS → emulation → post-Si regression, bare-metal boot, Maestro (placeholders for internal specifics). |
 | [`journal/`](journal/) | Dated cadence entries. Copy the template, one file per session. |
 | [`_internal/`](_internal/) | **Git-ignored.** Local-only landing spot for Maestro / platform / IP internals. |
+| `341204-006-…-spec.pdf` | Local copy of the public spec (Rev 3.0). **Git-ignored** (large binary; re-downloadable from Intel). |
 
 ---
 
@@ -72,6 +77,8 @@ DSA reuses concepts you already built in [`../prep_plan/`](../prep_plan/README.m
 | MMIO portals, `volatile`, polling, W1C | [Day 3 — Bits, MMIO, volatile, polling](../prep_plan/day03_bits_mmio_volatile_polling.md) |
 | PCIe enumeration (DSA is a PCIe-enumerated device) | [Day 34 — PCIe enumeration, config, BARs, MSI](../prep_plan/day34_pcie_enumeration_config_msi.md) |
 | PM intersection (idle gating / power-on) | [Day 27 — C-states, PkgC, S0ix](../prep_plan/day27_cstates_pkgc_s0ix.md) |
+| ADR / durable writes → persistence domain | [Day 15 — Memory](../prep_plan/day15_memory_systems_ecc.md) · [Day 31 — Post-Si PM](../prep_plan/day31_post_si_pm_validation.md) → [`adr_flow.md`](fundamentals/adr_flow.md) |
+| NTB / cross-node data movement | [Day 33 — PCIe fundamentals](../prep_plan/day33_pcie_fundamentals_ltssm.md) · [Day 34 — PCIe enumeration](../prep_plan/day34_pcie_enumeration_config_msi.md) → [`ntb_flow.md`](fundamentals/ntb_flow.md) |
 
 ---
 
@@ -80,6 +87,8 @@ DSA reuses concepts you already built in [`../prep_plan/`](../prep_plan/README.m
 - [ ] Which Xeon generation(s) / platform(s) are in scope?
 - [ ] Which DSA operations are the coverage priority for your IP?
 - [ ] SWQ vs DWQ focus? SIOV / virtualization in scope?
+- [ ] ADR vs eADR domain scope on the target platform? Durable-write path (`GENCAP` Durable Write Support = 0 or 1)?
+- [ ] NTB topology in scope — inter-domain (same-node) vs cross-node NTB moves; which are priority?
 - [ ] What does Maestro provide vs. what you write (kept in `_internal/`)?
 - [ ] Which platforms include the **power-on** pass on HAPS?
 - [ ] Bare-metal boot target(s) and handoff to regression.
