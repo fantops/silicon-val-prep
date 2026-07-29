@@ -1,6 +1,6 @@
 # Experiment plan — proving the NPU "data-plane tax" (client) + mover benefit
 
-> **Tracked in the private repo** (private + 2FA). Public-source only — no Intel-internal data. Companion to [`paper_idea_dsa_ai_dataplane.md`](paper_idea_dsa_ai_dataplane.md).
+> **Tracked in the private repo** (private + 2FA). Public-source only — no Intel-internal data. Companion to [`proposal_npu_dsa_mover.md`](proposal_npu_dsa_mover.md) (current proposal).
 > Goal: a repeatable experiment **you can run on your own NPU laptop** that proves the near-term paper's
 > claim, plus a **brief** server (AMX+DSA) sketch to detail later.
 
@@ -122,6 +122,7 @@ This contrast is the paper's punchline.
 - **Table:** median ms per stage [pre, h2d, infer, d2h, post] for CNN vs LLM.
 - **Figure (the money shot):** stacked/side-by-side bar — **data-plane tax vs NPU compute**, CNN vs LLM.
 - **Numbers:** data-plane fraction (%), CPU cycles/energy in the data plane, ideal-overlap speedup.
+- **Per-op data points** (feed the proposal's optimization table): for each offloadable op (dequant, embedding/KV gather, KV move, layout, host↔NPU staging) capture **bytes/token, baseline CPU cycles, energy, and its share of the data plane** → fills the `<TBD>` cells in [`proposal_npu_dsa_mover.md`](proposal_npu_dsa_mover.md).
 
 ---
 
