@@ -8,7 +8,7 @@
 
 ## Abstract
 
-On-device AI inference is increasingly limited not by neural **compute** but by the **data plane** that surrounds it — quantize/dequantize, tensor layout conversion, embedding gathers, KV-cache movement, host↔accelerator staging copies, and fallback traffic for operations the NPU cannot run. The NPU accelerates matrix math; the *rest of the pipeline* still runs on the host CPU, burning cycles and energy and stalling the NPU while it waits to be fed. We call this the **data-plane tax**. We propose integrating a **programmable data-streaming mover** (a DSA-class engine) on the SoC as a **companion to the NPU** that offloads and overlaps this data plane. Unlike a plain DMA, the mover performs *compute-capable movement* — type conversion, scatter-gather, reduction, dual-cast — over **shared virtual memory**, so the inference runtime can hand it the data-plane work directly. We describe the NPU architecture, the exact offload opportunities, and **how such a mover fits on the SoC** (fabric placement, coherency, IOMMU/PASID, coupling to the NPU, programming model, QoS, power). We validate the *opportunity* on today's client NPUs by measurement, and outline a server (AMX+DSA) counterpart that measures the *mechanism*.
+On-device AI inference is increasingly limited not by neural **compute** but by the **data plane** that surrounds it — quantize/dequantize, tensor layout conversion, embedding gathers, KV-cache movement, host↔accelerator staging copies, and fallback traffic for operations the NPU cannot run. The NPU accelerates matrix math; the *rest of the pipeline* still runs on the host CPU, burning cycles and energy and stalling the NPU while it waits to be fed. We call this the **data-plane tax**. We propose integrating a **programmable data-streaming mover** (a DSA-class engine) on the SoC as a **companion to the NPU** that offloads and overlaps this data plane. Unlike a plain DMA, the mover performs *compute-capable movement* — type conversion, scatter-gather, reduction, dual-cast — over **shared virtual memory**, so the inference runtime can hand it the data-plane work directly. We describe the NPU architecture, the exact offload opportunities, and **how such a mover fits on the SoC** (fabric placement, coherency, IOMMU/PASID, coupling to the NPU, programming model, QoS, power). We validate the *opportunity* on today's **Intel** client NPUs by measurement.
 
 ---
 
@@ -248,8 +248,9 @@ flowchart TB
 
 ## 7. Evaluation plan (summary)
 
-- **Client (opportunity, measurable now):** on a Core Ultra NPU laptop, profile the **host data-plane fraction** of end-to-end inference (OpenVINO), CNN vs LLM, and estimate the mover's freed-cycles / latency / energy benefit. Full protocol: [`experiment_plan_npu_dataplane.md`](experiment_plan_npu_dataplane.md).
-- **Server (mechanism, measured later):** on a DSA-capable Xeon with **AMX** as the compute engine, offload one data-plane op (dequant→Type-Conversion, embedding→Scatter-Gather, KV→Move) to a real **DSA** and measure freed cycles / tokens-per-second / energy. The client measures the *opportunity*; the server measures the *mechanism*.
+Evaluated on **Intel Core Ultra** client hardware: profile the **host data-plane fraction** of end-to-end inference (OpenVINO), CNN vs LLM, and estimate the mover's freed-cycles / latency / energy benefit. Full protocol: [`experiment_plan_npu_dataplane.md`](experiment_plan_npu_dataplane.md).
+
+> Out of scope for this proposal: the *measured* server-side mechanism (AMX compute + a real DSA on Xeon) is the separate [Dec-2026 paper](proposal_dec2026_draft.md).
 
 ---
 
