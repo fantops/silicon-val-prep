@@ -1,4 +1,4 @@
-# Proposal (DRAFT) — Dec 2026 IEEE: DSA-offloaded AI inference data plane (server, cross-IHV)
+# Proposal (DRAFT) — Dec 2026 IEEE: DSA-offloaded AI inference data plane (Intel server: AMX + DSA)
 
 > **Tracked in the private repo** (`fantops/silicon-val-prep`, private + 2FA). Public-source only — **no Intel-internal data**.
 > **Status: DRAFT** — the long-paper thesis; still gathering data and refining. Near-term (Aug 7) work lives in
@@ -11,20 +11,20 @@
 
 Full **experimental** paper. Compute engine = **AMX** on a DSA-capable Xeon; **DSA** offloads the inference
 data plane on the **same** die. The near-term client/NPU proposal measures the *opportunity*; this paper
-measures the *mechanism* end-to-end, then generalizes cross-IHV. **This is a draft — data still to be gathered.**
+measures the *mechanism* end-to-end on **Intel** silicon. **This is a draft — data still to be gathered.**
 
 ---
 
 ## The one-paragraph pitch
 
-Across Intel / AMD / Qualcomm on-device inference, a large and growing share of latency, energy, and memory
-traffic is **not** matrix compute — it is the **data plane**: quantize/dequantize, tensor layout & type
-conversion, embedding gather, KV-cache movement, and copies across execution-provider (EP) boundaries
-including CPU fallback. We characterize this **"data-plane tax,"** argue it should be **offloaded to a
-data-streaming accelerator**, and show that **Intel DSA Rev 3.0** added the exact primitives — **Type
-Conversion, Reduce, Scatter-Gather** (plus Memory Move / Dualcast / Fill) — that map onto these operations,
-freeing CPU cycles for compute. We propose an offload + validation framework and a research agenda. DSA is
-the concrete, most-capable exemplar of a general mover class; the framework generalizes across IHVs.
+On **Intel** platforms — a **Xeon** server (AMX compute) and the **Core Ultra** client (NPU) — a large and
+growing share of inference latency, energy, and memory traffic is **not** matrix compute; it is the **data
+plane**: quantize/dequantize, tensor layout & type conversion, embedding gather, KV-cache movement, and
+copies across execution-provider (EP) boundaries including CPU fallback. We characterize this **"data-plane
+tax,"** argue it should be **offloaded to a data-streaming accelerator**, and show that **Intel DSA Rev 3.0**
+added the exact primitives — **Type Conversion, Reduce, Scatter-Gather** (plus Memory Move / Dualcast / Fill) —
+that map onto these operations, freeing CPU cycles for compute. We propose an offload + validation framework
+and a research agenda, evaluated end-to-end on **Intel silicon** (DSA + AMX on one Xeon).
 
 ---
 
@@ -35,14 +35,14 @@ On Intel, **DSA and the NPU do not co-exist on one die**: DSA ships on **server 
 
 **Fix — use AMX as the compute engine on the same Xeon:** a Sapphire-Rapids-class Xeon has **both AMX**
 (in-core matrix/GEMM — the *server analog of an NPU*) **and DSA**. Single platform, fully reproducible:
-**AMX runs the matmuls; DSA offloads the data plane that feeds them**. The client NPU stays in the story as
-the **generalization** (same offload frees the host that feeds any compute EP), argued analytically.
+**AMX runs the matmuls; DSA offloads the data plane that feeds them**. The **Intel Core Ultra** NPU stays in the
+story as the **generalization** (the same offload frees the host that feeds any compute engine), argued analytically.
 
 ---
 
 ## Title candidates
 
-1. Offloading the Inference Data-Plane Tax: A Cross-IHV Case for Data-Streaming Accelerators
+1. Offloading the Inference Data-Plane Tax: A Case for Data-Streaming Accelerators on Intel Platforms
 2. Beyond the Matrix Engine: Freeing CPU Cycles by Offloading the AI Data Plane to DSA
 3. The Hidden Data-Movement Tax in AI Inference — and an Accelerator-Offload Agenda
 
@@ -53,7 +53,7 @@ the **generalization** (same offload frees the host that feeds any compute EP), 
 | Paper section | Sourced from |
 |---|---|
 | KPI method + data-plane-tax intuition (perf / accuracy / memory) | Microsoft experience — method/knowledge only, **no MS data**; re-measure with public tools |
-| Framing context (ONNX Runtime, EPs, NPU/CPU fallback; cross-IHV) | Microsoft experience (concept only) |
+| Framing context (ONNX Runtime, EPs, NPU/CPU fallback) | Microsoft experience (concept only) |
 | Compute + offload on one Xeon: **AMX** (matmul) + **DSA** (data plane) | Public: AMX ISA + DSA spec 341204-006US |
 | Offload op mapping (DSA Rev 3.0 type-convert / reduce / scatter-gather) | Current Intel DSA role + public spec |
 | Correctness / validation angle (numerics, ordering, fault handling) | Current Intel DSA validation |
@@ -119,7 +119,7 @@ energy; (2) stretch: wire one op through DSA inside the runtime → end-to-end t
 - Data-movement-is-energy results (general).
 - EP / runtime-overhead and CPU-fallback cost in on-device inference.
 - KV-cache offload / prefill-decode disaggregation in LLM serving (Mooncake / DistServe-style).
-- **Gap to claim:** AI data plane + DSA **Rev 3.0 compute ops** + cross-IHV framing is under-covered.
+- **Gap to claim:** AI data plane + DSA **Rev 3.0 compute ops** (type-convert / reduce / scatter-gather) on Intel platforms is under-covered.
 
 ---
 
