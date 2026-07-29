@@ -7,7 +7,7 @@
 
 ## ⚠️ Confidentiality — read this first
 
-This repo is pushed to a **public GitHub remote** (`github.com/fantops/silicon-val-prep`). Treat **everything committed here as public**.
+This repo's remote (`github.com/fantops/silicon-val-prep`) is **private** (2FA-enabled). Still keep the discipline below — **no Intel-internal content in tracked files**: a private personal repo can be made public, shared with collaborators, or fall under Intel's "work product in Intel systems" policy. Public-source research notes (e.g., [`research/`](./research/)) are fine to track.
 
 - ✅ **Safe here:** publicly-documented DSA architecture (Intel DSA spec, Linux `idxd`, `accel-config`), generic validation methodology, your own conceptual learning notes.
 - ❌ **Never here:** Maestro internal content, HAPS / emulation platform configs, RTL / microarchitecture internals, specific bug details, coverage numbers, unreleased product info, or anything from Intel-confidential docs.
@@ -49,6 +49,7 @@ flowchart LR
 | [`fundamentals/ntb_flow.md`](fundamentals/ntb_flow.md) | **NTB / cross-node** — DSA movement across a Non-Transparent Bridge + coverage. |
 | [`validation/validation_flow.md`](validation/validation_flow.md) | HAPS → emulation → post-Si regression, bare-metal boot, Maestro (placeholders for internal specifics). |
 | [`journal/`](journal/) | Dated cadence entries. Copy the template, one file per session. |
+| [`research/`](research/) | Pre-publication paper working notes (private repo — public-source only). |
 | [`_internal/`](_internal/) | **Git-ignored.** Local-only landing spot for Maestro / platform / IP internals. |
 | `341204-006-…-spec.pdf` | Local copy of the public spec (Rev 3.0). **Git-ignored** (large binary; re-downloadable from Intel). |
 
