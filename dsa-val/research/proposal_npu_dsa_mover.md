@@ -1,4 +1,4 @@
-# Proposal — A Data-Streaming Mover as the NPU's Data-Plane Companion for Efficient On-Device AI Inference
+# Proposal — An AI Tensor-Preprocessing Accelerator: offloading the pre-inference data plane to a DSA-type mover (Intel NPU)
 
 > **Tracked in the private repo** (`fantops/silicon-val-prep`, private + 2FA). Public-source only — **no Intel-internal data**.
 > Near-term (Aug 7) concept proposal. Companion: [`experiment_plan_npu_dataplane.md`](experiment_plan_npu_dataplane.md) (how we prove it) · [`proposal_dec2026_draft.md`](proposal_dec2026_draft.md) (Dec long paper).
@@ -8,81 +8,87 @@
 
 ## Abstract
 
-On-device AI inference is increasingly limited not by neural **compute** but by the **data plane** that surrounds it — quantize/dequantize, tensor layout conversion, embedding gathers, KV-cache movement, host↔accelerator staging copies, and fallback traffic for operations the NPU cannot run. The NPU accelerates matrix math; the *rest of the pipeline* still runs on the host CPU, burning cycles and energy and stalling the NPU while it waits to be fed. We call this the **data-plane tax**. We propose integrating a **programmable data-streaming mover** (a DSA-class engine) on the SoC as a **companion to the NPU** that offloads and overlaps this data plane. Unlike a plain DMA, the mover performs *compute-capable movement* — type conversion, scatter-gather, reduction, dual-cast — over **shared virtual memory**, so the inference runtime can hand it the data-plane work directly. We describe the NPU architecture, the exact offload opportunities, and **how such a mover fits on the SoC** (fabric placement, coherency, IOMMU/PASID, coupling to the NPU, programming model, QoS, power). We validate the *opportunity* on today's **Intel** client NPUs by measurement.
+Everyone optimizes the AI accelerator; almost nobody optimizes the **preprocessing** that feeds it. Before an
+NPU ever runs, the host CPU executes a serial chain of tensor plumbing — **copy, reorder, pad, transpose,
+datatype-convert** — and stages the result into the accelerator's buffers. For small-batch, latency-sensitive
+on-device inference this preprocessing is a real fraction of end-to-end time and CPU energy, and it **stalls
+the NPU** while the host prepares data. We propose an **AI tensor-preprocessing accelerator**: a **DSA-type
+data-streaming mover** that executes the preprocessing chain as a **single submitted descriptor batch**, over
+shared virtual memory, **overlapped** with NPU compute. The CPU merely submits a descriptor; the mover does the
+copy/reorder/pad/transpose/convert and notifies the NPU. We ground this on the **Intel** NPU (Core Ultra) with
+**Intel DSA** as the concrete mover, map each preprocessing op to a mover primitive, describe how such a mover
+fits on the SoC, and measure the preprocessing tax on today's Intel client NPUs to size the opportunity.
 
 ---
 
 ## 1. Problem statement
 
-An NPU is a compute accelerator: it turns matmul/convolution into high-TOPS, low-power fixed-function work. But **end-to-end inference is a pipeline**, and the NPU only accelerates one stage of it:
+**Everyone talks about the AI accelerator. Almost nobody talks about the preprocessing.**
+
+An NPU accelerates matmul/convolution — but an inference request first runs a **host-side preprocessing chain**
+before the accelerator does anything:
 
 ```
-input → pre-process → quantize/layout → stage to NPU → NPU compute → drain from NPU → dequantize → post-process → output
-        └──────────────── host CPU data plane ───────────────┘        └──────── host CPU data plane ────────┘
+input → copy → reorder → pad → transpose → datatype-convert → stage to NPU → [ NPU compute ] → ...
+        └──────────────── serial CPU tensor plumbing ────────────────┘
 ```
 
-The **non-compute stages run on the host CPU** and are dominated by **data movement and element-wise transforms**: image resize/normalize or tokenization, **layout conversion** (e.g., NCHW↔NHWC, tiling/blocking), **quantize/dequantize** (FP32↔FP16↔INT8), **embedding/KV gathers**, and **staging copies** across the host↔NPU boundary and DRAM↔on-chip SRAM.
+Each step is a **loop of loads/stores/convert** on the CPU: format the tensor to the layout/precision the NPU
+expects, pad to a static shape, transpose to the required data order, cast FP32→FP16/INT8, then copy into the
+NPU-visible buffer. This work:
+- runs **serially before** compute — the NPU waits to be fed;
+- **burns CPU cycles and energy** and **pollutes caches**;
+- is **proportionally worst for small-batch / latency-sensitive** inference, where compute is short so the
+  plumbing dominates.
 
-Two structural properties of NPUs **amplify** this tax:
+Two NPU realities push this onto the host:
+1. **Static shapes only** → the host must **pad/reshape** dynamic inputs to a fixed shape (or fall back to CPU/GPU).
+2. **Scratchpad-centric dataflow** → the NPU wants tensors in a specific **tiled layout/precision**, so the host
+   does the **convert / transpose / pack** to match.
 
-1. **Scratchpad-centric dataflow.** The NPU is engineered to keep tensors resident in on-chip **SRAM** and to *minimize SRAM↔DRAM transfers*. When the working set exceeds SRAM (large models, long context), spill/stage traffic grows — and the **host** frequently orchestrates the surrounding movement.
-2. **Static-shape execution.** Current NPUs run **static shapes only**. Dynamic-shape workloads (LLM variable sequence length, variable batch) require **host-side padding/reshaping**, or **CPU/GPU fallback** for unsupported ops — and **every fallback adds cross-engine copies** and marshalling.
+**The problem, stated:** *how do we take the pre-inference tensor-plumbing chain off the CPU — cutting latency,
+CPU utilization, and cache pollution — and keep the NPU fed, without enlarging the NPU?*
 
-**Consequences:**
-- **CPU cycles burned** on data-plane work contend with the application → worse responsiveness and battery on client.
-- **NPU stalls**, under-utilized while it waits for the host to prepare/move data → lower *effective* TOPS.
-- **Energy wasted**: general CPU cores are inefficient per byte for bulk convert/move vs a dedicated datapath; extra cache pollution and core wake-ups add power.
-- The tax is **worst exactly where on-device AI is heading** — **GenAI** (LLMs, diffusion) with dynamic shapes, quantized weights, and KV-caches.
+### 1.1 A concrete example — a small model, one inference
 
-**The problem, stated:** *how do we relieve the host CPU of the AI data-plane tax and keep the NPU fed — improving inference latency, CPU availability, and energy — without enlarging the NPU itself?*
+Take a small vision model (e.g., **MobileNetV2 / ResNet-50, INT8**), one image. Before the NPU runs a single MAC:
 
-### 1.1 A concrete example — one decode step of a small LLM
+| Stage | Where | Data-plane work | Mover primitive |
+|---|---|---|---|
+| decode + resize + normalize | CPU | pixels → tensor, scale/mean | (decode) + Memory Move |
+| layout NCHW → NPU tiled format | CPU | **reorder / transpose** | Scatter-Gather / strided Move |
+| quantize FP32 → INT8 | CPU | **datatype convert** | Type Conversion |
+| pad to static shape | CPU | **pad** | Fill |
+| stage into NPU buffer | CPU | **copy** | Memory Move |
+| inference | **NPU** | matmul / conv | — |
 
-Take **TinyLlama-1.1B** (≈22 layers, hidden 2048, 32k vocab), **INT4 weights / FP16 compute** — a realistic
-on-device model. Generating **one token** (batch = 1 decode) runs the pipeline below; the matmul compute is a
-small fraction while **data movement and transforms dominate**:
-
-| # | Stage | Where | Data-plane work | Offloadable to mover |
-|---|---|---|---|---|
-| 1 | Sampled token → embedding | host + NPU | **gather** one 2048-wide row from the 32k×2048 table | **Scatter-Gather** |
-| 2 | Weight streaming (per layer ×22) | host/NPU | **dequant INT4→FP16** for Wq/Wk/Wv/Wo/gate/up/down | **Type Conversion** |
-| 3 | Activation packing | host/SHAVE | **layout / tiling** convert to NCE format | Type Conversion / strided Move |
-| 4 | Attention | NPU + host | **KV-cache append + read** over growing context; softmax **reduce** | **Move** + **Reduce** |
-| 5 | Static-shape handling | host | **pad/bucket** the dynamic seq length, or CPU **fallback** copies | **Move** |
-| 6 | LM head → logits | NPU→host | drain 32k-wide logits to host | Move |
-| 7 | Sample (argmax / top-k/p) | host | **reduce / partial sort** | Reduce (+ host) |
-| 8 | Detokenize | host | id → text | host |
-
-**Why this is the worst case (and the point):** at batch = 1 the matmuls are tiny, yet the step still **streams
-and dequantizes ~all weights** and **moves the whole KV-cache** every token — it is **memory/data-plane bound**,
-not compute bound. Stages 1–6 are exactly the mover's wheelhouse, and a static-shape NPU also forces stage 5's
-pad/fallback each step. (A static CNN like MobileNet shows a *much smaller* tax — a useful contrast for the paper.)
+For a latency-sensitive request the **top five rows (preprocessing) are a real fraction** of end-to-end time
+and CPU energy — the compute is short, so the plumbing shows. For an **LLM** decode (e.g., TinyLlama-1.1B,
+INT4) the same plumbing **recurs every token** (tokenize, embedding **gather**, weight **dequant**, KV-cache
+**move**), so at batch = 1 the step is **memory/data-plane bound**, not compute bound (see the extension in §3).
 
 ---
 
 ## 2. Background — NPU architecture (public)
 
-*(Intel Core Ultra NPU; Meteor Lake = NPU 3720, Lunar Lake = NPU 4. Sources: Intel NPU Acceleration Library; OpenVINO NPU device docs.)*
-
-The Intel NPU is an integrated AI accelerator characterized by **compute acceleration + data-transfer** capabilities:
+*(Intel Core Ultra NPU; Meteor Lake = NPU 3720, Lunar Lake = NPU 4. Sources: Intel NPU Acceleration Library; OpenVINO NPU docs.)*
 
 | Block | Role |
 |---|---|
-| **Neural Compute Engines (NCE)** | Fixed-function hardware for **matrix multiplication and convolution** — the bulk of the TOPS. |
-| **SHAVE** (Streaming Hybrid Architecture Vector Engines) | Programmable **VLIW DSP / vector** cores for general and element-wise ops outside the NCE. |
+| **Neural Compute Engines (NCE)** | Fixed-function hardware for **matrix multiply and convolution** — the bulk of the TOPS. |
+| **SHAVE** (Streaming Hybrid Architecture Vector Engines) | Programmable **VLIW DSP / vector** cores for general / element-wise ops. |
 | **DMA engines** | Move data between **system DRAM** and an on-die **managed cache / scratchpad SRAM**. |
-| **Device MMU + IOMMU** | Address translation and security isolation. |
-| **UMD compiler** | Tiles the network to keep tensors resident in **SRAM**, maximizing NCE utilization and **minimizing SRAM↔DRAM transfers**. |
+| **Device MMU + IOMMU** | Address translation and isolation. |
+| **UMD compiler** | Tiles the network to keep tensors resident in **SRAM**, minimizing SRAM↔DRAM transfers. |
 
-- **Numerics:** hardware compute is **FP16**; supports FP32/FP16 and **INT8 (U8)** quantized (or mixed FP16-INT8).
-- **Execution:** a compiled model blob with a **tiled** schedule; the driver schedules layer execution and memory transactions across NPU submodules. **Static shapes only** (current limitation). Scales via tiles (`intel_npu::tiles` / `max_tiles`).
-- **Software:** **OpenVINO** NPU plugin or **DirectML**; **AUTO/HETERO** can split a model across NPU + CPU + GPU, falling back for unsupported ops.
+- **Numerics:** HW compute is **FP16**; supports FP32/FP16 and **INT8 (U8)** quantized (or mixed).
+- **Execution:** compiled, **tiled** blob; **static shapes only**; scales via tiles. Programmed via **OpenVINO**
+  NPU plugin or **DirectML**; **AUTO/HETERO** can split across NPU + CPU + GPU (fallback for unsupported ops).
 
 ```mermaid
 flowchart LR
   subgraph host["Host (CPU)"]
-    PRE["pre/post-process<br/>tokenize / quant-dequant / layout"]
-    FB["CPU/GPU fallback<br/>(dynamic-shape / unsupported ops)"]
+    PRE["preprocess chain<br/>copy / reorder / pad / transpose / convert"]
   end
   PRE -->|"stage inputs (copies)"| DMA
   subgraph NPUb["NPU"]
@@ -90,129 +96,116 @@ flowchart LR
     SRAM --> NCE["NCE (matmul / conv)"]
     SRAM --> SHV["SHAVE (vector)"]
   end
-  DRAM[("System DRAM")] <-->|"SRAM<->DRAM spill"| DMA
-  SRAM -->|"drain outputs (copies)"| PRE
-  FB <-->|"EP-boundary copies"| SRAM
+  DRAM[("System DRAM")] <-->|"SRAM<->DRAM"| DMA
 ```
 
-**Key observation:** the NPU's *own* DMA handles DRAM↔SRAM for the compiled graph, but the **host CPU** still owns (a) app-level pre/post-processing, (b) quant/dequant and layout not folded into the graph, (c) **cross-engine copies** for fallback, and (d) orchestration/staging. That host-and-boundary region is the target.
+**Why the host does the plumbing:** the NPU's DMA moves data for the *compiled graph*, but **static shapes** and
+the **tiled layout/precision** the NCE expects mean the **host** must convert/transpose/pad/stage the input first.
 
 ---
 
-## 3. Why the tax exists (tying arch → problem)
+## 3. Proposed solution — the preprocessing accelerator (a DSA-type mover)
 
-- The NPU is a **compute island**; the pipeline around it is **memory- and transform-bound**, and that part lands on the CPU.
-- The **static-shape + scratchpad** design means dynamic/large GenAI workloads externalize work to the host: padding, reshaping, dequant of compressed weights, KV movement, and fallback copies.
-- General CPU cores are the **wrong tool** for bulk, regular (and irregular-gather) data movement/convert: low bytes/joule, cache pollution, and serialized with the NPU rather than overlapped.
+Introduce a **DSA-type data-streaming mover** whose job is the **pre-inference tensor-plumbing chain**. Instead
+of the CPU running `for(...)` loops, the runtime builds a **descriptor chain** and submits it **once**:
 
----
+```
+  CPU today (per tensor):        With the mover (one submit):
+  for(...) copy                  build a descriptor batch:
+  for(...) reorder                 read -> transpose(strided) -> pack(gather) -> pad(fill) -> convert -> stage
+  for(...) pad                   one ENQCMD  ->  mover runs the chain, overlapped with the NPU
+  for(...) transpose             mover writes completion / notifies the NPU
+  for(...) convert
+```
 
-## 4. Proposed solution — a DSA-type mover as the NPU's data-plane companion
+**The CPU merely submits the descriptor.** The mover executes the chain over **shared virtual memory** (PASID /
+SVM — no pinning, no bounce buffer), **overlapped** with NPU compute, and signals completion by record / doorbell.
 
-Integrate a **programmable data-streaming mover** (a **DSA-class** engine) on the SoC, positioned to **offload the host-side and boundary data plane** and to **stage/prefetch** data so the NPU stays fed.
+**Why a DSA-class engine, not a plain DMA.** It does *compute-capable* movement and is **user-submittable**:
 
-**Why DSA-class, not a plain DMA.** A plain client iDMA can copy bytes; it cannot *transform* or be safely multi-tenant. A DSA-class engine adds exactly what the AI data plane needs (op vocabulary from the public Intel DSA spec, Rev 3.0):
-
-| Capability | Why it matters for inference |
+| Capability | Use in the preprocessing chain |
 |---|---|
-| **Type Conversion** | quant/dequant and dtype casts as *convert-on-move* (no separate CPU pass) |
-| **Scatter-Gather** | embedding / KV / MoE gathers — irregular, cache-hostile on the CPU |
-| **Reduce** | pooling / element-wise reductions |
-| **Memory Move / Dual-cast** | staging, double-buffering, mirroring |
-| **Descriptor + user-space submit** (ENQCMD/MOVDIR64B) | the runtime submits data-plane work directly, low overhead |
-| **PASID / SVM (shared virtual memory)** | operate on the runtime's *virtual* buffers — no pinning, no bounce copies |
-| **Faultable (PRS) + async completion** | overlap with NPU compute; tolerate demand-paged buffers |
+| **Type Conversion** | datatype cast (FP32→FP16/INT8) |
+| **Scatter-Gather** | reorder / pack into the NPU's tiled layout |
+| **Fill** | pad to static shape |
+| strided **Memory Move** | transpose / copy / stage |
+| **Batch descriptor** (`Fence` for order) | the whole chain, submitted as one unit |
+| **`ENQCMD` / `MOVDIR64B`** | user-space submit — "CPU merely submits" |
+| **PASID / SVM** | operate on the runtime's buffers — no pinning, no bounce |
 
-**Mechanism.** The inference runtime (OpenVINO / DirectML / ORT) routes data-plane ops to the mover as descriptors over **shared virtual memory**; the mover executes them **overlapped** with NPU compute; completion is signaled by poll / wait / interrupt. Result: the **CPU is freed**, the **NPU is fed sooner**, and serial host stages become **overlapped** movement.
+A plain client iDMA can copy bytes but cannot convert / gather / pad, chain, or be safely multi-tenant.
 
-```mermaid
-flowchart LR
-  A["input"] --> B["mover: convert + gather + stage"]
-  B --> D["NPU compute"]
-  B -. overlap .- D
-  D --> E["mover: drain + dequant"]
-  E --> F["output"]
-  E -. overlap .- D
-```
-
----
-
-## 5. What it accelerates — offload map + efficiency
-
-| NPU-adjacent data-plane pain | Mover op | Efficiency gained |
+### Preprocessing op → mover primitive
+| Preprocessing step | Mover primitive | Note |
 |---|---|---|
-| Quant / dequant (INT8 ↔ FP16/FP32) | **Type Conversion** | frees CPU; fuse convert into the staging copy |
-| Host↔NPU layout / tiling conversion | Type Conversion / strided **Move** | offload reshape/transpose copies |
-| Embedding / KV / MoE gather | **Scatter-Gather** | efficient irregular access vs CPU cache misses |
-| Weight streaming / activation spill staging | **Move / Dual-cast** (double-buffer) | prefetch next tile → hide memory latency, raise NCE utilization |
-| Input staging / output drain (host↔NPU) | **Move** (+ SVM) | overlap with compute; no bounce buffer |
-| CPU/GPU fallback & HETERO EP-boundary copies | **Move** | offload cross-engine copies forced by dynamic shapes |
-| Pooling / element-wise reductions | **Reduce** | offload from CPU/SHAVE |
+| Copy tensor | **Memory Move** | direct |
+| Reorder / pack | **Scatter-Gather** | into packed / tiled layout |
+| Pad | **Fill** (+ Move) | pad region = Fill pattern |
+| Transpose | **strided Memory Move** | via strides (no named transpose op) |
+| Datatype convert | **Type Conversion** | Rev 3.0 |
+| The chain | **Batch descriptor** (`Fence`) | one `ENQCMD` submits it |
+| Notify | completion record / doorbell | poll / interrupt |
 
-**Efficiency dimensions (the KPIs):**
-1. **CPU cycles freed** — application responsiveness + battery.
-2. **Latency** — overlap data movement with NPU compute; remove serial host stages.
-3. **Energy/inference** — dedicated datapath beats general cores on bytes/joule; less cache pollution and fewer wake-ups.
-4. **Effective NPU utilization** — keep the NCE fed → higher realized TOPS.
+> **Extension (same mechanism):** the descriptor-chain approach carries past preprocessing to the **in-inference**
+> data plane — weight **dequant** (Type Conversion), **KV-cache** movement (Move), embedding **gather**
+> (Scatter-Gather), and **output** drain + dequant. Preprocessing is the sharp, relatable anchor; the mover
+> generalizes to the whole host data plane.
 
 ---
 
-## After offload — what gets optimized (operation & instruction level)
+## 4. After offload — what gets optimized (operation & instruction level)
 
-Today each data-plane op runs on the CPU/SHAVE as a **loop of SIMD instructions** (loads/stores + convert +
-gather + reduce), consuming core cycles and serialized ahead of / behind NPU compute. After offload, each op
-becomes **one 64-byte descriptor submit** (`ENQCMD` / `MOVDIR64B`) to the mover, executed **asynchronously and
-overlapped** with the NPU. The optimization is twofold: **fewer CPU dynamic instructions** and **latency hidden
-under compute**.
+Today each preprocessing op runs on the CPU/SHAVE as a **loop of SIMD instructions** (loads/stores + convert +
+gather), consuming core cycles serialized ahead of NPU compute. After offload, each op becomes **one 64-byte
+descriptor** in a batch, executed **asynchronously and overlapped**. The optimization is twofold: **fewer CPU
+dynamic instructions** and **latency hidden under compute**.
 
 ### Instruction-level: before → after
-| Data-plane op | Baseline CPU/SHAVE path (today) | After (mover) | What's optimized |
+| Preprocessing op | Baseline CPU/SHAVE path (today) | After (mover) | What's optimized |
 |---|---|---|---|
-| Dequant INT4→FP16 | loop: load + unpack + `VCVT` + store (AVX) | 1 **Type-Conversion** descriptor | convert loop offloaded; overlaps compute |
-| Embedding / KV gather | `VPGATHER` / pointer-chase loads | 1 **Scatter-Gather** descriptor | irregular loads offloaded |
-| KV-cache append / read | `REP MOVS` / AVX copy | 1 **Memory Move** descriptor | copy offloaded; overlapped |
-| Layout / tiling convert | transpose load/store loops | Type-Conversion / strided **Move** | transpose offloaded |
-| Host↔NPU staging | `memcpy` (+ bounce buffer) | **Move** over SVM | copy offloaded; no bounce buffer |
-| Softmax / pooling stats | AVX reduce loops | **Reduce** | reduction offloaded |
-| Sampling reduce | partial-sort / argmax | Reduce (+ host tail) | partial offload |
+| Datatype convert (FP32→FP16/INT8) | loop: load + `VCVT` + store (AVX) | 1 **Type-Conversion** descriptor | convert loop offloaded; overlaps |
+| Reorder / pack | `VPGATHER` / strided loads | 1 **Scatter-Gather** descriptor | irregular access offloaded |
+| Pad | fill loop / `memset` | 1 **Fill** descriptor | pad offloaded |
+| Transpose | transpose load/store loops | strided **Memory Move** | transpose offloaded |
+| Copy / stage to NPU | `memcpy` (+ bounce buffer) | **Memory Move** over SVM | copy offloaded; no bounce |
 
-**Instruction-count view:** a data-plane op that is an *N*-instruction CPU loop collapses to **~1 submit + 1
-completion check**; the mover performs the *N*-equivalent work on a dedicated datapath, in parallel with the NCE.
+**Instruction-count view:** the whole chain (an *N*-instruction CPU sequence) collapses to **~1 batch submit + 1
+completion check**; the mover does the *N*-equivalent work on a dedicated datapath, in parallel with the NCE.
 
 ### Data points to fill (measured — you provide)
-Per op, per token — from the [experiment plan](experiment_plan_npu_dataplane.md) (client baseline) + a server DSA microbench (mover cost):
+Per op, per inference — from the [experiment plan](experiment_plan_npu_dataplane.md) (client baseline):
 
-| Op | Bytes/token | Baseline CPU cycles | Baseline energy (mJ) | Mover time (µs) | Overlap % | Freed CPU cycles |
+| Op | Bytes | Baseline CPU cycles | Baseline energy (mJ) | Mover time (µs) | Overlap % | Freed CPU cycles |
 |---|---|---|---|---|---|---|
-| Dequant INT4→FP16 | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
-| Embedding / KV gather | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
-| KV-cache move | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
-| Layout convert | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
-| Host↔NPU staging | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
-| **Total** | | `Σ` | `Σ` | | | `Σ = C_dp` |
+| Datatype convert | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
+| Reorder / pack | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
+| Pad | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
+| Transpose | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
+| Copy / stage | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<TBD>` | `<derived>` |
+| **Total** | | `Σ` | `Σ` | | | `Σ = C_pp` |
 
 ### Analytical model (fill once data lands)
-- Baseline per-token latency:  `T_base = t_compute + Σ t_i(dp)`   (data-plane stages serial with compute)
-- Freed CPU cycles:  `C_dp = Σ c_i(dp)`   (offloaded ops' baseline cycles)
-- After overlap:  `T_opt ≈ max( t_compute , Σ t_i(mover) ) + t_host_residual`
-- Speedup:  `S = T_base / T_opt` ;  energy saved ≈ `E_cpu(dp) − E_mover`
-- Instruction reduction:  CPU data-plane dynamic instructions  `Σ N_i  →  ≈ (#ops) submits`
+- Baseline latency:   `T_base = t_compute + Σ t_i(preproc)`   (chain serial before compute)
+- Freed CPU cycles:   `C_pp = Σ c_i(preproc)`
+- After overlap:      `T_opt ≈ max( t_compute , t_chain(mover) ) + t_host_residual`
+- Speedup:            `S = T_base / T_opt` ;  energy saved ≈ `E_cpu(preproc) − E_mover`
+- Instruction reduction:  CPU preprocessing instructions  `Σ N_i  →  ≈ 1 batch submit`
 
-> **Next:** you provide the measured `<TBD>` cells → we finalize the model, compute S and energy saved, and
-> build the before/after figure. The experiment plan's P2/P3 phases produce these exact numbers.
+> **Next:** you provide the measured `<TBD>` cells → we finalize the model, compute S and energy saved, and build
+> the before/after figure. The experiment plan's P2/P3 phases produce these numbers.
 
 ---
 
-## 6. How it fits on the SoC (integration)
+## 5. How it fits on the SoC (integration)
 
-The mover is a **fabric-attached data-streaming engine** placed alongside the NPU, CPU, and memory controllers — analogous to how a server DSA sits as an integrated endpoint on the mesh with IOMMU access.
+The mover is a **fabric-attached data-streaming engine** placed alongside the NPU, CPU, and memory controllers.
 
 ```mermaid
 flowchart TB
   subgraph SoC["Client SoC"]
     CPU["CPU cores + LLC"]
     NPU["NPU<br/>NCE · SHAVE · DMA · SRAM"]
-    MOVER["DSA-type mover<br/>move · convert · gather · reduce"]
+    MOVER["DSA-type mover<br/>move · convert · gather · fill"]
     FAB["Coherent fabric / NoC"]
     IOMMU["IOMMU / SMMU + PASID"]
     MC["Memory controllers"]
@@ -226,58 +219,68 @@ flowchart TB
   MOVER -. "tight: P2P into NPU staging SRAM" .-> NPU
 ```
 
-**6.1 Placement & bandwidth.** On the **coherent fabric / NoC**, with high-bandwidth access to the memory controllers (and ideally a path toward the NPU's staging region). It must sit where it can see both **host buffers** and the **NPU ingress**.
-
-**6.2 Memory & coherency.** The mover should be **coherent** with CPU caches (so offloaded convert/move stays consistent with app/runtime data), or provide explicit **cache-control** semantics where coherence is relaxed. Coherence keeps the SVM programming model clean.
-
-**6.3 IOMMU / PASID / SVM.** The mover shares the **IOMMU/SMMU** and carries a **PASID**, so it operates on the **runtime's virtual addresses** directly — **no pinning, no bounce buffers**. This is what makes it usable from a user-space inference runtime rather than a kernel-only DMA.
-
-**6.4 Coupling to the NPU — two integration tiers:**
-- **Loose (near-term, no NPU redesign):** mover and NPU are independent fabric agents. The runtime orchestrates: mover prepares/stages/converts data into a **shared DRAM pool**, signals completion; the NPU's own DMA pulls into SRAM. Benefit with minimal SoC change.
-- **Tight (future):** mover writes **peer-to-peer into the NPU's staging SRAM** (or a **shared staging SRAM** pool), enabling *convert-on-the-way-in* and **true double-buffering** of NCE tiles. Requires NPU-side support (an ingress port / mailbox / shared-buffer handshake).
-
-**6.5 Programming model.** Exposed as a device with **user-space descriptor submission** (ring + doorbell). Integrated into the runtime as a **data-plane offload path** (e.g., an OpenVINO/ORT pre/post + staging hook, or a DirectML metacommand). Descriptors carry op, virtual src/dst (via PASID), shapes/strides, and completion; **async** completion overlaps with NPU inference requests.
-
-**6.6 QoS & scheduling.** The mover shares memory bandwidth with the CPU and NPU. It needs **QoS / bandwidth controls** (group/bandwidth limits, priorities) so offload + overlap is a **net win** and it never **starves the NPU** of DRAM bandwidth — a real constraint on bandwidth-limited client SoCs.
-
-**6.7 Power.** Power-gated when idle; its per-byte energy for convert/move/gather must **beat the CPU** doing the same. On client, **energy is the headline metric**, so this is a gating design requirement, not an afterthought.
-
-**6.8 Integration cost / tradeoffs (stated honestly).** Added silicon area; fabric/coherency and IOMMU complexity; potential **memory-bandwidth contention**; and non-trivial **software-stack work** to route data-plane ops to the mover. Today a DSA-class engine ships on **server (Xeon)**, not on client SoCs — so this is a **forward-looking client-SoC integration proposal**, motivated by measuring the opportunity on current NPUs.
-
----
-
-## 7. Evaluation plan (summary)
-
-Evaluated on **Intel Core Ultra** client hardware: profile the **host data-plane fraction** of end-to-end inference (OpenVINO), CNN vs LLM, and estimate the mover's freed-cycles / latency / energy benefit. Full protocol: [`experiment_plan_npu_dataplane.md`](experiment_plan_npu_dataplane.md).
-
-> Out of scope for this proposal: the *measured* server-side mechanism (AMX compute + a real DSA on Xeon) is the separate [Dec-2026 paper](proposal_dec2026_draft.md).
+- **Placement & bandwidth:** on the **coherent fabric / NoC**, with high-bandwidth access to the memory
+  controllers and a path toward the NPU ingress.
+- **Coherency:** **coherent** with CPU caches (keeps offloaded convert/move consistent with app data), or explicit
+  cache-control where coherence is relaxed.
+- **IOMMU / PASID / SVM:** shares the IOMMU and carries a **PASID** → operates on the runtime's **virtual**
+  buffers (no pinning, no bounce). This is what makes it usable from a user-space inference runtime.
+- **Coupling to the NPU — two tiers:**
+  - **Loose (near-term, no NPU redesign):** mover stages/converts into a **shared DRAM pool**, signals; the NPU's
+    own DMA pulls into SRAM.
+  - **Tight (future):** mover writes **peer-to-peer into the NPU staging SRAM** for *convert-on-the-way-in* and
+    double-buffering; needs an NPU ingress/handshake.
+- **Programming model:** user-space **descriptor batch** submission integrated into the runtime (an OpenVINO/ORT
+  preprocessing hook or a DirectML metacommand); **async** completion overlaps with the inference request.
+- **QoS & power:** **bandwidth/QoS controls** so the mover never starves the NPU of DRAM bandwidth; **power-gated**
+  when idle — its bytes/joule for convert/move/pad must beat the CPU (on client, energy is the headline metric).
+- **Integration cost (honest):** added area; fabric/coherency + IOMMU complexity; memory-bandwidth contention;
+  and runtime-integration work. **Today a DSA-class engine ships on server (Xeon), not on client SoCs** — so this
+  is a **forward-looking client-SoC integration proposal**, motivated by measuring the opportunity on current NPUs.
 
 ---
 
-## 8. Expected contributions
+## 6. Evaluation (Intel Core Ultra client)
 
-1. **Quantify** the on-device inference **data-plane tax** on a current client NPU (CNN vs LLM).
-2. A concrete **architecture**: a DSA-type mover as the NPU's data-plane companion, with **SoC integration options** (loose vs tight coupling).
-3. An **offload taxonomy** mapping AI data-plane ops → mover ops.
-4. A **research/validation agenda** (correctness of convert/gather/reduce; QoS; energy) bridging to the long paper.
+Evaluated on **Intel Core Ultra** client hardware: profile the **preprocessing (host data-plane) fraction** of
+end-to-end inference (OpenVINO), for a static CNN and a dynamic LLM, and estimate the mover's freed-cycles /
+latency / energy benefit. Full protocol: [`experiment_plan_npu_dataplane.md`](experiment_plan_npu_dataplane.md).
+
+> Out of scope for this proposal: the *measured* server-side mechanism (AMX compute + a real DSA on Xeon) is the
+> separate [Dec-2026 paper](proposal_dec2026_draft.md).
 
 ---
 
-## 9. Risks & limitations
+## 7. Contributions
 
-- **Platform:** DSA-class movers are server-only today → client integration is a proposal; the client benefit is **estimated** (opportunity measured, mechanism modeled).
+1. **Name and quantify** the pre-inference **preprocessing tax** on a client NPU (static CNN vs dynamic LLM).
+2. **The preprocessing-accelerator concept:** a DSA-type mover that runs the tensor-plumbing chain as a **single
+   submitted descriptor batch** — "the CPU merely submits."
+3. **An op→primitive mapping** (copy/reorder/pad/transpose/convert → Move/Scatter-Gather/Fill/Type-Conversion).
+4. **SoC integration** options (loose vs tight coupling) and the QoS/coherency/PASID requirements.
+5. A **research agenda** extending the same descriptor-chain to the full in-inference data plane.
+
+---
+
+## 8. Risks & limitations
+
+- **Platform:** DSA-class movers ship on server today → client integration is a proposal; the client benefit is
+  **estimated** (opportunity measured, mechanism modeled).
+- **No named transpose:** transpose/reorder is a **strided move / gather**, not a dedicated op — state it plainly.
 - **Bandwidth:** on shared-DRAM client SoCs the mover must be net-positive, not just added traffic.
 - **Profiling:** NPU per-op counters are coarse → rely on host stage-level timing.
-- **Software:** realizing the benefit needs runtime integration (OpenVINO/ORT/DirectML).
+- **Software:** the benefit needs runtime integration (OpenVINO / ORT / DirectML).
 
 ---
 
-## 10. Related work (to differentiate — verify before submission)
+## 9. Related work (to differentiate — verify before submission)
 
 - Datacenter / microservice "tax": data movement dominates cycles (Kanev et al., ISCA 2015).
 - DSA characterization on Xeon: memcpy/dedup/DPDK/SPDK (Rev 1/2-era studies).
-- NPU/accelerator inference: OpenVINO/DirectML NPU execution; heterogeneous EP scheduling.
-- **Gap claimed:** NPU **host-side data-plane tax** + a **DSA-class mover** as an on-SoC companion, with **client** on-device-GenAI framing, is under-covered.
+- Input-pipeline bottlenecks in training (e.g., data-loading/"DALI"-style preprocessing offload to GPU).
+- OpenVINO / DirectML NPU execution; heterogeneous EP scheduling and CPU fallback cost.
+- **Gap claimed:** an on-SoC **DSA-class preprocessing mover** for **client NPU** inference, with a descriptor-chain
+  programming model, is under-covered.
 
 ---
 
