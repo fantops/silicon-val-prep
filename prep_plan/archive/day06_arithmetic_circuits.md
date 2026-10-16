@@ -102,7 +102,7 @@ In a datapath, the **adder or multiplier is almost always the longest combinatio
 
 ## Coding A — `d06_arith`
 
-Build an **arithmetic library in C** validated against native ops: `add_ripple`/`add_cla` (expose carry + signed-overflow flags), a **Booth radix-4** `mul_booth` and a shift-add `mul_shiftadd` (assert both == native over random signed inputs), a **fixed-point** `qmul(Qm.n)` with shift+round+saturate, and `fp_eq(a,b,eps)` plus a NaN/Inf classifier showing why `==` fails. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-6--arithmetic-circuits).
+Build an **arithmetic library in C** validated against native ops: `add_ripple`/`add_cla` (expose carry + signed-overflow flags), a **Booth radix-4** `mul_booth` and a shift-add `mul_shiftadd` (assert both == native over random signed inputs), a **fixed-point** `qmul(Qm.n)` with shift+round+saturate, and `fp_eq(a,b,eps)` plus a NaN/Inf classifier showing why `==` fails. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-6--arithmetic-circuits).
 
 **Interview prompts:** Ripple vs CLA — where's the delay? Why is Booth+Wallace the fast multiplier? Why never `==` on floats?
 

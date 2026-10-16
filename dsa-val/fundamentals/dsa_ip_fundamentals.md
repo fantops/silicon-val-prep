@@ -34,9 +34,9 @@ The spec covers the **2nd and 3rd generations** of DSA. Revision history (author
 
 ## 2. Where it sits in the SoC
 
-- Presented to software as a **PCIe-enumerated device** — a Root-Complex Integrated Endpoint (RCIEP) — even though it's on-die. So it has PCIe config space, BARs, and MSI-X. → ties to [Day 34 — PCIe enumeration](../../prep_plan/day34_pcie_enumeration_config_msi.md).
-- Sits on the **mesh/uncore**; its reads/writes go through the **coherent fabric** (LLC / memory controllers). → coherence matters, [Day 17](../../prep_plan/day17_coherence_mesi_false_sharing.md).
-- Uses the **IOMMU (Intel VT-d)** for address translation and isolation. → [Day 19 — IOMMU/SMMU](../../prep_plan/day19_tlb_huge_pages_iommu_smmu.md).
+- Presented to software as a **PCIe-enumerated device** — a Root-Complex Integrated Endpoint (RCIEP) — even though it's on-die. So it has PCIe config space, BARs, and MSI-X. → ties to [Day 34 — PCIe enumeration](../../prep_plan/archive/day34_pcie_enumeration_config_msi.md).
+- Sits on the **mesh/uncore**; its reads/writes go through the **coherent fabric** (LLC / memory controllers). → coherence matters, [Day 17](../../prep_plan/archive/day17_coherence_mesi_false_sharing.md).
+- Uses the **IOMMU (Intel VT-d)** for address translation and isolation. → [Day 19 — IOMMU/SMMU](../../prep_plan/archive/day19_tlb_huge_pages_iommu_smmu.md).
 - **Reach:** moves data to/from **volatile memory, persistent memory, MMIO**, and — through a **Non-Transparent Bridge (NTB)** — **remote memory on another node** in a cluster. → [NTB / cross-node](ntb_flow.md).
 
 ---
@@ -139,7 +139,7 @@ This is where DSA is much more than a DMA engine, and where a lot of functional 
 |---|---|
 | **PASID** (Process Address Space ID) | Tags each descriptor with an address space, so **user-space** can submit descriptors that use **virtual addresses**. |
 | **SVM** (Shared Virtual Memory) | Device shares the process's virtual address space — no buffer pinning or bounce-copy. |
-| **IOMMU / Intel VT-d** | Translates device VA→PA and enforces per-PASID isolation. → [Day 19](../../prep_plan/day19_tlb_huge_pages_iommu_smmu.md). |
+| **IOMMU / Intel VT-d** | Translates device VA→PA and enforces per-PASID isolation. → [Day 19](../../prep_plan/archive/day19_tlb_huge_pages_iommu_smmu.md). |
 | **ATS + DevTLB** | Device caches translations locally (Address Translation Services). Invalidation correctness = a coverage item. |
 | **PRS / PRI** (Page Request Services) | On a not-present page, device **faults**, IOMMU asks the OS to page it in, then the op **replays**. Faultable DMA is a major DSA differentiator — and a rich bug surface. |
 | **Fault handling mode** | Per-descriptor **Block on Fault** (wait for PRS, continue transparently) vs **partial descriptor completion** (stop, report bytes-completed + fault address; software resolves + resumes). |
@@ -183,14 +183,14 @@ Group the space so a vplan writes itself:
 - **Integrity ops:** CRC and **DIF** insert/strip/update/check — including injected mismatches.
 - **Error injection:** bad/unmapped address, misalignment, poisoned/UC memory, DIF/CRC mismatch, WQ overflow, PASID misconfig.
 - **QoS / concurrency:** multiple engines × WQs × groups; fairness, bandwidth split, head-of-line blocking, deadlock freedom.
-- **Power:** IP clock/power gating when idle, and the **power-on** pass (some platforms). → [Day 27](../../prep_plan/day27_cstates_pkgc_s0ix.md).
+- **Power:** IP clock/power gating when idle, and the **power-on** pass (some platforms). → [Day 27](../../prep_plan/archive/day27_cstates_pkgc_s0ix.md).
 - **Virtualization:** SIOV, VF/mdev assignment, guest isolation.
 - **Rev 3.0 ops:** **scatter-gather** (SGL walks, noncontiguous buffers); **type-convert / reduce** (element types, reduction correctness, overflow).
 - **Inter-domain:** IDPT entry types (SASS / SAMS), memory-window Address vs Offset mode, access-PASID permission checks, **Update Window** atomicity + implicit drain, bad-handle / permission-denied reporting.
 - **Persistent / durable writes:** durable-write flag matrix, `GENCAP` Durable Write Support = 0 vs 1 paths, completion ordering, CR-not-persistent. → [ADR](adr_flow.md).
 - **Cross-node (NTB):** move across an NTB window, **destination readback** propagation, Drain explicit readbacks, remote-PMem durability. → [NTB](ntb_flow.md).
 - **QoS bandwidth caps:** per-group **Read/Write Bandwidth Limit** (`GRPCFG`, Rev 3.0) — enforcement + fairness.
-- **Coherence/ordering:** DMA vs CPU caches; correct barriers before doorbell/submit. → [Day 20](../../prep_plan/day20_dma_doorbells_ordering_barriers.md), [Day 17](../../prep_plan/day17_coherence_mesi_false_sharing.md).
+- **Coherence/ordering:** DMA vs CPU caches; correct barriers before doorbell/submit. → [Day 20](../../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md), [Day 17](../../prep_plan/archive/day17_coherence_mesi_false_sharing.md).
 
 ---
 
@@ -215,5 +215,5 @@ That concurrency + cross-IP surface is exactly what the **full-SoC emulation** s
 
 ### Cross-links
 - In this folder: [ADR / durable writes](adr_flow.md) · [NTB / cross-node](ntb_flow.md) · Ramp-up: [Fast Ramp-Up](../ramp_up.md)
-- Foundation: [Day 20 DMA/ordering](../../prep_plan/day20_dma_doorbells_ordering_barriers.md) · [Day 19 IOMMU](../../prep_plan/day19_tlb_huge_pages_iommu_smmu.md) · [Day 17 coherence](../../prep_plan/day17_coherence_mesi_false_sharing.md) · [Day 3 MMIO](../../prep_plan/day03_bits_mmio_volatile_polling.md) · [Day 34 PCIe enum](../../prep_plan/day34_pcie_enumeration_config_msi.md)
+- Foundation: [Day 20 DMA/ordering](../../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md) · [Day 19 IOMMU](../../prep_plan/archive/day19_tlb_huge_pages_iommu_smmu.md) · [Day 17 coherence](../../prep_plan/archive/day17_coherence_mesi_false_sharing.md) · [Day 3 MMIO](../../prep_plan/archive/day03_bits_mmio_volatile_polling.md) · [Day 34 PCIe enum](../../prep_plan/archive/day34_pcie_enumeration_config_msi.md)
 - Next in this folder: [validation flow & platforms](../validation/validation_flow.md)

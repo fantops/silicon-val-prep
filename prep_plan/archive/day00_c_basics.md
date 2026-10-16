@@ -125,7 +125,7 @@ These are basic C bugs, but they become silicon-validation bugs when they sit in
 
 ## Coding A — Embedded C basics
 
-Use the reference solutions in [`coding/solutions/`](../coding/) (write your own first in [`coding/exercises/`](../coding/exercises/)):
+Use the reference solutions in [`coding/solutions/`](../../coding/) (write your own first in [`coding/exercises/`](../../coding/exercises/)):
 
 - `d00_reverse_list.c` — build and reverse a linked list.
 - `d00_cycle_detect.c` — Floyd slow/fast pointer cycle detection.
@@ -187,7 +187,7 @@ Before writing any loop, say out loud:
 
 ## Exit Check
 
-- [ ] Can compile and run every Day 0 file from [`coding/`](../coding/) with `make sol-d00_<name>`.
+- [ ] Can compile and run every Day 0 file from [`coding/`](../../coding/) with `make sol-d00_<name>`.
 - [ ] Can explain array decay and why `sizeof(arr)` changes in a function.
 - [ ] Can write `my_strlen`, `my_memcpy`, and `my_memmove` from memory.
 - [ ] Can reverse a linked list and detect a cycle without notes.

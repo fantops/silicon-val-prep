@@ -150,7 +150,7 @@ CDC is about *clock* domains; **RDC** is about *reset* domains. A signal launche
 
 ## Coding A — `d13_cdc_sync`
 
-Model the crossings in C: a **pulse (toggle) synchronizer** (`toggle_sync`) that converts a source-pulse stream to dest-pulses and **demonstrates a lost back-to-back pulse** when events are too close, then a **req/ack handshake FSM** (`handshake_xfer`) that never loses a word, plus `bin_to_gray`/`gray_to_bin` reused from [Day 7](day07_sequential_logic.md) showing single-bit transitions. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-13--cdc-techniques-pulse-handshake-gray-reset).
+Model the crossings in C: a **pulse (toggle) synchronizer** (`toggle_sync`) that converts a source-pulse stream to dest-pulses and **demonstrates a lost back-to-back pulse** when events are too close, then a **req/ack handshake FSM** (`handshake_xfer`) that never loses a word, plus `bin_to_gray`/`gray_to_bin` reused from [Day 7](day07_sequential_logic.md) showing single-bit transitions. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-13--cdc-techniques-pulse-handshake-gray-reset).
 
 **Interview prompts:** Why does the open-loop toggle lose back-to-back events? Why is a handshake safe for a bus without syncing the data? Why Gray for pointers?
 

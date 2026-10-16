@@ -223,7 +223,7 @@ Round-by-round (rounds + outcome), grouped by status:
 
 ## � Flywheel (per round, next cycle)
 
-After each round: same-day timeline row (what · learning · status · suggestion) → map each "didn't land" to a Day-file drill → re-run the [Day 41 mock](prep_plan/day41_final_mock.md) + [REVISION.md](prep_plan/REVISION.md) flashcard sweep before the next interview.
+After each round: same-day timeline row (what · learning · status · suggestion) → map each "didn't land" to a Day-file drill → re-run the [Day 41 mock](prep_plan/archive/day41_final_mock.md) + [REVISION.md](prep_plan/REVISION.md) flashcard sweep before the next interview.
 
 ---
 

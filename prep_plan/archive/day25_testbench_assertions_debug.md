@@ -172,7 +172,7 @@ A repeatable triage loop — narrate it *as a trace*, the Nvidia-gap fix:
 
 ## Coding A — `d25_scoreboard_crv`
 
-Build a **self-checking testbench in C** around a DUT model (reuse the [Day 14](day14_async_fifo_cdc_verification.md) FIFO or a small ALU): a **reference model**, a **constrained-random** stimulus generator (legal-shape constraints + logged seed for replay), a **scoreboard** that flags the **first diverging transaction**, assertion-style invariant checks (`assert_no_overflow`, `assert_inorder`), and an **error-injection** mode that forces illegal inputs and verifies the flags/handling instead of corruption. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-25--testbench-architecture--assertions--debug).
+Build a **self-checking testbench in C** around a DUT model (reuse the [Day 14](day14_async_fifo_cdc_verification.md) FIFO or a small ALU): a **reference model**, a **constrained-random** stimulus generator (legal-shape constraints + logged seed for replay), a **scoreboard** that flags the **first diverging transaction**, assertion-style invariant checks (`assert_no_overflow`, `assert_inorder`), and an **error-injection** mode that forces illegal inputs and verifies the flags/handling instead of corruption. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-25--testbench-architecture--assertions--debug).
 
 **Interview prompts:** Why self-checking? What does an assertion catch that a scoreboard doesn't (and vice versa)? Functional vs error tests for this DUT?
 

@@ -135,7 +135,7 @@ synth/P&R → report_timing → look at WNS path
 
 ## Coding A — `d08_sta_paths`
 
-Build a **multi-path STA slack calculator in C**: given a list of paths (`launch_clk, capture_clk, period, Tcq, Tcomb_min/max, Tsu, Th, skew, uncertainty`), compute **setup and hold slack** per path, report **WNS/TNS**, classify each violation (setup→"slow/pipeline", hold→"add delay") and **skip paths flagged as false/async** (an exceptions list). Show a CDC path generating false violations until it's added to the async-group exception. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-8--timing--sta).
+Build a **multi-path STA slack calculator in C**: given a list of paths (`launch_clk, capture_clk, period, Tcq, Tcomb_min/max, Tsu, Th, skew, uncertainty`), compute **setup and hold slack** per path, report **WNS/TNS**, classify each violation (setup→"slow/pipeline", hold→"add delay") and **skip paths flagged as false/async** (an exceptions list). Show a CDC path generating false violations until it's added to the async-group exception. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-8--timing--sta).
 
 **Interview prompts:** Why no `Tclk` in hold? Which corner for hold vs setup? What happens if you false-path a real path?
 

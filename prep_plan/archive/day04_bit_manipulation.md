@@ -206,7 +206,7 @@ Counters and DSP/switch statistics often **saturate** (stick at max) instead of 
 
 ## Coding A — `d04_bitops`
 
-Build a **bit-ops library in C** with: `is_pow2`, `floor_pow2`, `ceil_pow2`, `popcount` (Kernighan + SWAR), `ffs`/`clz`/`ctz` wrappers, `get_field`/`put_field`, `rol`/`ror` (width-guarded), `bswap16/32/64`, `reverse32`, `unique`/`missing` (XOR), `sext`, and `sat_add8` — each validated against a brute-force oracle, with explicit tests for the UB traps (`1U` shift, width-32 mask, widen-before-shift). Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-4--bit-manipulation-mastery).
+Build a **bit-ops library in C** with: `is_pow2`, `floor_pow2`, `ceil_pow2`, `popcount` (Kernighan + SWAR), `ffs`/`clz`/`ctz` wrappers, `get_field`/`put_field`, `rol`/`ror` (width-guarded), `bswap16/32/64`, `reverse32`, `unique`/`missing` (XOR), `sext`, and `sat_add8` — each validated against a brute-force oracle, with explicit tests for the UB traps (`1U` shift, width-32 mask, widen-before-shift). Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-4--bit-manipulation-mastery).
 
 **Interview prompts:** Floor vs ceil pow2 — what's the shared move? Why widen before `<<32`? Why is `x&(x-1)` popcount faster on sparse inputs?
 

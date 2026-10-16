@@ -121,6 +121,6 @@ The failure modes are **wrong-node / wrong-address writes** (translation bug) an
 ## 6. Cross-links
 
 - DSA core: [`dsa_ip_fundamentals.md`](dsa_ip_fundamentals.md) · Ramp-up: [`../ramp_up.md`](../ramp_up.md) · Persistence: [`adr_flow.md`](adr_flow.md)
-- Foundation: [Day 20 — DMA, ordering, barriers](../../prep_plan/day20_dma_doorbells_ordering_barriers.md) · [Day 33 — PCIe fundamentals / LTSSM](../../prep_plan/day33_pcie_fundamentals_ltssm.md) · [Day 34 — PCIe enumeration, config, BARs, MSI](../../prep_plan/day34_pcie_enumeration_config_msi.md)
+- Foundation: [Day 20 — DMA, ordering, barriers](../../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md) · [Day 33 — PCIe fundamentals / LTSSM](../../prep_plan/archive/day33_pcie_fundamentals_ltssm.md) · [Day 34 — PCIe enumeration, config, BARs, MSI](../../prep_plan/archive/day34_pcie_enumeration_config_msi.md)
 
 > **Confidentiality:** NTB topology, BAR/LUT maps, platform bring-up steps, and any behavior beyond the public spec belong in git-ignored [`../_internal/`](../_internal/) — not here.

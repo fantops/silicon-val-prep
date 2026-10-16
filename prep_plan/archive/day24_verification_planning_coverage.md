@@ -166,7 +166,7 @@ When asked "write a test plan for *X*," **never start listing random tests.** Sa
 
 ## Coding A — `d24_vplan_coverage`
 
-Build a **coverage tracker in C** that models the CDV loop: define coverpoints with **bins** and a **cross**, feed a randomized stimulus stream through it, and report **per-bin hit counts**, overall **coverage %**, and the **uncovered holes** — then show a directed test closing a named hole. Add a tiny **vplan struct** (spec-ref → test → coverpoint → status) and a checker that fails if any "covered" row has 0 hits. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-24--verification-planning--coverage).
+Build a **coverage tracker in C** that models the CDV loop: define coverpoints with **bins** and a **cross**, feed a randomized stimulus stream through it, and report **per-bin hit counts**, overall **coverage %**, and the **uncovered holes** — then show a directed test closing a named hole. Add a tiny **vplan struct** (spec-ref → test → coverpoint → status) and a checker that fails if any "covered" row has 0 hits. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-24--verification-planning--coverage).
 
 **Interview prompts:** Recite the 8-step scaffold. Why is 100% code coverage insufficient? What's a coverage hole vs a legitimate exclusion?
 

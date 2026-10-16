@@ -112,7 +112,7 @@ On silicon this is **rung 1 of bring-up** ([Day 23](day23_cpu_bringup_functional
 
 ## Coding A — `d11_clock_reset`
 
-Model clocking/reset control in C: a **glitchless clock-mux FSM** (`clk_mux_step`) that switches between two simulated clocks and **asserts no runt pulse** (old clock reaches a clean low before the new one starts); a **÷N divider**; and a **reset sequencer** (`reset_seq`) that releases N domains in a required order through per-domain 2-flop synchronizers, flagging an out-of-order release. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-11--clocking--reset-architecture).
+Model clocking/reset control in C: a **glitchless clock-mux FSM** (`clk_mux_step`) that switches between two simulated clocks and **asserts no runt pulse** (old clock reaches a clean low before the new one starts); a **÷N divider**; and a **reset sequencer** (`reset_seq`) that releases N domains in a required order through per-domain 2-flop synchronizers, flagging an out-of-order release. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-11--clocking--reset-architecture).
 
 **Interview prompts:** Where does the runt pulse come from in a naive clock mux? Why async-assert / sync-de-assert? What breaks if reset releases out of order?
 

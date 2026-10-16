@@ -124,7 +124,7 @@ Given an unfamiliar block and a bad signal:
 
 ## Coding A — `d10_rtl_semantics`
 
-Model Verilog semantics in C: a **4-state logic type** (`0/1/X/Z`) with AND/OR/NOT/XOR truth tables showing **X-propagation** and **Z-contention → X**; and a tiny **update-scheduler** that demonstrates **blocking vs nonblocking** on a 2-stage shift register (nonblocking shifts correctly, blocking collapses to one flop). Add an `infer_latch()` checker that flags an incomplete case-to-output mapping. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-10--verilog--systemverilog).
+Model Verilog semantics in C: a **4-state logic type** (`0/1/X/Z`) with AND/OR/NOT/XOR truth tables showing **X-propagation** and **Z-contention → X**; and a tiny **update-scheduler** that demonstrates **blocking vs nonblocking** on a 2-stage shift register (nonblocking shifts correctly, blocking collapses to one flop). Add an `infer_latch()` checker that flags an incomplete case-to-output mapping. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-10--verilog--systemverilog).
 
 **Interview prompts:** Why does blocking collapse the shift register? What produces X, and how does it propagate? `always_comb` vs `always @(*)`?
 

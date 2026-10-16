@@ -8,7 +8,7 @@ A **finite-state machine** is combinational next-state logic ([Day 5](day05_bool
 
 This is where Days 5 and 7 combine (combinational next-state + a state register). It also **pre-loads the protocol state machines you'll meet later**: the PCIe **LTSSM** ([Day 33](day33_pcie_fundamentals_ltssm.md)/[Day 36](day36_pcie_bringup_functional_val.md)), the **MESI** controller ([Day 17](day17_coherence_mesi_false_sharing.md)), the **C-state**/**ASPM** machines ([Day 27](day27_cstates_pkgc_s0ix.md)/[Day 35](day35_pcie_power_management.md)) are all FSMs — master the vocabulary now and those days read as "the same machine at larger scale" instead of new material. It is also the launch point for [Day 12–14](day12_metastability_synchronizers.md): the handshake/pulse synchronizers and async-FIFO control are all small FSMs crossing clock domains.
 
-**Broadcom R2 + R1 gap this closes:** "draw a `101` detector bubble diagram," Moore vs Mealy, state minimization, and the FSM-coding hazards (inferred latch, Mealy glitch). This deepens the condensed §1 in [broadcom_switch_presi_notes.html](../broadcom_switch_presi_notes.html) into a full derivation.
+**Broadcom R2 + R1 gap this closes:** "draw a `101` detector bubble diagram," Moore vs Mealy, state minimization, and the FSM-coding hazards (inferred latch, Mealy glitch). This deepens the condensed §1 in [broadcom_switch_presi_notes.html](../../broadcom_switch_presi_notes.html) into a full derivation.
 
 ---
 
@@ -176,7 +176,7 @@ Recognizing these as FSMs means a "design/validate the X protocol" question redu
 
 ## Coding A — `d09_fsm_detect`
 
-Implement two detectors in C and prove them equivalent on random bit streams: a **state-machine `seq_detect()`** (parameterized target pattern, overlapping flag, returns per-bit output) and a **sliding-window matcher** (shift register + comparator, the literal "pattern in the last K bits" reading). Add a **safe-FSM** harness that injects an illegal state code and shows the `default → reset` recovery. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-9--fsm-design--sequence-detectors).
+Implement two detectors in C and prove them equivalent on random bit streams: a **state-machine `seq_detect()`** (parameterized target pattern, overlapping flag, returns per-bit output) and a **sliding-window matcher** (shift register + comparator, the literal "pattern in the last K bits" reading). Add a **safe-FSM** harness that injects an illegal state code and shows the `default → reset` recovery. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-9--fsm-design--sequence-detectors).
 
 **Interview prompts:** Overlapping vs non-overlapping — which transition changes? Moore vs Mealy timing of the output. Why does one-hot give a free assertion?
 

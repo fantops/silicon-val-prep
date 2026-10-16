@@ -1,8 +1,8 @@
 # Revision Sweep — 42-Day Flashcard Index
 
-> **One-minute-per-day spaced-repetition sweep.** Cover the answer, say it out loud, check. Run the whole sheet the night before any conversation, or one phase per day as continuous review. This is the condensed recall layer over the full [day files](README.md); the timed mock + delivery drill is [Day 41](day41_final_mock.md).
+> **One-minute-per-day spaced-repetition sweep.** Cover the answer, say it out loud, check. Run the whole sheet the night before any conversation, or one phase per day as continuous review. This is the condensed recall layer over the full [day files](README.md); the timed mock + delivery drill is [Day 41](archive/day41_final_mock.md).
 >
-> **Framing:** Intel IP-Val is the **current** role ([Day 40](day40_intel_role_narrative.md)); Microsoft is the prior chapter. The plan is a **continuous foundation build**, not a cram. **Bold = a Broadcom-R2 gap** — drill those hardest.
+> **Framing:** Intel IP-Val is the **current** role ([Day 40](archive/day40_intel_role_narrative.md)); Microsoft is the prior chapter. **Active focus = CPU-PM debug** (Phases 6 + D35/D37, supported by D11–D14 CDC/wake races) — sweep those weekly; others on demand. **Bold = a Broadcom-R2 gap.**
 
 ---
 
@@ -45,7 +45,7 @@
 - **D22 consistency** — TSO vs weak; acquire/release/seq-cst in one sentence each; LDAR/STLR; SPSC ring needs acq/rel.
 - **D23 CPU bring-up** — reset→clocks→BIST→MMU→cache→INT→timers→SMP→boot; **who triggers startup: reset controller releases reset → PC to vector → Boot ROM**; vplan = spec→test→coverpoint→status; coverage axes.
 
-## Phase 5 — Verification Engineering (D24–D25)
+## Phase 5 — Verification Engineering (D24–D25) · *parked — interview-only, skip in the weekly sweep*
 
 - **D24 vplan/coverage** — **8-step scaffold: Spec→Features→Stimulus→Checks→Coverage→Corners→Perf→Platform**; **functional vs code coverage (100%-code/40%-functional trap)**; **deliver a 16-port 1.6T switch plan via the scaffold, not ad-hoc**; directed vs CRV vs formal.
 - **D25 testbench/debug** — driver/monitor/scoreboard/ref-model; **self-checking** (else verifies nothing); **functional vs error/negative tests** (assert graceful handling); SVA immediate/concurrent/`cover` (`req|->##[1:8]grant`, `$onehot`); **debug from first divergence**, log seeds, regression test per fix.
@@ -81,15 +81,15 @@
 
 | Story | One-line | Day |
 |---|---|---|
-| **QNN page-fault / IOMMU race** (cross-IHV anchor) | wake issued DMA before IOMMU stream-table restored → unmapped IOVA → hang; fix = restore-before-DMA barrier + fault-retry; missing `(wake × stream-state)` coverpoint | [D40](day40_intel_role_narrative.md) |
-| **ADR opcode-ordering hang** | missing wait-for-ack between PCU FW opcodes (CDC structure) | [D31](day31_post_si_pm_validation.md) |
-| **Core C6 wake-loss** | CFC FIFO race — pulse crossed a domain and was lost (D12–14) | [D31](day31_post_si_pm_validation.md) |
-| **PkgC6 blocked by PCIe** | endpoint not in L1.2 → root-complex won't deep-idle | [D37](day37_pcie_pm_intersection.md) |
-| **PCIe lane-polarity reversed** | board-level catch, spec-mandated reversal coverage | [D36](day36_pcie_bringup_functional_val.md) |
+| **QNN page-fault / IOMMU race** (cross-IHV anchor) | wake issued DMA before IOMMU stream-table restored → unmapped IOVA → hang; fix = restore-before-DMA barrier + fault-retry; missing `(wake × stream-state)` coverpoint | [D40](archive/day40_intel_role_narrative.md) |
+| **ADR opcode-ordering hang** | missing wait-for-ack between PCU FW opcodes (CDC structure) | [D31](archive/day31_post_si_pm_validation.md) |
+| **Core C6 wake-loss** | CFC FIFO race — pulse crossed a domain and was lost (D12–14) | [D31](archive/day31_post_si_pm_validation.md) |
+| **PkgC6 blocked by PCIe** | endpoint not in L1.2 → root-complex won't deep-idle | [D37](archive/day37_pcie_pm_intersection.md) |
+| **PCIe lane-polarity reversed** | board-level catch, spec-mandated reversal coverage | [D36](archive/day36_pcie_bringup_functional_val.md) |
 
 ---
 
-## The five must-pass anchor traces ([Day 40](day40_intel_role_narrative.md))
+## The five must-pass anchor traces ([Day 40](archive/day40_intel_role_narrative.md))
 
 1. MS perf-regression flow · 2. Intel PCIe transactor + debug · 3. L&T JTAG · 4. P-states vs C-states vs D-states · 5. CPU architecture diagram from memory.
 

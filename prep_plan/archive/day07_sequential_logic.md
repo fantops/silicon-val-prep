@@ -167,7 +167,7 @@ always_comb
 
 ## Coding A — `d07_seq_timing`
 
-Build a **sequential-primitives model in C**: a max-length `lfsr_step()` (parameterized taps, asserts it visits `2ⁿ−1` states and never 0), `gray_inc()` / `bin_to_gray()` / `gray_to_bin()` (assert single-bit change per step), a `johnson`/`ring` counter, and a **timing calculator** `fmax()` / `setup_slack()` / `hold_slack()` that takes `Tcq, Tcomb_min/max, Tsu, Th, Tskew` and reports pass/fail + which fix applies. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-7--sequential-logic--timing).
+Build a **sequential-primitives model in C**: a max-length `lfsr_step()` (parameterized taps, asserts it visits `2ⁿ−1` states and never 0), `gray_inc()` / `bin_to_gray()` / `gray_to_bin()` (assert single-bit change per step), a `johnson`/`ring` counter, and a **timing calculator** `fmax()` / `setup_slack()` / `hold_slack()` that takes `Tcq, Tcomb_min/max, Tsu, Th, Tskew` and reports pass/fail + which fix applies. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-7--sequential-logic--timing).
 
 **Interview prompts:** Why doesn't `Tclk` appear in the hold equation? Why does Gray code guarantee a single-bit transition? What makes the LFSR lock up and how do you prevent it?
 

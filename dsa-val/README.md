@@ -72,14 +72,14 @@ DSA reuses concepts you already built in [`../prep_plan/`](../prep_plan/README.m
 
 | DSA concept | Foundation day |
 |---|---|
-| DMA descriptors, doorbells, ordering, barriers | [Day 20 — DMA, doorbells, ordering, barriers](../prep_plan/day20_dma_doorbells_ordering_barriers.md) |
-| IOMMU / VT-d, PASID, address translation | [Day 19 — TLB, huge pages, IOMMU/SMMU](../prep_plan/day19_tlb_huge_pages_iommu_smmu.md) |
-| DMA-vs-CPU cache coherence | [Day 17 — Coherence, MESI, false sharing](../prep_plan/day17_coherence_mesi_false_sharing.md) |
-| MMIO portals, `volatile`, polling, W1C | [Day 3 — Bits, MMIO, volatile, polling](../prep_plan/day03_bits_mmio_volatile_polling.md) |
-| PCIe enumeration (DSA is a PCIe-enumerated device) | [Day 34 — PCIe enumeration, config, BARs, MSI](../prep_plan/day34_pcie_enumeration_config_msi.md) |
-| PM intersection (idle gating / power-on) | [Day 27 — C-states, PkgC, S0ix](../prep_plan/day27_cstates_pkgc_s0ix.md) |
-| ADR / durable writes → persistence domain | [Day 15 — Memory](../prep_plan/day15_memory_systems_ecc.md) · [Day 31 — Post-Si PM](../prep_plan/day31_post_si_pm_validation.md) → [`adr_flow.md`](fundamentals/adr_flow.md) |
-| NTB / cross-node data movement | [Day 33 — PCIe fundamentals](../prep_plan/day33_pcie_fundamentals_ltssm.md) · [Day 34 — PCIe enumeration](../prep_plan/day34_pcie_enumeration_config_msi.md) → [`ntb_flow.md`](fundamentals/ntb_flow.md) |
+| DMA descriptors, doorbells, ordering, barriers | [Day 20 — DMA, doorbells, ordering, barriers](../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md) |
+| IOMMU / VT-d, PASID, address translation | [Day 19 — TLB, huge pages, IOMMU/SMMU](../prep_plan/archive/day19_tlb_huge_pages_iommu_smmu.md) |
+| DMA-vs-CPU cache coherence | [Day 17 — Coherence, MESI, false sharing](../prep_plan/archive/day17_coherence_mesi_false_sharing.md) |
+| MMIO portals, `volatile`, polling, W1C | [Day 3 — Bits, MMIO, volatile, polling](../prep_plan/archive/day03_bits_mmio_volatile_polling.md) |
+| PCIe enumeration (DSA is a PCIe-enumerated device) | [Day 34 — PCIe enumeration, config, BARs, MSI](../prep_plan/archive/day34_pcie_enumeration_config_msi.md) |
+| PM intersection (idle gating / power-on) | [Day 27 — C-states, PkgC, S0ix](../prep_plan/archive/day27_cstates_pkgc_s0ix.md) |
+| ADR / durable writes → persistence domain | [Day 15 — Memory](../prep_plan/archive/day15_memory_systems_ecc.md) · [Day 31 — Post-Si PM](../prep_plan/archive/day31_post_si_pm_validation.md) → [`adr_flow.md`](fundamentals/adr_flow.md) |
+| NTB / cross-node data movement | [Day 33 — PCIe fundamentals](../prep_plan/archive/day33_pcie_fundamentals_ltssm.md) · [Day 34 — PCIe enumeration](../prep_plan/archive/day34_pcie_enumeration_config_msi.md) → [`ntb_flow.md`](fundamentals/ntb_flow.md) |
 
 ---
 

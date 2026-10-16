@@ -50,7 +50,7 @@ flowchart LR
 
 ### Bare-metal OS boots
 
-- **Bare-metal** (no full OS scheduler/driver stack) gives **deterministic, low-noise** control of the IP — you own MMIO, descriptors, and completion polling directly (ties to [Day 3 MMIO](../../prep_plan/day03_bits_mmio_volatile_polling.md), [Day 20 DMA/ordering](../../prep_plan/day20_dma_doorbells_ordering_barriers.md)).
+- **Bare-metal** (no full OS scheduler/driver stack) gives **deterministic, low-noise** control of the IP — you own MMIO, descriptors, and completion polling directly (ties to [Day 3 MMIO](../../prep_plan/archive/day03_bits_mmio_volatile_polling.md), [Day 20 DMA/ordering](../../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md)).
 - Typical bare-metal DSA smoke path (generic):
   1. Enumerate device, map BAR / portal.
   2. Configure + enable a WQ (dedicated is simplest for bring-up).
@@ -93,4 +93,4 @@ flowchart LR
 
 ### Cross-links
 - [DSA IP fundamentals](../fundamentals/dsa_ip_fundamentals.md) · [Journal](../journal/) · [Internal (git-ignored)](../_internal/)
-- Foundation: [Day 20 DMA/ordering](../../prep_plan/day20_dma_doorbells_ordering_barriers.md) · [Day 19 IOMMU](../../prep_plan/day19_tlb_huge_pages_iommu_smmu.md) · [Day 24 verification planning](../../prep_plan/day24_verification_planning_coverage.md)
+- Foundation: [Day 20 DMA/ordering](../../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md) · [Day 19 IOMMU](../../prep_plan/archive/day19_tlb_huge_pages_iommu_smmu.md) · [Day 24 verification planning](../../prep_plan/archive/day24_verification_planning_coverage.md)

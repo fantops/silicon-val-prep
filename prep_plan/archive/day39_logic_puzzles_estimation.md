@@ -6,7 +6,7 @@ Puzzles test **method, not trivia**. A repeatable approach beats memorizing answ
 
 ## Why this day in the flow
 
-This **caps Phase 8 (Reasoning)** and the entire foundation track. Broadcom missed the **100-coin puzzle** and rated logical thinking 5/10; the diagnosis was "improve logical reasoning and interview problem solving." This day deepens §5 of [broadcom_switch_presi_notes.html](../broadcom_switch_presi_notes.html) into a *method* plus the missing 100-coin variants, and doubles as a **behavioral** fix — **thinking aloud, stating assumptions, sanity-checking** is the same owned-narrative fluency that the QC/Nvidia rounds wanted ([INTERVIEW_LOG](../INTERVIEW_LOG.md) gaps). The hardware-flavored puzzles route straight back to [Day 5](day05_boolean_combinational_logic.md)/[Day 9](day09_fsm_sequence_detectors.md).
+This **caps Phase 8 (Reasoning)** and the entire foundation track. Broadcom missed the **100-coin puzzle** and rated logical thinking 5/10; the diagnosis was "improve logical reasoning and interview problem solving." This day deepens §5 of [broadcom_switch_presi_notes.html](../../broadcom_switch_presi_notes.html) into a *method* plus the missing 100-coin variants, and doubles as a **behavioral** fix — **thinking aloud, stating assumptions, sanity-checking** is the same owned-narrative fluency that the QC/Nvidia rounds wanted ([INTERVIEW_LOG](../../INTERVIEW_LOG.md) gaps). The hardware-flavored puzzles route straight back to [Day 5](day05_boolean_combinational_logic.md)/[Day 9](day09_fsm_sequence_detectors.md).
 
 **Broadcom R2 gap this closes:** 100-coin puzzle (didn't solve), logical reasoning (5/10), thinking-aloud under pressure.
 
@@ -144,7 +144,7 @@ The same habit fixes puzzles *and* the owned-narrative gaps from the log:
 
 ## Coding A — `d39_puzzle_sims` *(optional, light)*
 
-Optionally **verify two puzzles by simulation in C**: Monte-Carlo the **100-prisoners** strategy — random opening (≈0% all-success) vs **cycle-following** (≈31%) — to *see* the `1 − ln 2` result; and a **coin-game** verifier that plays the `N mod (K+1)` optimal strategy against a random opponent and confirms it always wins from a winning position. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-39--logic-puzzles--estimation-optional). *(Like [Day 40–41](day41_final_mock.md), this day is reasoning-first; coding is optional.)*
+Optionally **verify two puzzles by simulation in C**: Monte-Carlo the **100-prisoners** strategy — random opening (≈0% all-success) vs **cycle-following** (≈31%) — to *see* the `1 − ln 2` result; and a **coin-game** verifier that plays the `N mod (K+1)` optimal strategy against a random opponent and confirms it always wins from a winning position. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-39--logic-puzzles--estimation-optional). *(Like [Day 40–41](day41_final_mock.md), this day is reasoning-first; coding is optional.)*
 
 **Interview prompts:** Name the strategy before solving. What's the information-theoretic bound for this weighing? What tiny case sanity-checks your answer?
 
@@ -152,9 +152,9 @@ Optionally **verify two puzzles by simulation in C**: Monte-Carlo the **100-pris
 
 ## Bug Anchor / cross-links
 
-- **Deepens:** [broadcom_switch_presi_notes.html](../broadcom_switch_presi_notes.html) §5 (aptitude pack) into a method + the 100-coin variants.
+- **Deepens:** [broadcom_switch_presi_notes.html](../../broadcom_switch_presi_notes.html) §5 (aptitude pack) into a method + the 100-coin variants.
 - **Routes to Phase 1 for HW-flavored puzzles:** [Day 5](day05_boolean_combinational_logic.md) (XOR-from-NANDs, gate minimization), [Day 9](day09_fsm_sequence_detectors.md) (divisible-by-N FSM).
-- **Behavioral tie-in:** the thinking-aloud discipline is the same owned-narrative fix flagged in [INTERVIEW_LOG](../INTERVIEW_LOG.md) (QC CPU Core R2, SysPerf); rehearse with [Day 41](day41_final_mock.md).
+- **Behavioral tie-in:** the thinking-aloud discipline is the same owned-narrative fix flagged in [INTERVIEW_LOG](../../INTERVIEW_LOG.md) (QC CPU Core R2, SysPerf); rehearse with [Day 41](day41_final_mock.md).
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Concept
 
-You are (joining 27 Jul 2026) an **IP Functional Validation engineer at Intel** — CPU subsystem, pre-silicon. The plan's old goal ("cram to leave Microsoft for a silicon role") is **done**: the Intel offer is accepted. This day is the **narrative wrap** — make the whole career arc a set of **reflex traces** (not recited facts), frame **Microsoft as the most-recent past chapter**, keep the **retained bug stories** sharp, and lock the identity shift: *"I continuously build deep expertise; interviews are a by-product."* This directly fixes the **owned-narrative-fluency** gap flagged repeatedly in the [interview log](../INTERVIEW_LOG.md).
+You are (joining 27 Jul 2026) an **IP Functional Validation engineer at Intel** — CPU subsystem, pre-silicon. The plan's old goal ("cram to leave Microsoft for a silicon role") is **done**: the Intel offer is accepted. This day is the **narrative wrap** — make the whole career arc a set of **reflex traces** (not recited facts), frame **Microsoft as the most-recent past chapter**, keep the **retained bug stories** sharp, and lock the identity shift: *"I continuously build deep expertise; interviews are a by-product."* This directly fixes the **owned-narrative-fluency** gap flagged repeatedly in the [interview log](../../INTERVIEW_LOG.md).
 
 ## Why this day in the flow
 
@@ -102,7 +102,7 @@ Move from *"I prepare for interviews"* → **"I continuously build deep expertis
 
 - **Bug stories map to:** [Day 18](day18_virtual_memory_page_faults.md)/[Day 19](day19_tlb_huge_pages_iommu_smmu.md) (QNN page-fault/IOMMU), [Day 12](day12_metastability_synchronizers.md)–[Day 14](day14_async_fifo_cdc_verification.md) (wake-handshake CDC), [Day 31](day31_post_si_pm_validation.md) (ADR/C6 detail).
 - **Role maps to:** Phases 4–7 (the IP-Val job); Phases 1–3 (the RTL floor under it).
-- **Behavioral/narrative tie-in:** [Day 39](day39_logic_puzzles_estimation.md) (thinking-aloud = owned-narrative fluency), [Day 41](day41_final_mock.md) (deliver under time), [INTERVIEW_LOG](../INTERVIEW_LOG.md) (the gaps this closes).
+- **Behavioral/narrative tie-in:** [Day 39](day39_logic_puzzles_estimation.md) (thinking-aloud = owned-narrative fluency), [Day 41](day41_final_mock.md) (deliver under time), [INTERVIEW_LOG](../../INTERVIEW_LOG.md) (the gaps this closes).
 
 ---
 

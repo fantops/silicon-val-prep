@@ -128,7 +128,7 @@ AXI/CHI **VIP (verification IP)** + a **scoreboard** that mirrors ordering is th
 
 ## Coding A — `d32_axi_model`
 
-Model AXI in C: a **VALID/READY handshake** (`axi_xfer`) that **detects the VALID-waits-on-READY deadlock**; a **multi-ID outstanding scoreboard** (`axi_order_check`) asserting same-ID responses stay ordered while different-ID may reorder; an **INCR/WRAP burst-address generator** that flags a 4KB-boundary crossing; and a simple **round-robin/QoS arbiter** with a starvation check. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-32--amba-axi--chi).
+Model AXI in C: a **VALID/READY handshake** (`axi_xfer`) that **detects the VALID-waits-on-READY deadlock**; a **multi-ID outstanding scoreboard** (`axi_order_check`) asserting same-ID responses stay ordered while different-ID may reorder; an **INCR/WRAP burst-address generator** that flags a 4KB-boundary crossing; and a simple **round-robin/QoS arbiter** with a starvation check. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-32--amba-axi--chi).
 
 **Interview prompts:** Why must VALID not wait on READY? Same-ID vs cross-ID ordering? How is CHI just MESI at interconnect scale?
 

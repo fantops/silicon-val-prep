@@ -205,7 +205,7 @@ This is the single most common combinational RTL bug, and it's *why* the FSM rec
 
 ## Coding A — `d05_comb_logic`
 
-Build a small **combinational-block library in C** that models the gates/blocks from truth tables: `priority_encode()` (find-first-set, highest index), a 4-bit ripple-carry `add4()` exposing carry-out, a 2:1/4:1 `mux()`, a 4-bit `alu()` (ADD/SUB/AND/OR/XOR/SLT) with carry + overflow flags, and `parity()`/`popcount()`. Driver proves each against a brute-force truth table. Full spec + signatures in [coding/EXERCISES.md](../coding/EXERCISES.md#day-5--boolean--combinational-logic).
+Build a small **combinational-block library in C** that models the gates/blocks from truth tables: `priority_encode()` (find-first-set, highest index), a 4-bit ripple-carry `add4()` exposing carry-out, a 2:1/4:1 `mux()`, a 4-bit `alu()` (ADD/SUB/AND/OR/XOR/SLT) with carry + overflow flags, and `parity()`/`popcount()`. Driver proves each against a brute-force truth table. Full spec + signatures in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-5--boolean--combinational-logic).
 
 **Interview prompts:** Why is a mux universal? Show signed overflow as carry-in ≠ carry-out of the MSB. Where does priority encoding vs plain encoding change the answer?
 

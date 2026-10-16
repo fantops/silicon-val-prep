@@ -151,7 +151,7 @@ sequenceDiagram
 
 ## 10. Validation on-ramp — first flows
 
-Bring these up in order (bare-metal first for determinism — ties to [Day 3 MMIO](../prep_plan/day03_bits_mmio_volatile_polling.md), [Day 20 DMA/ordering](../prep_plan/day20_dma_doorbells_ordering_barriers.md)):
+Bring these up in order (bare-metal first for determinism — ties to [Day 3 MMIO](../prep_plan/archive/day03_bits_mmio_volatile_polling.md), [Day 20 DMA/ordering](../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md)):
 
 - [ ] **Enumerate + capability dump** — read `GENCAP`/`WQCAP`/`OPCAP`/`DSACAP0-2`; confirm which ops/features this part supports.
 - [ ] **Configure + enable** one **dedicated** WQ in one group/engine.

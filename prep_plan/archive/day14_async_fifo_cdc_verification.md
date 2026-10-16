@@ -6,7 +6,7 @@ The **async (dual-clock) FIFO** is the canonical structure for streaming **multi
 
 ## Why this day in the flow
 
-This **caps Phase 2 (Clocking & CDC)**: [Day 12](day12_metastability_synchronizers.md) gave metastability + the level synchronizer, [Day 13](day13_cdc_techniques.md) gave pulse/handshake/Gray/reset, and today assembles them into the full data-streaming crossing **and** turns to *how you verify it* — which is the hinge into **Phase 5 (Verification Engineering, [Day 24–25](day24_verification_planning_coverage.md))**. It directly answers two things Broadcom asked: the **FIFO depth** problem (R1, depth=32) and **"write functional + error tests"** (R2) for a CDC structure. This deepens §1.4 and §4.3 of [broadcom_switch_presi_notes.html](../broadcom_switch_presi_notes.html).
+This **caps Phase 2 (Clocking & CDC)**: [Day 12](day12_metastability_synchronizers.md) gave metastability + the level synchronizer, [Day 13](day13_cdc_techniques.md) gave pulse/handshake/Gray/reset, and today assembles them into the full data-streaming crossing **and** turns to *how you verify it* — which is the hinge into **Phase 5 (Verification Engineering, [Day 24–25](day24_verification_planning_coverage.md))**. It directly answers two things Broadcom asked: the **FIFO depth** problem (R1, depth=32) and **"write functional + error tests"** (R2) for a CDC structure. This deepens §1.4 and §4.3 of [broadcom_switch_presi_notes.html](../../broadcom_switch_presi_notes.html).
 
 **Broadcom gaps closed:** FIFO depth reasoning (R1), async FIFO + CDC verification (R2), functional-vs-error test design on a real structure.
 
@@ -161,7 +161,7 @@ This is the **test-plan-from-spec scaffold** ([Day 24](day24_verification_planni
 
 ## Coding A — `d14_async_fifo`
 
-Build an **async FIFO model + depth calculator in C**: `fifo_write`/`fifo_read` over a `2^n` array with **Gray-coded** pointers and the `+1` MSB full/empty logic (assert: never overflow, never underflow, FIFO order + data integrity preserved); a **dual-rate driver** that randomizes write/read bursts and finds the **peak backlog**, reproducing **32** for the `80/100` vs `8/10` case; and an **error harness** that forces overflow/underflow and shows the flags fire instead of losing/duplicating data. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-14--async-fifo--cdc-verification).
+Build an **async FIFO model + depth calculator in C**: `fifo_write`/`fifo_read` over a `2^n` array with **Gray-coded** pointers and the `+1` MSB full/empty logic (assert: never overflow, never underflow, FIFO order + data integrity preserved); a **dual-rate driver** that randomizes write/read bursts and finds the **peak backlog**, reproducing **32** for the `80/100` vs `8/10` case; and an **error harness** that forces overflow/underflow and shows the flags fire instead of losing/duplicating data. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-14--async-fifo--cdc-verification).
 
 **Interview prompts:** Why Gray pointers? Why the extra MSB? Why is depth a burst problem, not a rate problem, when averages match?
 

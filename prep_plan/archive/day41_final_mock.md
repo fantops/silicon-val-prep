@@ -256,7 +256,7 @@ Bug anchors to pull:
 | Self-tape | Phone camera, Loom, or Zoom record-to-self |
 | Whiteboard | Physical board or Excalidraw |
 | Mock peer | Friend / ex-colleague / paid mock service |
-| Coding | Plain editor + terminal; run on the [`coding/`](../coding/) repo |
+| Coding | Plain editor + terminal; run on the [`coding/`](../../coding/) repo |
 
 ---
 

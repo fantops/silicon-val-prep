@@ -187,7 +187,7 @@ On-chip memories are tested with **MBIST** (Memory BIST: an on-chip engine write
 
 ## Coding A — `d15_mem_ecc`
 
-Build a **memory model + ECC in C**: an `addr_split()` that decomposes an address into `[bank|row|col|byte]` for given geometry (assert round-trip), a **Hamming SECDED** `ecc_encode()` / `ecc_decode()` that **corrects any single-bit** error (syndrome → flip) and **detects double-bit** errors (overall parity), and a **march-test generator** (`march_c`) over a fake array that catches an injected stuck-at / decoder fault. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-15--memory-systems--ecc).
+Build a **memory model + ECC in C**: an `addr_split()` that decomposes an address into `[bank|row|col|byte]` for given geometry (assert round-trip), a **Hamming SECDED** `ecc_encode()` / `ecc_decode()` that **corrects any single-bit** error (syndrome → flip) and **detects double-bit** errors (overall parity), and a **march-test generator** (`march_c`) over a fake array that catches an injected stuck-at / decoder fault. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-15--memory-systems--ecc).
 
 **Interview prompts:** Address vs data in one sentence. Why power-of-2 check-bit positions? How does SECDED tell 1-bit from 2-bit errors?
 

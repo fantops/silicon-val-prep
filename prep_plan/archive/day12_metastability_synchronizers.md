@@ -8,7 +8,7 @@ When a flip-flop's **setup/hold** window ([Day 7](day07_sequential_logic.md)) is
 
 [Day 7](day07_sequential_logic.md) defined the setup/hold contract; today is **what physically happens when that contract is broken by an asynchronous edge** — the root cause of every CDC bug. This is the foundation for [Day 13](day13_cdc_techniques.md) (the full crossing taxonomy: pulse, bus, reset) and [Day 14](day14_async_fifo_cdc_verification.md) (async FIFO + CDC verification). Your retained **Intel back-to-back-wake** bug ([Day 31](day31_post_si_pm_validation.md)) is a CDC failure — an *event* crossed a domain as a one-cycle pulse and was lost — so this chapter also sharpens a real bug story.
 
-**Broadcom R2 gap this closes:** *the* major weakness — "metastability physics," "design methods to avoid metastability," "setup/hold," "two-flop synchronizer," MTBF. This is the deep version of §3–§4 in [broadcom_switch_presi_notes.html](../broadcom_switch_presi_notes.html).
+**Broadcom R2 gap this closes:** *the* major weakness — "metastability physics," "design methods to avoid metastability," "setup/hold," "two-flop synchronizer," MTBF. This is the deep version of §3–§4 in [broadcom_switch_presi_notes.html](../../broadcom_switch_presi_notes.html).
 
 ---
 
@@ -159,7 +159,7 @@ This is the seam into [Day 14](day14_async_fifo_cdc_verification.md)'s CDC verif
 
 ## Coding A — `d12_metastability`
 
-Build an **MTBF + synchronizer model in C**: `mtbf(t_r, tau, T0, f_clk, f_data)` (assert it grows exponentially in `t_r` and shrinks with `f_clk`/`f_data`), a **2-FF synchronizer model** that delays a level by two destination cycles, and a **metastability-injection harness** that, on a simulated near-edge transition, randomly stalls the first stage by a cycle and shows the 2-FF structure still delivers a clean level while a 1-FF "sync" can pass a corrupted one. Full spec in [coding/EXERCISES.md](../coding/EXERCISES.md#day-12--metastability--synchronizers).
+Build an **MTBF + synchronizer model in C**: `mtbf(t_r, tau, T0, f_clk, f_data)` (assert it grows exponentially in `t_r` and shrinks with `f_clk`/`f_data`), a **2-FF synchronizer model** that delays a level by two destination cycles, and a **metastability-injection harness** that, on a simulated near-edge transition, randomly stalls the first stage by a cycle and shows the 2-FF structure still delivers a clean level while a 1-FF "sync" can pass a corrupted one. Full spec in [coding/EXERCISES.md](../../coding/EXERCISES.md#day-12--metastability--synchronizers).
 
 **Interview prompts:** Which MTBF term is the design lever? Why no logic between the flops? What can't a 2-FF synchronizer carry?
 

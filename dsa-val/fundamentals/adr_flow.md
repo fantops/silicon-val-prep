@@ -102,6 +102,6 @@ DSA-durable-write correctness is a persistence-domain problem: the failure mode 
 ## 5. Cross-links
 
 - DSA core: [`dsa_ip_fundamentals.md`](dsa_ip_fundamentals.md) · Ramp-up: [`../ramp_up.md`](../ramp_up.md) · Cross-node: [`ntb_flow.md`](ntb_flow.md)
-- Foundation: [Day 15 — Memory systems / DRAM](../../prep_plan/day15_memory_systems_ecc.md) · [Day 20 — DMA, ordering, barriers](../../prep_plan/day20_dma_doorbells_ordering_barriers.md) · [Day 27 — C-states / PkgC / power](../../prep_plan/day27_cstates_pkgc_s0ix.md) · [Day 31 — Post-Si PM validation](../../prep_plan/day31_post_si_pm_validation.md)
+- Foundation: [Day 15 — Memory systems / DRAM](../../prep_plan/archive/day15_memory_systems_ecc.md) · [Day 20 — DMA, ordering, barriers](../../prep_plan/archive/day20_dma_doorbells_ordering_barriers.md) · [Day 27 — C-states / PkgC / power](../../prep_plan/archive/day27_cstates_pkgc_s0ix.md) · [Day 31 — Post-Si PM validation](../../prep_plan/archive/day31_post_si_pm_validation.md)
 
 > **Confidentiality:** power-fail sequences, hold-up budgets, DIMM/platform specifics, and any silicon behavior beyond the public spec belong in git-ignored [`../_internal/`](../_internal/) — not here.
